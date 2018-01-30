@@ -6,10 +6,7 @@ import com.kyper.yarn.Dialogue.VariableStorage;
 import com.kyper.yarn.Value.Type;
 
 /**
- * A data table that stores string pairs for later retrieval. global instance in
- * {@link com.kyperbox.KyperBoxGame KyperBoxGame} and each
- * {@link com.kyperbox.GameState GameState} has its own instance. TODO:
- * interface with yarn storage
+ * A data table that stores Values
  *
  */
 public class UserData implements VariableStorage {
