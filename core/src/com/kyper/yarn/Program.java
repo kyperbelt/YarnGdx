@@ -71,10 +71,10 @@ public class Program {
 				if (instruction.getOperation() == ByteCode.Label) {
 					instruction_text = instruction.toString(this, lib);
 				} else {
-					instruction_text += "    " + instruction.toString(this, lib);
+					instruction_text = "    " + instruction.toString(this, lib);
 				}
 
-				String preface = null;
+				String preface;
 				if (instruction_count % 5 == 0 || instruction_count == entry.value.instructions.size - 1) {
 					preface = String.format("%1$6s", instruction_count + "");
 				} else {
@@ -82,14 +82,17 @@ public class Program {
 				}
 
 				sb.appendLine(preface + instruction_text);
+				instruction_count++;
 			}
 			sb.appendLine("");
 		}
 
 		for (Entry<String, String> entry : strings) {
 			LineInfo line_info = this.line_info.get(entry.key);
-			sb.appendLine(String.format("%1$s: %2$s  (%3$s:%4$s)", entry.key, entry.value, line_info.node_name,
-					line_info.line_number));
+			if(line_info == null)
+				continue;
+			sb.appendLine(String.format("%1$s: %2$s  (%3$s:%4$s)", entry.key, entry.value, line_info.getNodeName(),
+					line_info.getLineNumber()));
 		}
 
 		return sb.toString();
@@ -185,7 +188,7 @@ public class Program {
 		}
 
 		public String getNodeName() {
-			return node_name;
+			return node_name==null?"null":node_name;
 		}
 	}
 

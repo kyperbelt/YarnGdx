@@ -51,7 +51,7 @@ public class Loader {
 		StringBuilder b = new StringBuilder();
 
 		for (Token token : token_list) {
-			b.appendLine(String.format("%1$s (%2$s line %3$s)", token.toString(), token.context, token.line_number));
+			b.appendLine(String.format("%1$s (%2$s line %3$s)", token.toString(), token.value, token.line_number));
 		}
 
 		dialogue.debug_logger.log("Tokens:");
@@ -125,12 +125,17 @@ public class Loader {
 				}
 
 				Lexer lexer = new Lexer();
+				
+				
 				TokenList tokens = lexer.tokenise(info.body);
+				
+				
 
 				if (show_tokens)
 					printTokenList(tokens);
-
+				
 				Node node = new Parser(tokens, library).parse();
+				
 
 				//if this node is tagged "rawText", then preserve its source
 				if (info.tags != null && !info.tags.isEmpty() && info.tags.contains("rawText")) {
@@ -162,6 +167,8 @@ public class Loader {
 					String message = String.format("in file %s: Error reading node %s:%s", file_name, info.title,
 							e.getMessage());
 					throw new IllegalStateException(message);
+				}else {
+					throw new IllegalStateException("Something went wrong in Yarn:"+e.getMessage());
 				}
 			}
 

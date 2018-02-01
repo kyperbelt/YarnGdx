@@ -2,7 +2,6 @@ package com.kyper.yarn;
 
 
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Array.ArrayIterable;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenType;
@@ -56,6 +55,7 @@ public class Parser {
 	 */
 	public boolean nextSymbolsAre(TokenType... valid_types) {
 		Array<Token> temp = new Array<Lexer.Token>(tokens);
+		//temp.reverse();
 		for (TokenType type : valid_types) {
 			if (temp.removeIndex(0).type != type)
 				return false;
@@ -419,6 +419,7 @@ public class Parser {
 				//otherwise, evaluate it as a command
 				type = Type.ClientCommand;
 				this.client_command = command_tokens.get(0).value;
+
 			}
 
 		}
@@ -454,25 +455,21 @@ public class Parser {
 	// ShortcutOptionGroup = ShortcutOption+ Node
 
 	protected static class ShortcutOptionGroup extends ParseNode {
-
-		private ArrayIterable<ShortcutOption> _options;
 		private Array<ShortcutOption> options = new Array<Parser.ShortcutOption>();
 
 		protected ShortcutOptionGroup(ParseNode parent, Parser p) {
 			super(parent, p);
 
-			//keep parsing options until we cant, but experct at least one (otherwise its 
+			//keep parsing options until we cant, but expect at least one (otherwise its 
 			//not actually a list of options)
-			int shortcut_index = 1;//give each option a number so it can n ame itself
+			int shortcut_index = 1;//give each option a number so it can name itself
 			do {
 				options.add(new ShortcutOption(shortcut_index++, this, p));
 			} while (p.nextSymbolIs(TokenType.ShortcutOption));
 		}
 
-		protected ArrayIterable<ShortcutOption> getOptions() {
-			if (_options == null)
-				_options = new Array.ArrayIterable<ShortcutOption>(options, false);
-			return _options;
+		protected Array<ShortcutOption> getOptions() {
+			return options;
 		}
 
 		@Override
@@ -506,7 +503,7 @@ public class Parser {
 			p.expectSymbol(TokenType.ShortcutOption);
 			label = p.expectSymbol(TokenType.Text).value;
 
-			//parse the ocnditional ("<< if $foo >>) if its there
+			//parse the conditional ("<< if $foo >>) if its there
 
 			Array<String> tags = new Array<String>();
 			while (p.nextSymbolsAre(TokenType.BeginCommand, TokenType.If) || p.nextSymbolIs(TokenType.TagMarker)) {
@@ -861,7 +858,7 @@ public class Parser {
 
 		protected ValueNode(ParseNode parent, Parser p) {
 			super(parent, p);
-			Token t = p.expectSymbol(TokenType.Number, TokenType.Variable, TokenType.String);
+			Token t = p.expectSymbol(TokenType.Number, TokenType.Variable, TokenType.Str);
 			useToken(t);
 		}
 
@@ -893,7 +890,7 @@ public class Parser {
 			case Number:
 				value = new Value(Float.parseFloat(t.value));
 				break;
-			case String:
+			case Str:
 				value = new Value(t.value);
 				break;
 			case False:
@@ -984,11 +981,11 @@ public class Parser {
 
 			//used for keeping count of parameters for each function
 			Array<Token> function_stack = new Array<Lexer.Token>();
-
+			
 			Array<TokenType> valid_token_types = new Array<Lexer.TokenType>(Operator.operatorTypes());
 			valid_token_types.add(TokenType.Number);
 			valid_token_types.add(TokenType.Variable);
-			valid_token_types.add(TokenType.String);
+			valid_token_types.add(TokenType.Str);
 			valid_token_types.add(TokenType.LeftParen);
 			valid_token_types.add(TokenType.RightParen);
 			valid_token_types.add(TokenType.Identifier);
@@ -1003,25 +1000,30 @@ public class Parser {
 			while (p.tokens.size > 0 && p.nextSymbolIs(valid_token_types.toArray())) {
 				Token next_token = p.expectSymbol(valid_token_types.toArray());
 
-				if (next_token.type == TokenType.Number || next_token.type == TokenType.Variable
-						|| next_token.type == TokenType.String || next_token.type == TokenType.True
-						|| next_token.type == TokenType.False || next_token.type == TokenType.Null) {
+				if (next_token.type == TokenType.Number 
+						|| next_token.type == TokenType.Variable
+						|| next_token.type == TokenType.Str 
+						|| next_token.type == TokenType.True
+						|| next_token.type == TokenType.False 
+						|| next_token.type == TokenType.Null) {
 
 					//primitive values go straight to output
 					expression_RPN.add(next_token);
 				} else if (next_token.type == TokenType.Identifier) {
-					operator_stack.add(next_token);
-					function_stack.add(next_token);
+					operator_stack.add(next_token);//push 
+					function_stack.add(next_token);//push
 
 					//next token must be a left paren, so process that immediately
 					next_token = p.expectSymbol(TokenType.LeftParen);
+					
 					//enter that sub expression
-					operator_stack.add(next_token);
+					operator_stack.add(next_token); //push
+					
 				} else if (next_token.type == TokenType.Comma) {
 
-					//Resolve this su expression before moving on
+					//Resolve this sub expression before moving on
 					try {
-						//pop operators u ntil we reach a left paren
+						//pop operators until we reach a left paren
 						while (operator_stack.peek().type != TokenType.LeftParen)
 							expression_RPN.add(operator_stack.pop());
 
@@ -1060,7 +1062,9 @@ public class Parser {
 					//is only unary when the last token was a left paren,
 					//an operator, or its the first token.
 					if (next_token.type == TokenType.Minus) {
-						if (last_token == null || last_token.type == TokenType.LeftParen
+						
+						if (last_token == null ||
+								last_token.type == TokenType.LeftParen
 								|| Operator.isOperator(last_token.type)) {
 
 							//this is unary minus
@@ -1069,7 +1073,7 @@ public class Parser {
 						}
 					}
 
-					//we cannot assing values inside an expresion. That is,
+					//we cannot assign values inside an expression. That is,
 					//saying "foo = 2" in an expression does not assign foo to 2
 					//and then evaluate to 2. instead, yarn defines this
 					//to mean "foo == 2"
@@ -1145,7 +1149,7 @@ public class Parser {
 
 			//we now have this in more easly parsed RPN form;
 			//time to build the expression tree
-			Token first_token = expression_RPN.peek();
+			Token first_token = expression_RPN.first();
 			Array<Expression> evaluation_stack = new Array<Parser.Expression>();
 			while (expression_RPN.size > 0) {
 
@@ -1210,7 +1214,6 @@ public class Parser {
 					evaluation_stack.add(exp);
 
 				} else {
-
 					//this is a raw value
 					ValueNode v = new ValueNode(parent, next, p);
 					Expression exp = new Expression(parent, v, p);
@@ -1218,7 +1221,7 @@ public class Parser {
 				}
 
 			}
-
+			
 			//we should now have a single expression in this stack, which is the root
 			//of the expressions tree. if we have more than one, then we have a problem
 			if (evaluation_stack.size != 1) {
@@ -1386,14 +1389,26 @@ public class Parser {
 		}
 
 		protected static TokenType[] operatorTypes() {
-			TokenType[] t = new TokenType[] { TokenType.Not, TokenType.UnaryMinus,
+			TokenType[] t = new TokenType[] { 
+					TokenType.Not,
+					TokenType.UnaryMinus,
 
-					TokenType.Add, TokenType.Minus, TokenType.Divide, TokenType.Multiply, TokenType.Modulo,
+					TokenType.Add, 
+					TokenType.Minus, 
+					TokenType.Divide,
+					TokenType.Multiply, 
+					TokenType.Modulo,
 
-					TokenType.EqualToOrAssign, TokenType.EqualTo, TokenType.GreaterThan, TokenType.GreaterThanOrEqualTo,
-					TokenType.LessThan, TokenType.LessThanOrEqualTo, TokenType.NotEqualTo,
+					TokenType.EqualToOrAssign,
+					TokenType.EqualTo, 
+					TokenType.GreaterThan,
+					TokenType.GreaterThanOrEqualTo,
+					TokenType.LessThan,
+					TokenType.LessThanOrEqualTo,
+					TokenType.NotEqualTo,
 
-					TokenType.And, TokenType.Or,
+					TokenType.And,
+					TokenType.Or,
 
 					TokenType.Xor };
 
@@ -1416,7 +1431,7 @@ public class Parser {
 
 	public static int indexOf(Object[] array, Object value) {
 		for (int i = 0; i < array.length; i++) {
-			if (array == value)
+			if (array[i] == value)
 				return i;
 		}
 		return -1;

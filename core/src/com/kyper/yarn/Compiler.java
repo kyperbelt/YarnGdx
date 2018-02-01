@@ -429,11 +429,11 @@ public class Compiler {
 	}
 
 	protected String registerLabel(String commentary) {
-		return "L" + label_count++ + commentary;
+		return "L" + (label_count++) + commentary;
 	}
 
 	protected String registerLabel() {
-		return registerLabel(null);
+		return registerLabel("");
 	}
 
 }

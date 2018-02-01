@@ -15,7 +15,7 @@ import com.kyper.yarn.Program.Node;
 
 public class VirtualMachine {
 
-	public enum ExecutionState {
+	public static enum ExecutionState {
 		/** Stopped */
 		Stopped,
 		/** Waiting on option selection */
@@ -94,6 +94,7 @@ public class VirtualMachine {
 		Instruction current_instruction = current_node.instructions.get(state.program_counter);
 
 		runInstruction(current_instruction);
+		System.out.println(current_instruction.toString(program,dialogue.library));
 
 		state.program_counter++;
 
@@ -144,11 +145,11 @@ public class VirtualMachine {
 			break;
 		case PushNumber:
 			//pushes a number onto the stack
-			state.pushValue(Float.parseFloat((String) instruction.operandA()));
+			state.pushValue(Float.parseFloat(String.valueOf(instruction.operandA())));
 			break;
 		case PushBool:
 			//pushes a boolean value onto the stack.
-			state.pushValue(Boolean.parseBoolean((String) instruction.operandA()));
+			state.pushValue(Boolean.parseBoolean(String.valueOf(instruction.operandA())));
 			break;
 		case PushNull:
 			//pushes a null value onto the stack
@@ -214,7 +215,12 @@ public class VirtualMachine {
 			String dest_var_name = (String) instruction.operandA();
 			dialogue.continuity.setValue(dest_var_name, top_value);
 			break;
-
+		case StoreVariable:
+			//store the top value on the stack in a variable
+			Value topval = state.peekValue();
+			String destinationVarName = String.valueOf(instruction.operandA());
+			dialogue.continuity.setValue(destinationVarName, topval);
+			break;
 		case Stop:
 			//stop execution immidiately and report it
 			node_complte_handler.handle(new NodeCompleteResult(null));
@@ -302,7 +308,7 @@ public class VirtualMachine {
 			//no acepted bytecode, stop the program 
 			//and throw exeption
 			setExecutionState(ExecutionState.Stopped);
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException(instruction.getOperation().name());
 
 		}
 	}

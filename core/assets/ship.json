@@ -1,0 +1,12 @@
+[
+	{
+		"title": "Ship",
+		"tags": "",
+		"body": "<<if visited(\"Ship\") is false>>\r\n    Ship: Hey, friend.\r\n    Player: Hi, Ship.\r\n    Player: How's space?\r\n    Ship: Oh, man.\r\n    <<setsprite ShipFace happy>>\r\n        Ship: It's HUGE!\r\n    <<setsprite ShipFace neutral>>\r\n<<else>>\r\n    <<setsprite ShipFace happy>>\r\n        Ship: Hey!!\r\n    <<setsprite ShipFace neutral>>\r\n<<endif>>\r\n<<if $should_see_ship is true and $sally_warning is false>>\r\n    Player: Sally said you wanted to see me?\r\n    <<setsprite ShipFace happy>>\r\n    Ship: She totally did!!\r\n    <<setsprite ShipFace neutral>>\r\n    Ship: She wanted me to tell you...\r\n    Ship: If you ever go off-watch without resetting the console again...\r\n    <<setsprite ShipFace happy>>\r\n    Ship: She'll flay you alive!\r\n    <<set $sally_warning to true>>\r\n    Player: Uh.\r\n    <<setsprite ShipFace neutral>>\r\n<<endif>>",
+		"position": {
+			"x": 224,
+			"y": 191
+		},
+		"colorID": 2
+	}
+]

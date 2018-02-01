@@ -41,9 +41,13 @@ public class Dialogue {
 
 	/**
 	 * creates a yarn dialogue
-	 * @param continuity - will be used to store/get values
-	 * @param debug	- debug logger implementation
-	 * @param error	- error logger implementation
+	 * 
+	 * @param continuity
+	 *            - will be used to store/get values
+	 * @param debug
+	 *            - debug logger implementation
+	 * @param error
+	 *            - error logger implementation
 	 */
 	public Dialogue(VariableStorage continuity, YarnLogger debug, YarnLogger error) {
 		this.continuity = continuity;
@@ -54,12 +58,31 @@ public class Dialogue {
 		this.error_logger = error;
 
 		library.importLibrary(new StandardLibrary());
+		
+		//register the "visited" function which returns true if we've visited
+		//a node previously (nodes are marked as visited when we leave them)
+		library.registerFunction("visited", -1, yarnFunctionIsNodeVisited);
+		
+		//register the visitCount function which returns athe number of times 
+		//a node has been run(increments on node end)
+		//no parameters = check the current node
+		library.registerFunction("visitCount",-1,yarnFunctionNodeVisitCount);
 
+	}
+	
+	public boolean isRunning() {
+		return vm!=null && vm.getExecutionState()!= ExecutionState.Stopped;
+	}
+	
+	public ExecutionState getExecutionState() {
+		return vm.getExecutionState();
 	}
 
 	/**
 	 * creates a dialogue with a default debug and error implementation
-	 * @param continuity - will be used to store/get values
+	 * 
+	 * @param continuity
+	 *            - will be used to store/get values
 	 */
 	public Dialogue(VariableStorage continuity) {
 		this(continuity, new YarnLogger() {
@@ -107,7 +130,7 @@ public class Dialogue {
 	/**
 	 * Start a thread that spits out results waits for results to be consumed
 	 */
-	private Array<RunnerResult> results;
+	private Array<RunnerResult> results = new Array<Dialogue.RunnerResult>();
 
 	public boolean start(String start) {
 		if (results == null)
@@ -184,7 +207,7 @@ public class Dialogue {
 	 * 
 	 */
 	public void update() {
-		if (vm.getExecutionState() != ExecutionState.WaitingOnOptionSelection
+		if (vm!=null && vm.getExecutionState() != ExecutionState.WaitingOnOptionSelection
 				&& vm.getExecutionState() != ExecutionState.Stopped) {
 			vm.runNext();
 		}
@@ -198,19 +221,19 @@ public class Dialogue {
 	public boolean optionsAvailable() {
 		return checkNext(1) != null && checkNext(1) instanceof OptionResult;
 	}
-	
+
 	public boolean isLine() {
 		return checkNext() instanceof LineResult;
 	}
-	
+
 	public boolean isCommand() {
 		return checkNext() instanceof CommandResult;
 	}
-	
+
 	public boolean isOptions() {
 		return checkNext() instanceof OptionResult;
 	}
-	
+
 	public boolean isNodeComplete() {
 		return checkNext() instanceof NodeCompleteResult;
 	}
@@ -232,8 +255,8 @@ public class Dialogue {
 	public <t> t checkNext(Class<t> type) {
 		return type.cast(checkNext(0));
 	}
-	
-	//RETURN FUNCS
+
+	// RETURN FUNCS
 
 	public RunnerResult getNext() {
 		return results.size == 0 ? null : results.pop();
@@ -242,19 +265,19 @@ public class Dialogue {
 	public <t> t getNext(Class<t> type) {
 		return type.cast(getNext());
 	}
-	
+
 	public OptionResult getOptions() {
 		return getNext(OptionResult.class);
 	}
-	
+
 	public LineResult getLine() {
 		return getNext(LineResult.class);
 	}
-	
+
 	public CommandResult getCommand() {
 		return getNext(CommandResult.class);
 	}
-	
+
 	public NodeCompleteResult getNodeComplete() {
 		return getNext(NodeCompleteResult.class);
 	}
@@ -262,6 +285,7 @@ public class Dialogue {
 	public void stop() {
 		if (vm != null)
 			vm.stop();
+		results.clear();
 
 	}
 
@@ -332,7 +356,7 @@ public class Dialogue {
 		program = null;
 	}
 
-	protected String getByteCode() {
+	public String getByteCode() {
 		return program.dumpCode(library);
 	}
 
@@ -370,10 +394,6 @@ public class Dialogue {
 	 */
 	public void unloadAll() {
 		unloadAll(true);
-	}
-
-	public enum CompiledFormat {
-		V1
 	}
 
 	/**
@@ -417,7 +437,9 @@ public class Dialogue {
 	protected ReturningFunc yarnFunctionIsNodeVisited = new ReturningFunc() {
 		@Override
 		public Object invoke(Value... params) {
-			return (Integer) yarnFunctionNodeVisitCount.invoke(params) > 0;
+			boolean visited = (Integer) yarnFunctionNodeVisitCount.invoke(params) > 0;
+			System.out.println("VISITED = "+visited);
+			return visited;
 		}
 	};
 
@@ -441,7 +463,7 @@ public class Dialogue {
 		public LineResult(String text) {
 			line = new Line(text);
 		}
-		
+
 		public String getText() {
 			return line.text;
 		}
@@ -470,11 +492,11 @@ public class Dialogue {
 			this.chooser = chooser;
 			this.options = new Options(options);
 		}
-		
-		public Array<String> getOptions(){
+
+		public Array<String> getOptions() {
 			return options.getOptions();
 		}
-		
+
 		public void choose(int choice) {
 			chooser.choose(choice);
 		}
@@ -580,7 +602,7 @@ public class Dialogue {
 	}
 
 	/**
-	 * variable storage TODO: try to use {@link com.kyperbox.util.UserData UserData}
+	 * variable storage TODO: try to use {@link com.kyper.yarn.UserData UserData}
 	 */
 	public static interface VariableStorage {
 		public void setValue(String name, Value value);

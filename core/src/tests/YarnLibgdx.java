@@ -1,5 +1,8 @@
 package tests;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
@@ -18,18 +21,22 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 	// what keys to check for input when options are presented - supports up to 5
 	// options
+	// NOTE: dialogue can support an arbitrary number of options i am just choosing
+	// to only support 5 for this example - not that we will even use that many.
 	int[] OP_KEYS = { Keys.NUM_1, Keys.NUM_2, Keys.NUM_3, Keys.NUM_4, Keys.NUM_5 };
 
 	// used to place font
 	int screenwidth;
 	int screenheight;
 
-	// Example file we will be using taken straight from the yarnspinner tests :
-	// https://github.com/thesecretlab/YarnSpinner/tree/master/Tests
-	String example_file = "example.json";
+	// file of ship containing all the ship dialogue
+	String ship_file = "ship.json";
+
+	// file of sally containing all the sally dialogue
+	String sally_file = "sally.json";
 
 	// print all the tokens that are spat out by the parser
-	boolean show_tokens = false;
+	boolean show_tokens = true;
 
 	// print out tree created by the parser from list of tokens
 	boolean show_parse_tree = true;
@@ -60,14 +67,27 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 	final String ps = "PRESS SPACE TO CONTINUE";
 	final String finished = "You finished!";
+	final String vars = "Variables:";
+	final String see_ship_var = "should_see_ship";
+	final String sally_warning_var = "sally_warning";
+	final String talk_to_ship = "Talk to Ship";
+	final String talk_to_sally = "Talk to Sally";
 
 	// use this to check if the dialogue is complete -- aka there are no more nodes
 	// to run
 	boolean complete = false;
+	// should dump bytecode when complete
+	boolean byte_code_printed = true;
 
 	@Override
 	public void create() {
-
+		
+		
+		// enter some variables for our dialogue to use -
+		// we do not need to do this but just to access them before the dialogue
+		// we do for testing purposes
+		data.put(see_ship_var, false);
+		data.put(sally_warning_var, false);
 		option_string = new StringBuilder(400);
 
 		font = new BitmapFont(Gdx.files.internal("default.fnt"));
@@ -81,14 +101,21 @@ public class YarnLibgdx extends ApplicationAdapter {
 		// alternatively we could pass in custom loggers
 		// test_dialogue = new Dialogue(data,YarnLogger_debug,YarnLogger_error)
 
-		// load the dialogue from file
-		test_dialogue.loadFile(example_file, show_tokens, show_parse_tree, only_consider);
+		// load the ship dialogue from file
+		test_dialogue.loadFile(ship_file, show_tokens, show_parse_tree, only_consider);
+
+		// load the sally dialogue from file -- notice that we load it to the same
+		// dialogue. This allows us to retain the same continuity and use the same
+		// libraries -
+		test_dialogue.loadFile(sally_file, show_tokens, show_parse_tree, null);
 
 		// in order to begin updating and receiving results from our dialogue we must
 		// start it
-		test_dialogue.start(); // this will start the dialogue at the default node of Start
+		// test_dialogue.start();
+		// this will start the dialogue at the default node of Start
 		// we could specify a different node if we wish
 		// test_dialogue.start("nameofnode");
+		//we will handle this in our input method down below
 
 	}
 
@@ -134,8 +161,11 @@ public class YarnLibgdx extends ApplicationAdapter {
 			// check if the node is complete and there is no line currently active
 			if (test_dialogue.isNodeComplete() && current_line == null) {
 				node_complete = test_dialogue.getNodeComplete();
-				if(node_complete.next_node == null)
+				if (node_complete.next_node == null) {
 					complete = true;
+					if (byte_code_printed)
+						Gdx.app.log("::ByteCode:", "\n" + test_dialogue.getByteCode());
+				}
 			}
 		}
 
@@ -145,6 +175,8 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 		batch.begin();
 		if (!complete) {
+
+			// draw dialogue
 			if (current_line != null) {
 				font.draw(batch, current_line.getText(), screenwidth * .1f, screenheight * .8f);
 
@@ -152,6 +184,7 @@ public class YarnLibgdx extends ApplicationAdapter {
 					font.draw(batch, ps, screenwidth * .3f, screenheight * .1f);
 			}
 
+			// draw options
 			if (current_options != null) {
 				int check_limit = Math.min(current_options.getOptions().size, OP_KEYS.length); // we do this to avoid
 																								// array
@@ -164,9 +197,17 @@ public class YarnLibgdx extends ApplicationAdapter {
 				}
 			}
 
-		}else {
-			font.draw(batch, finished, screenwidth*.4f, screenheight*.5f);
+		} else {
+			font.draw(batch, finished, screenwidth * .4f, screenheight * .5f);
 		}
+		
+		//draw debug vars ---
+		option_string.setLength(0);
+		option_string.appendLine(vars);
+		option_string.append(see_ship_var).append('=').append(data.getBoolean(see_ship_var)).append('\n');
+		option_string.append(sally_warning_var).append('=').append(data.getBoolean(sally_warning_var));
+		
+		font.draw(batch, option_string, screenwidth*.3f, screenheight);
 
 		batch.end();
 	}
@@ -175,6 +216,22 @@ public class YarnLibgdx extends ApplicationAdapter {
 	 * used to update the input so we can progress the dialogue
 	 */
 	public void updateInput() {
+		
+		if(!test_dialogue.isRunning()) {
+			
+			if(Gdx.input.isKeyJustPressed(OP_KEYS[0])) {
+				//talk to ship
+				test_dialogue.start("Ship");
+			}
+			
+			if(Gdx.input.isKeyJustPressed(OP_KEYS[1])) {
+				//talk to sally
+				test_dialogue.start("Sally");
+			}
+			
+			return;
+			
+		}
 
 		// space goes to next line unless there is options
 		if (current_line != null && current_options == null) {
@@ -206,7 +263,7 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 	@Override
 	public void dispose() {
-
+		batch.dispose();
 		font.dispose();
 	}
 }
