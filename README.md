@@ -5,7 +5,8 @@ YarnGdx is a Libgdx library for creating interactive dialogue in games! YarnGdx 
 There is a simple code example in the tests package that can be run like a normal libgdx project.
 
 
-
+## Latest Download
+[yarngdx_1_0.zip][100]
 
 
 
@@ -21,3 +22,6 @@ There is a simple code example in the tests package that can be run like a norma
 [3]:https://github.com/thesecretlab/YarnSpinner
 <!--- NOTABLE GAMES --->
 [20]:http://nightinthewoods.com/
+
+<!---EXTERNALS --->
+[100]:https://drive.google.com/file/d/114-k45BfesuC3XKMTzRpbQ6YTK0N-Zek/view?usp=sharing
