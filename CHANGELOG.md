@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-##[1_0] - 2018-02-01
+## [1_0] - 2018-02-01
 ### Added
  - Dialogue lines(newline seperated)
  - Inline options (->)
