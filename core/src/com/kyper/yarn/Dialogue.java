@@ -32,7 +32,7 @@ public class Dialogue {
 	protected Program program;
 
 	// the library contains all the functions and operators we know about
-	public Library library;
+	protected Library library;
 
 	private VirtualMachine vm;
 
@@ -58,22 +58,26 @@ public class Dialogue {
 		this.error_logger = error;
 
 		library.importLibrary(new StandardLibrary());
-		
-		//register the "visited" function which returns true if we've visited
-		//a node previously (nodes are marked as visited when we leave them)
+
+		// register the "visited" function which returns true if we've visited
+		// a node previously (nodes are marked as visited when we leave them)
 		library.registerFunction("visited", -1, yarnFunctionIsNodeVisited);
-		
-		//register the visitCount function which returns athe number of times 
-		//a node has been run(increments on node end)
-		//no parameters = check the current node
-		library.registerFunction("visitCount",-1,yarnFunctionNodeVisitCount);
+
+		// register the visitCount function which returns athe number of times
+		// a node has been run(increments on node end)
+		// no parameters = check the current node
+		library.registerFunction("visitCount", -1, yarnFunctionNodeVisitCount);
 
 	}
-	
-	public boolean isRunning() {
-		return vm!=null && vm.getExecutionState()!= ExecutionState.Stopped;
+
+	public Library getLibrary() {
+		return library;
 	}
-	
+
+	public boolean isRunning() {
+		return vm != null && vm.getExecutionState() != ExecutionState.Stopped;
+	}
+
 	public ExecutionState getExecutionState() {
 		return vm.getExecutionState();
 	}
@@ -127,15 +131,15 @@ public class Dialogue {
 		loadString(input, file, show_tokens, show_tree, only_consider);
 	}
 
-	/**
-	 * Start a thread that spits out results waits for results to be consumed
-	 */
-	private Array<RunnerResult> results = new Array<Dialogue.RunnerResult>();
+	// /**
+	// * Start a thread that spits out results waits for results to be consumed
+	// */
+	// private Array<RunnerResult> results = new Array<Dialogue.RunnerResult>();
+
+	private RunnerResult next_result;
 
 	public boolean start(String start) {
-		if (results == null)
-			results = new Array<Dialogue.RunnerResult>();
-		results.clear();
+		next_result = null;
 
 		if (debug_logger == null) {
 			throw new YarnRuntimeException("debug_logger must be set before running");
@@ -155,7 +159,7 @@ public class Dialogue {
 		vm.setLineHandler(new LineHandler() {
 			@Override
 			public void handle(LineResult line) {
-				results.insert(0, line);
+				next_result = line;
 			}
 		});
 
@@ -166,13 +170,13 @@ public class Dialogue {
 				if (command.command.getCommand().equals("stop")) {
 					vm.stop();
 				}
-				results.insert(0, command);
+				next_result = command;
 			}
 		});
 
 		vm.setCompleteHandler(new NodeCompleteHandler() {
 			@Override
-			public void handle(NodeCompleteResult compelte) {
+			public void handle(NodeCompleteResult complete) {
 				if (vm.currentNodeName() != null) {
 					int count = 0;
 					if (visited_node_count.containsKey(vm.currentNodeName()))
@@ -180,14 +184,14 @@ public class Dialogue {
 
 					visited_node_count.put(vm.currentNodeName(), count + 1);
 				}
-				results.insert(0, compelte);
+				next_result = complete;
 			}
 		});
 
 		vm.setOptionsHandler(new OptionsHandler() {
 			@Override
 			public void handle(OptionResult options) {
-				results.insert(0, options);
+				next_result = options;
 			}
 		});
 
@@ -206,87 +210,206 @@ public class Dialogue {
 	 * update the virtual machine counter.
 	 * 
 	 */
-	public void update() {
-		if (vm!=null && vm.getExecutionState() != ExecutionState.WaitingOnOptionSelection
-				&& vm.getExecutionState() != ExecutionState.Stopped) {
+	protected boolean update() {
+		if (vm != null && vm.getExecutionState() != ExecutionState.WaitingOnOptionSelection) {
 			vm.runNext();
+			return true;
 		}
+		return false;
 	}
 
-	// CHECK FUNCS
-	public boolean hasNext() {
-		return checkNext(0) != null;
+	/**
+	 * get the next result - if it is null it will attempt to populate it
+	 * 
+	 * @return
+	 */
+	public RunnerResult getNext() {
+		// TODO: remove?
+		if (vm == null) // we are not running so return null
+			return null;
+		checkNext();// make sure there is a next result
+		RunnerResult r = next_result;
+		next_result = null;
+		return r;
 	}
 
-	public boolean optionsAvailable() {
-		return checkNext(1) != null && checkNext(1) instanceof OptionResult;
+	/**
+	 * get the next result - will return null if there is no result
+	 * 
+	 * @return
+	 */
+	public RunnerResult nextRaw() {
+		return next_result;
 	}
 
-	public boolean isLine() {
-		return checkNext() instanceof LineResult;
+	/**
+	 * checks the next result - if it is null it will attempt to populate it
+	 * 
+	 * @return
+	 */
+	public RunnerResult checkNext() {
+		if (next_result == null)
+			populateNext();
+		return next_result;
 	}
 
-	public boolean isCommand() {
-		return checkNext() instanceof CommandResult;
-	}
-
-	public boolean isOptions() {
+	/**
+	 * check if the next result is an options result
+	 * 
+	 * @return
+	 */
+	public boolean isNextOptions() {
 		return checkNext() instanceof OptionResult;
 	}
 
-	public boolean isNodeComplete() {
+	/**
+	 * check if the next result is a line result
+	 * 
+	 * @return
+	 */
+	public boolean isNextLine() {
+		return checkNext() instanceof LineResult;
+	}
+
+	/**
+	 * check if the next result is a custom command result
+	 * 
+	 * @return
+	 */
+	public boolean isNextCommand() {
+		return checkNext() instanceof CommandResult;
+	}
+
+	/**
+	 * check if the next result is a node complete result
+	 * 
+	 * @return
+	 */
+	public boolean isNextComplete() {
 		return checkNext() instanceof NodeCompleteResult;
 	}
 
 	/**
-	 * offset from the end of the results stack
+	 * get the next result as a line if the next result is not a line it will return
+	 * null
 	 * 
-	 * @param offset
 	 * @return
 	 */
-	public RunnerResult checkNext(int offset) {
-		return results.size - Math.abs(offset) <= 0 ? null : results.get(results.size - 1 - Math.abs(offset));
+	public LineResult getNextAsLine() {
+		return isNextLine() ? (LineResult) getNext() : null;
 	}
 
-	public RunnerResult checkNext() {
-		return checkNext(0);
+	/**
+	 * get the next result as an options result if the next result is not an options
+	 * result then this will return null
+	 * 
+	 * @return
+	 */
+	public OptionResult getNextAsOptions() {
+		return isNextOptions() ? (OptionResult) getNext() : null;
 	}
 
-	public <t> t checkNext(Class<t> type) {
-		return type.cast(checkNext(0));
+	/**
+	 * get the next result as a command result (must be parsed by the programmer) if
+	 * the next result is not a commandreslt then this will return null
+	 * 
+	 * @return
+	 */
+	public CommandResult getNextAsCommand() {
+		return isNextCommand() ? (CommandResult) getNext() : null;
 	}
 
-	// RETURN FUNCS
-
-	public RunnerResult getNext() {
-		return results.size == 0 ? null : results.pop();
+	/**
+	 * get the next result as a node complete result if the next result is not a
+	 * node compelte result then this will return null
+	 * 
+	 * @return
+	 */
+	public NodeCompleteResult getNextAsComplete() {
+		return isNextComplete() ? (NodeCompleteResult) getNext() : null;
 	}
 
-	public <t> t getNext(Class<t> type) {
-		return type.cast(getNext());
+	// we update the vm until the next result is no longer null
+	private void populateNext() {
+		while (next_result == null)
+			if (!update())
+				break;
+
 	}
 
-	public OptionResult getOptions() {
-		return getNext(OptionResult.class);
-	}
-
-	public LineResult getLine() {
-		return getNext(LineResult.class);
-	}
-
-	public CommandResult getCommand() {
-		return getNext(CommandResult.class);
-	}
-
-	public NodeCompleteResult getNodeComplete() {
-		return getNext(NodeCompleteResult.class);
-	}
+	// CHECK FUNCS
+	// public boolean hasNext() {
+	// return checkNext(0) != null;
+	// }
+	//
+	// public boolean optionsAvailable() {
+	// return checkNext(1) != null && checkNext(1) instanceof OptionResult;
+	// }
+	//
+	// public boolean isLine() {
+	// return checkNext() instanceof LineResult;
+	// }
+	//
+	// public boolean isCommand() {
+	// return checkNext() instanceof CommandResult;
+	// }
+	//
+	// public boolean isOptions() {
+	// return checkNext() instanceof OptionResult;
+	// }
+	//
+	// public boolean isNodeComplete() {
+	// return checkNext() instanceof NodeCompleteResult;
+	// }
+	//
+	// /**
+	// * offset from the end of the results stack
+	// *
+	// * @param offset
+	// * @return
+	// */
+	// public RunnerResult checkNext(int offset) {
+	// return results.size - Math.abs(offset) <= 0 ? null : results.get(results.size
+	// - 1 - Math.abs(offset));
+	// }
+	//
+	// public RunnerResult checkNext() {
+	// return checkNext(0);
+	// }
+	//
+	// public <t> t checkNext(Class<t> type) {
+	// return type.cast(checkNext(0));
+	// }
+	//
+	// // RETURN FUNCS
+	//
+	// public RunnerResult getNext() {
+	// return results.size == 0 ? null : results.pop();
+	// }
+	//
+	// public <t> t getNext(Class<t> type) {
+	// return type.cast(getNext());
+	// }
+	//
+	// public OptionResult getOptions() {
+	// return getNext(OptionResult.class);
+	// }
+	//
+	// public LineResult getLine() {
+	// return getNext(LineResult.class);
+	// }
+	//
+	// public CommandResult getCommand() {
+	// return getNext(CommandResult.class);
+	// }
+	//
+	// public NodeCompleteResult getNodeComplete() {
+	// return getNext(NodeCompleteResult.class);
+	// }
 
 	public void stop() {
 		if (vm != null)
 			vm.stop();
-		results.clear();
-
 	}
 
 	public Array<String> allNodes() {
@@ -374,6 +497,12 @@ public class Dialogue {
 
 	}
 
+	protected void printState() {
+		if (!isRunning())
+			return;
+		System.out.println("Current VM State:" + vm.getExecutionState().name());
+	}
+
 	public void analyse(Context context) {
 		context.addProgramToAnalysis(program);
 	}
@@ -438,7 +567,6 @@ public class Dialogue {
 		@Override
 		public Object invoke(Value... params) {
 			boolean visited = (Integer) yarnFunctionNodeVisitCount.invoke(params) > 0;
-			System.out.println("VISITED = "+visited);
 			return visited;
 		}
 	};
@@ -473,11 +601,16 @@ public class Dialogue {
 	 * client should run and parse command
 	 */
 	public static class CommandResult extends RunnerResult {
-		public Command command;
+		protected Command command;
 
 		public CommandResult(String text) {
 			command = new Command(text);
 		}
+
+		public String getCommand() {
+			return command.command;
+		}
+
 	}
 
 	/**

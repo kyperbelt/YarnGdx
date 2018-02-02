@@ -54,11 +54,11 @@ public class Library {
 			functions.remove(name);
 	}
 
-	public interface ReturningFunc {
+	public static interface ReturningFunc {
 		public Object invoke(Value... params);
 	}
 
-	public interface Function {
+	public static interface Function {
 		public void invoke(Value... params);
 	}
 
