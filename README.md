@@ -7,6 +7,12 @@ There is a simple code example in the tests package that can be run like a norma
 
 ## Latest Download
 [yarngdx_1_0.zip][100]
+---
+
+## Getting Started
+- First thing you want figure out is how you want to include YarnGdx in your project. You could clone the repo and add it to your project, Or get the [latest download][100] and include the jars in your build path. 
+- Even though you could use any old text editor to create your dialogue files - I would recommend heading over and downloading the latest build of the [Yarn Editor][5]. It is very easy to understand and offers some useful features like color coding and node tags.
+- Once you are all set up and are ready to get started implementing Yarn Dialogues into your game go ahead to the [YarnGDX Wiki][4] for an in depth guide. 
 
 
 
@@ -20,6 +26,10 @@ There is a simple code example in the tests package that can be run like a norma
 [1]:https://github.com/infiniteammoinc/Yarn
 [2]:http://twinery.org/
 [3]:https://github.com/thesecretlab/YarnSpinner
+[4]:https://github.com/kyperbelt/YarnGdx/wiki
+[5]:https://github.com/InfiniteAmmoInc/Yarn#builds
+
+
 <!--- NOTABLE GAMES --->
 [20]:http://nightinthewoods.com/
 
