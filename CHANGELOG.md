@@ -1,7 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+
+## [1_1] -2018-02-13
+
+### Added
+- Simplified methods for loading dialogues
+
+
+### Fixed
+- Fixed a bug that caused lines to be ran multiple times when in conjunction to expression blocks. 
+
 ## [1_0] - 2018-02-01
+
 ### Added
  - Dialogue lines(newline seperated)
  - Inline options (->)
@@ -13,8 +24,5 @@ All notable changes to this project will be documented in this file.
  - Basic Conditional statements (if/else)
  - Custom function libray that can be extended
  
- ### Changed
- ---
- 
- ### Removed
+ ### Fixed
  ---
