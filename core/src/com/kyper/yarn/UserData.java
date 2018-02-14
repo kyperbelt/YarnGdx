@@ -34,6 +34,19 @@ public class UserData implements VariableStorage {
 	public void put(String name, Object object) {
 		setValue(name, new Value(object));
 	}
+	
+	public boolean contains(String name) {
+		if(variables.containsKey(name))
+			return true;
+		return false;
+	}
+	
+	public Value remove(String name) {
+		if(contains(name)) {
+			return variables.remove(name);
+		}
+		else return null;
+	}
 
 	public String getString(String name) {
 		if (variables.containsKey(name)) {

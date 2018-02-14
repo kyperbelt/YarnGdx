@@ -22,6 +22,8 @@ public class VirtualMachine {
 		/** Running */
 		Running
 	}
+	
+	protected static final String EXEC_COMPLETE = "execution_complete_command";
 
 	private LineHandler line_handler;
 	private OptionsHandler option_handler;
@@ -84,13 +86,18 @@ public class VirtualMachine {
 
 		if (execution_state == ExecutionState.WaitingOnOptionSelection) {
 			dialogue.error_logger.log("Cannot continue running dialogue. Still waiting on option selection.");
+			//execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
+			
 			return;
 		}
 
 		if (execution_state == ExecutionState.Stopped)
 			setExecutionState(ExecutionState.Running);
-
+		
+		
+		
+		
 		Instruction current_instruction = current_node.instructions.get(state.program_counter);
 
 		runInstruction(current_instruction);
@@ -99,13 +106,19 @@ public class VirtualMachine {
 		//System.out.println(current_instruction.toString(program, dialogue.library));
 
 		state.program_counter++;
-
+		
 		if (state.program_counter >= current_node.instructions.size) {
 			node_complte_handler.handle(new NodeCompleteResult(null));
-			setExecutionState(ExecutionState.Stopped);
+			//execution_state = ExecutionState.Stopped;
+		    setExecutionState(ExecutionState.Stopped);
 			dialogue.debug_logger.log("Run complete");
+			return;
 		}
 
+
+		
+
+		
 	}
 
 	/**
@@ -229,6 +242,9 @@ public class VirtualMachine {
 		case Stop:
 			// stop execution immidiately and report it
 			node_complte_handler.handle(new NodeCompleteResult(null));
+			command_handler.handle(new CommandResult(EXEC_COMPLETE));
+			
+			//execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
 			break;
 		case RunNode:
@@ -258,6 +274,7 @@ public class VirtualMachine {
 			// if we have no options to show, immidiately stop
 			if (state.current_options.size == 0) {
 				node_complte_handler.handle(new NodeCompleteResult(null));
+				//execution_state = ExecutionState.Stopped;
 				setExecutionState(ExecutionState.Stopped);
 				break;
 			}
@@ -313,6 +330,7 @@ public class VirtualMachine {
 		default:
 			// no acepted bytecode, stop the program
 			// and throw exeption
+			//execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
 			throw new IllegalArgumentException(instruction.getOperation().name());
 

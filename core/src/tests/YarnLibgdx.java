@@ -113,6 +113,7 @@ public class YarnLibgdx extends ApplicationAdapter {
 		// we do for testing purposes
 		data.put(see_ship_var, false);
 		data.put(sally_warning_var, false);
+		data.put(poop, "empty");
 		option_string = new StringBuilder(400);
 
 		font = new BitmapFont(Gdx.files.internal("default.fnt"));
@@ -168,10 +169,14 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 	}
 
+	final String poop ="$poop";
+	
 	@Override
 	public void render() {
-
+	
 		// --- ignore
+
+		
 		if (screenwidth == 0) {
 			screenwidth = Gdx.graphics.getWidth();
 			screenheight = Gdx.graphics.getHeight();
@@ -270,7 +275,8 @@ public class YarnLibgdx extends ApplicationAdapter {
 		option_string.setLength(0);
 		option_string.appendLine(vars);
 		option_string.append(see_ship_var).append('=').append(data.getBoolean(see_ship_var)).append('\n');
-		option_string.append(sally_warning_var).append('=').append(data.getBoolean(sally_warning_var));
+		option_string.append(sally_warning_var).append('=').append(data.getBoolean(sally_warning_var)).append('\n');
+		option_string.append(poop).append('=').append(data.getString(poop));
 
 		font.draw(batch, option_string, screenwidth * .3f, screenheight);
 

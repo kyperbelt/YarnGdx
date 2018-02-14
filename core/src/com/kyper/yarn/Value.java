@@ -12,6 +12,11 @@ public class Value implements Comparable<Value> {
 	private String variable_name;
 	private String string_value;
 	private boolean bool_value;
+	
+	private static final String NULL_STRING = "null";
+	private static final String FALSE_STRING = "false";
+	private static final String TRUE_STRING = "true";
+	private static final String NAN = "NaN";
 
 	public Value() {
 		this(null);
@@ -147,15 +152,15 @@ public class Value implements Comparable<Value> {
 		switch (type) {
 		case NUMBER:
 			if (Float.isNaN(number_value))
-				return "NaN";
+				return NAN;
 			else
 				Float.toString(number_value);
 		case STRING:
 			return string_value;
 		case BOOL:
-			return Boolean.toString(bool_value);
+			return bool_value?TRUE_STRING:FALSE_STRING;
 		case NULL:
-			return "null";
+			return NULL_STRING;
 		default:
 			throw new IllegalStateException("Argument out of Range");
 		}
