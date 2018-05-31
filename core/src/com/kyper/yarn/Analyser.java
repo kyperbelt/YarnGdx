@@ -63,10 +63,10 @@ public class Analyser {
 				context_label += node_name;
 
 				if (line_number != -1) {
-					context_label += String.format(": %s", line_number);
+					context_label += StringUtils.format(": %s", line_number);
 
 					if (col_number != -1) {
-						context_label += String.format(":%s", col_number);
+						context_label += StringUtils.format(":%s", col_number);
 					}
 				}
 			}
@@ -76,7 +76,7 @@ public class Analyser {
 			if (context_label == null || context_label.isEmpty()) {
 				message = this.message;
 			} else {
-				message = String.format(" %1$s: %2$s", context_label, this.message);
+				message = StringUtils.format(" %1$s: %2$s", context_label, this.message);
 			}
 
 			return message;
@@ -208,12 +208,12 @@ public class Analyser {
 			Array<Diagnosis> diagnoses = new Array<Analyser.Diagnosis>();
 			
 			for (String ro : read_only) {
-				String message = String.format("Variable %s is read from, but nevver assigned", ro);
+				String message = StringUtils.format("Variable %s is read from, but nevver assigned", ro);
 				diagnoses.add(new Diagnosis(message, Severity.Warning));
 			}
 			
 			for (String wo : write_only) {
-				String message = String.format("Variable %s is assigned, but never read from", wo);
+				String message = StringUtils.format("Variable %s is assigned, but never read from", wo);
 				diagnoses.add(new Diagnosis(message, Severity.Warning));
 			}
 			

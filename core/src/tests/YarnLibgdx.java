@@ -16,7 +16,7 @@ import com.kyper.yarn.Dialogue.LineResult;
 import com.kyper.yarn.Dialogue.NodeCompleteResult;
 import com.kyper.yarn.Dialogue.OptionResult;
 import com.kyper.yarn.Library.Function;
-import com.kyper.yarn.UserData;
+import com.kyper.yarn.DialogueData;
 import com.kyper.yarn.Value;
 
 public class YarnLibgdx extends ApplicationAdapter {
@@ -48,7 +48,7 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 	// Used to store values by dialogue (or your game, access is not limited) - can
 	// export/import as json
-	UserData data = new UserData("Test_data");
+	DialogueData data = new DialogueData("Test_data");
 
 	// this is the class that loads and hold the dialogue for now
 	Dialogue test_dialogue;
