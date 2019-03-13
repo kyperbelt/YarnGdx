@@ -668,9 +668,9 @@ public class Parser {
 		@Override
 		public String printTree(int indent_level) {
 			if (label != null) {
-				return tab(indent_level, String.format("Option: \"%1$s\" -> %2$s", label, destination));
+				return tab(indent_level, StringUtils.format("Option: \"%1$s\" -> %2$s", label, destination));
 			} else {
-				return tab(indent_level, String.format("Option: -> %s", destination));
+				return tab(indent_level, StringUtils.format("Option: -> %s", destination));
 			}
 		}
 
@@ -869,7 +869,7 @@ public class Parser {
 			case NUMBER:
 				return tab(indent_level, "" + value.getNumberValue());
 			case STRING:
-				return tab(indent_level, String.format("\"%s\"", value.getStringValue()));
+				return tab(indent_level, StringUtils.format("\"%s\"", value.getStringValue()));
 			case BOOL:
 				return tab(indent_level, value.asString());
 			case VARNAME:
@@ -1188,7 +1188,7 @@ public class Parser {
 
 						//ensure that this call has the right number of params;
 						if (!info.isParamCountCorrect(next.parameter_count)) {
-							String error = String.format("Error parsing expression: "
+							String error = StringUtils.format("Error parsing expression: "
 									+ "Unsupported number of parameters for function %1$s (expected %2$s, got %3$s)",
 									next.value, info.getParamCount(), next.parameter_count);
 							throw ParseException.make(next, error);

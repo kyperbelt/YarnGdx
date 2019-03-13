@@ -51,7 +51,7 @@ public class Loader {
 		StringBuilder b = new StringBuilder();
 
 		for (Token token : token_list) {
-			b.appendLine(String.format("%1$s (%2$s line %3$s)", token.toString(), token.value, token.line_number));
+			b.appendLine(StringUtils.format("%1$s (%2$s line %3$s)", token.toString(), token.value, token.line_number));
 		}
 
 		dialogue.debug_logger.log("Tokens:");
@@ -155,16 +155,16 @@ public class Loader {
 
 			} catch (Exception e) {
 				if (e instanceof TokeniserException) {
-					String message = String.format("In file %s: Error reading %s:%s", file_name, info.title,
+					String message = StringUtils.format("In file %s: Error reading %s:%s", file_name, info.title,
 							e.getMessage());
 					throw new TokeniserException(message);
 
 				} else if (e instanceof ParseException) {
-					String message = String.format("In file %s: Error parsing node %s:%s", file_name, info.title,
+					String message = StringUtils.format("In file %s: Error parsing node %s:%s", file_name, info.title,
 							e.getMessage());
 					throw new ParseException(message);
 				} else if (e instanceof IllegalStateException) {
-					String message = String.format("in file %s: Error reading node %s:%s", file_name, info.title,
+					String message = StringUtils.format("in file %s: Error reading node %s:%s", file_name, info.title,
 							e.getMessage());
 					throw new IllegalStateException(message);
 				}else {
@@ -195,7 +195,7 @@ public class Loader {
 		} else if (fn.endsWith(".node")) {
 			format = NodeFormat.SingleNodeText;
 		} else {
-			throw new IllegalArgumentException(String.format("Unknown file format for file '%s'", file_name));
+			throw new IllegalArgumentException(StringUtils.format("Unknown file format for file '%s'", file_name));
 		}
 		return format;
 	}
@@ -266,7 +266,7 @@ public class Loader {
 
 						if (!header_match.find()) {
 							dialogue.error_logger
-									.log(String.format("Line %s: cant parse header '%s'", line_number, line));
+									.log(StringUtils.format("Line %s: cant parse header '%s'", line_number, line));
 							continue;
 						}
 
@@ -306,7 +306,7 @@ public class Loader {
 							if (e instanceof IllegalArgumentException) {
 
 							} else if (e instanceof IllegalStateException) {
-								dialogue.error_logger.log(String.format("%s:Error setting %s: invalid value '%s'",
+								dialogue.error_logger.log(StringUtils.format("%s:Error setting %s: invalid value '%s'",
 										line_number, field, value));
 							} else if (e instanceof NumberFormatException) {
 								dialogue.error_logger.log("could not convert " + field + ":" + e.getMessage());
@@ -441,7 +441,7 @@ public class Loader {
 
 		@Override
 		public String toString() {
-			return String.format("Node{ title:%1$s ,body:%2$s}", title, body);
+			return StringUtils.format("Node{ title:%1$s ,body:%2$s}", title, body);
 		}
 
 		public boolean setField(String name, Object value) {

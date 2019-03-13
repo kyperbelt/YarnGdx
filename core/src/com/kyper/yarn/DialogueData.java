@@ -9,7 +9,7 @@ import com.kyper.yarn.Value.Type;
  * A data table that stores Values
  *
  */
-public class UserData implements VariableStorage {
+public class DialogueData implements VariableStorage {
 
 	private static final String NAME = "$USERDATA_NAME";
 
@@ -18,7 +18,7 @@ public class UserData implements VariableStorage {
 
 	private String name;
 
-	public UserData(String name) {
+	public DialogueData(String name) {
 		this.name = name;
 		variables = new ObjectMap<String, Value>();
 	}

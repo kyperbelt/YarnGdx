@@ -137,7 +137,7 @@ public class Library {
 					return Value.NULL;
 				}
 			} else {
-				String error = String.format(
+				String error = StringUtils.format(
 						"Incorrect number of parameters for function %1$s (expected %2$s, got %3$s", this.name,
 						this.param_count, params.length);
 				throw new IllegalStateException(error);
