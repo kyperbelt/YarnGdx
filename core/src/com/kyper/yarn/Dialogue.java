@@ -630,13 +630,13 @@ public class Dialogue {
 				node_name = params[0].asString();
 				// ensure node existance
 				if (!nodeExists(node_name)) {
-					String error = StringUtils.format(" the node %s does not exist.", node_name);
+					String error = String.format(" the node %s does not exist.", node_name);
 					error_logger.log(error);
 					return 0;
 				}
 			} else {
 				// we go ttoo many parameters
-				String error = StringUtils.format("incorrect number of parameters visitcount expect 0 or 1, got %s",
+				String error = String.format("incorrect number of parameters visitcount expect 0 or 1, got %s",
 						params.length);
 				error_logger.log(error);
 				return 0;

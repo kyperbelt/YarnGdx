@@ -12,6 +12,7 @@ public class Lexer {
 
 	// single-line comments, If this is encountered at any point, the rest of the line is just skipped
 	public static final String LINE_COMMENT = "//";
+	public static final char FORWARD_SLASH = '/';
 
 	public static final String LINE_SEPARATOR = "\n";
 
@@ -27,6 +28,8 @@ public class Lexer {
 	private static final String OPTION = "option";
 	private static final String OR = "or";
 	private static final String DESTINATION = "destination";
+
+	private static final Regex WHITESPACE = new Regex("\\s*");
 
 	protected ObjectMap<String, LexerState> states;
 
@@ -272,7 +275,7 @@ public class Lexer {
 		//now we start finding tokens
 		int column_number = this_indentation;
 		
-		Regex whitespace = new Regex("\\s*");
+		Regex whitespace = WHITESPACE;
 		
 		while (column_number < line.length()) {
 
@@ -285,8 +288,10 @@ public class Lexer {
 
 			for (TokenRule rule : current_state.token_rules) {
 
+				Matcher myMatch = rule.altRegex.match(line,column_number);
 				Matcher match = rule.regex.match(line);
-				if (!match.find(column_number))
+				
+				if (!myMatch.find(0))
 					continue;
 				String token_text;
 
@@ -319,13 +324,15 @@ public class Lexer {
 					column_number = text_start_index;
 					
 
+					match.find(column_number);
+
 					//TODO: ====
 					//THIS IS PROBABLY WRONG
 					int text_end_index = match.start()+match.group().length();
 					token_text = line.substring(text_start_index,text_end_index);
 
 				}else {
-					token_text = match.group();
+					token_text = myMatch.group();
 					
 				}
 				
@@ -413,7 +420,7 @@ public class Lexer {
 		}
 
 		public TokeniserException(int line_number, int column_number, String message) {
-			super(StringUtils.format("%1$s : %2$s : %3$s", line_number, column_number, message));
+			super(String.format("%1$s : %2$s : %3$s", line_number, column_number, message));
 			this.line_number = line_number;
 			this.column_number = column_number;
 		}
@@ -434,7 +441,7 @@ public class Lexer {
 				name_list = names.first();
 			}
 			
-			String message = StringUtils.format("Expected %s", name_list);
+			String message = String.format("Expected %s", name_list);
 			
 			return new TokeniserException(line_number,column_number,message);
 		}
@@ -584,9 +591,9 @@ public class Lexer {
 		@Override
 		public String toString() {
 			if (value != null) {
-				 return StringUtils.format("%1$s (%2$s) at %3$s:%4$s (state: %5$s)", type.name(), value.toString(), line_number, column_number, lexer_state);
+				 return String.format("%1$s (%2$s) at %3$s:%4$s (state: %5$s)", type.name(), value.toString(), line_number, column_number, lexer_state);
 			}
-			return StringUtils.format("%1$s at %2$s :%3$s (state: %4$s)", type, line_number, column_number, lexer_state);
+			return String.format("%1$s at %2$s :%3$s (state: %4$s)", type, line_number, column_number, lexer_state);
 		}
 
 	}
@@ -608,7 +615,7 @@ public class Lexer {
 
 		public TokenRule addTransition(TokenType type, String enter_state, boolean delimits_text) {
 
-			String pattern = StringUtils.format("\\G%1$s", patterns.get(type));
+			String pattern = String.format("\\G%1$s", patterns.get(type));
 			TokenRule rule = new TokenRule(type, new Regex(pattern), enter_state, delimits_text);
 			token_rules.add(rule);
 			return rule;
@@ -636,13 +643,13 @@ public class Lexer {
 
 			for (TokenRule other_rule : token_rules) {
 				if (other_rule.delimits_text)
-					delimiter_rules.add(StringUtils.format("(%1$s)", other_rule.regex.toString().substring(2)));
+					delimiter_rules.add(String.format("(%1$s)", other_rule.regex.toString().substring(2)));
 			}
 
 			//create a regex that matches all text up to but not including
 			//any of the delimiter rules
 
-			String pattern = StringUtils.format("\\G((?!%1$s).)*", String.join("|", delimiter_rules));
+			String pattern = String.format("\\G((?!%1$s).)*", String.join("|", delimiter_rules));
 
 			TokenRule rule = addTransition(type, enter_state);
 			rule.regex = new Regex(pattern);
@@ -668,7 +675,8 @@ public class Lexer {
 
 	protected class TokenRule {
 		public Regex regex = null;
-
+		public Regex altRegex = null;
+		
 		//set to null if should stay in same state
 		public String enter_state;
 		public TokenType type;
@@ -680,20 +688,23 @@ public class Lexer {
 			this.enter_state = enter_state;
 			this.type = type;
 			this.delimits_text = delimits_text;
+			altRegex = new Regex(regex.pattern.toString().replace("\\G","^"));
 		}
 
 		@Override
 		public String toString() {
-			return StringUtils.format("[TokenRule: %1$s - %2$s ]", type, this.regex);
+			return String.format("[TokenRule: %s - %s ]", type, this.regex);
 		}
 	}
 
 	protected static class Regex {
 
 		private Pattern pattern;
+		private StringBuilder stringBuilder;
 
 		public Regex(String pattern) {
 			this.pattern = Pattern.compile(pattern);
+			this.stringBuilder = new StringBuilder();
 		}
 
 		public Regex(Pattern pattern) {
@@ -717,18 +728,21 @@ public class Lexer {
 			return pattern.toString();
 		}
 
-		public Matcher match(String text) {
+		public Matcher match(CharSequence text) {
 			return pattern.matcher(text);
 		}
 
 		public Matcher match(String text, int begin_index) {
-			return match(text.substring(begin_index));
+			stringBuilder.setLength(0);
+			stringBuilder.append(text, begin_index, text.length());
+			return match(stringBuilder);
 		}
 
 		public Matcher match(String text, int begin_index, int end_index) {
-			return match(text.substring(begin_index, end_index));
+			stringBuilder.setLength(0);
+			stringBuilder.append(text, begin_index, end_index);
+			return match(stringBuilder);
 		}
-
 	}
 
 	public class IntBoolPair extends Entry<Integer, Boolean> {
@@ -739,11 +753,11 @@ public class Lexer {
 	}
 
 	public static String padRight(String s, int n) {
-		return StringUtils.format("%1$-" + n + "s", s);
+		return String.format("%1$-" + n + "s", s);
 	}
 
 	public static String padLeft(String s, int n) {
-		return StringUtils.format("%1$" + n + "s", s);
+		return String.format("%1$" + n + "s", s);
 	}
 
 }

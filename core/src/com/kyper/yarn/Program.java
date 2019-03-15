@@ -34,7 +34,7 @@ public class Program {
 		String key;
 
 		if (line_id == null)
-			key = StringUtils.format("%1$s - %2$s", node_name, string_count++);
+			key = String.format("%1$s - %2$s", node_name, string_count++);
 		else
 			key = line_id;
 
@@ -76,9 +76,9 @@ public class Program {
 
 				String preface;
 				if (instruction_count % 5 == 0 || instruction_count == entry.value.instructions.size - 1) {
-					preface = StringUtils.format("%1$6s", instruction_count + "");
+					preface = String.format("%1$6s", instruction_count + "");
 				} else {
-					preface = StringUtils.format("%1$6s    ", " ");
+					preface = String.format("%1$6s    ", " ");
 				}
 
 				sb.appendLine(preface + instruction_text);
@@ -91,7 +91,7 @@ public class Program {
 			LineInfo line_info = this.line_info.get(entry.key);
 			if(line_info == null)
 				continue;
-			sb.appendLine(StringUtils.format("%1$s: %2$s  (%3$s:%4$s)", entry.key, entry.value, line_info.getNodeName(),
+			sb.appendLine(String.format("%1$s: %2$s  (%3$s:%4$s)", entry.key, entry.value, line_info.getNodeName(),
 					line_info.getLineNumber()));
 		}
 
@@ -107,7 +107,7 @@ public class Program {
 		for (Entry<String, Node> other : other_program.nodes) {
 			if (nodes.containsKey(other.key)) {
 				throw new IllegalStateException(
-						StringUtils.format("This program already contains a node named %s", other.key));
+						String.format("This program already contains a node named %s", other.key));
 			}
 
 			nodes.put(other.key, other.value);
@@ -117,7 +117,7 @@ public class Program {
 			//TODO: this seems fishy -- maybe check strings map instead?
 			if (nodes.containsKey(other.key)) {
 				throw new IllegalStateException(
-						StringUtils.format("This program already contains a string with key %s", other.key));
+						String.format("This program already contains a string with key %s", other.key));
 			}
 			strings.put(other.key, other.value);
 		}
@@ -158,7 +158,7 @@ public class Program {
 				expected_type_names.add(type.name());
 			}
 			String possible_values = String.join(",", expected_type_names);
-			String message = StringUtils.format("Line %1$s:%2$s: Expected %3$s, but found %4$s", line_number,
+			String message = String.format("Line %1$s:%2$s: Expected %3$s, but found %4$s", line_number,
 					found_token.column_number, possible_values, found_token.type.name());
 			ParseException e = new ParseException(message);
 			e.line_number = line_number;
@@ -167,7 +167,7 @@ public class Program {
 
 		protected static ParseException make(Token most_recent_token, String message) {
 			int line_number = most_recent_token.line_number + 1;
-			String m = StringUtils.format("Line %1$s:%2$s: %3$s", line_number, most_recent_token.column_number, message);
+			String m = String.format("Line %1$s:%2$s: %3$s", line_number, most_recent_token.column_number, message);
 			ParseException e = new ParseException(m);
 			e.line_number = line_number;
 			return e;
@@ -340,11 +340,11 @@ public class Program {
 			// If we had any pushes or pops, report them
 
 			if (pops > 0 && pushes > 0)
-				comment += StringUtils.format("Pops %1$s, Pushes %2$s", pops, pushes);
+				comment += String.format("Pops %1$s, Pushes %2$s", pops, pushes);
 			else if (pops > 0)
-				comment += StringUtils.format("Pops %s", pops);
+				comment += String.format("Pops %s", pops);
 			else if (pushes > 0)
-				comment += StringUtils.format("Pushes %s", pushes);
+				comment += String.format("Pushes %s", pushes);
 
 			// String lookup comments
 			switch (operation) {
@@ -355,7 +355,7 @@ public class Program {
 				// Add the string for this option, if it has one
 				if ((String) operandA != null) {
 					String text = p.getString((String) operandA);
-					comment += StringUtils.format("\"%s\"", text);
+					comment += String.format("\"%s\"", text);
 				}
 
 				break;
@@ -368,7 +368,7 @@ public class Program {
 				comment = "; " + comment;
 			}
 
-			return StringUtils.format("%1$-15s %2$-10s %3$-10s %4$-10s", operation.name(), opAString, opBString, comment);
+			return String.format("%1$-15s %2$-10s %3$-10s %4$-10s", operation.name(), opAString, opBString, comment);
 		}
 	}
 
