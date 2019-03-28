@@ -12,12 +12,12 @@ import com.badlogic.gdx.utils.Array;
  * Allows loading of dialogues via AssetManager. Note that the dialogue instance is kept the same through loading calls.
  * @see AssetManager
  */
-public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, DialogueAssetLoader.YarnDialogParameter> {
+public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, DialogueAssetLoader.DialogParameter> {
 
     /** The dialogue instance. */
     private Dialogue dialogue;
 
-    private YarnDialogParameter defaultParam = new YarnDialogParameter();
+    private DialogParameter defaultParam = new DialogParameter();
 
     /**
      * Constructor, sets the {@link FileHandleResolver} to use to resolve the file associated with the asset name.
@@ -37,7 +37,7 @@ public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, Dialo
      * @return A Dialogue instance.
      */
     @Override
-    public Dialogue loadSync(AssetManager manager, String fileName, FileHandle file, YarnDialogParameter parameter) {
+    public Dialogue loadSync(AssetManager manager, String fileName, FileHandle file, DialogParameter parameter) {
         if(parameter == null){
             parameter = defaultParam;
         }
@@ -49,11 +49,11 @@ public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, Dialo
     }
 
     @Override
-    public void loadAsync(AssetManager manager, String fileName, FileHandle file, YarnDialogParameter parameter) {
+    public void loadAsync(AssetManager manager, String fileName, FileHandle file, DialogParameter parameter) {
     }
 
     @Override
-    public Array<AssetDescriptor> getDependencies(String fileName, FileHandle file, DialogueAssetLoader.YarnDialogParameter parameter) {
+    public Array<AssetDescriptor> getDependencies(String fileName, FileHandle file, DialogueAssetLoader.DialogParameter parameter) {
         return null;
     }
 
@@ -61,7 +61,7 @@ public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, Dialo
      * Parameters to be passed onto the loading of a Dialogue.
      * @see Dialogue
      */
-    static public class YarnDialogParameter extends AssetLoaderParameters<Dialogue> {
+    static public class DialogParameter extends AssetLoaderParameters<Dialogue> {
         /** The logger to log debug logs with. The default implementation does nothing. */
         public Dialogue.YarnLogger debugLogger = new Dialogue.YarnLogger() {
             @Override
