@@ -9,11 +9,11 @@ import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.ReturningFunc;
 import com.kyper.yarn.Loader.NodeFormat;
 import com.kyper.yarn.Program.LineInfo;
-import com.kyper.yarn.VirtualMachine.CommandHandler;
-import com.kyper.yarn.VirtualMachine.ExecutionState;
-import com.kyper.yarn.VirtualMachine.LineHandler;
-import com.kyper.yarn.VirtualMachine.NodeCompleteHandler;
-import com.kyper.yarn.VirtualMachine.OptionsHandler;
+import com.kyper.yarn.DialogueRunner.CommandHandler;
+import com.kyper.yarn.DialogueRunner.ExecutionState;
+import com.kyper.yarn.DialogueRunner.LineHandler;
+import com.kyper.yarn.DialogueRunner.NodeCompleteHandler;
+import com.kyper.yarn.DialogueRunner.OptionsHandler;
 
 public class Dialogue {
 
@@ -34,7 +34,7 @@ public class Dialogue {
 	// the library contains all the functions and operators we know about
 	protected Library library;
 
-	private VirtualMachine vm;
+	private DialogueRunner vm;
 
 	// collection of nodes that we've seen
 	public ObjectMap<String, Integer> visited_node_count = new ObjectMap<String, Integer>();
@@ -236,7 +236,7 @@ public class Dialogue {
 			return false;
 		}
 
-		vm = new VirtualMachine(this, program);
+		vm = new DialogueRunner(this, program);
 
 		vm.setLineHandler(new LineHandler() {
 			@Override
@@ -251,7 +251,7 @@ public class Dialogue {
 				// if stop
 				if (command.command.getCommand().equals("stop")) {
 					vm.stop();
-				} else if (command.getCommand().equals(VirtualMachine.EXEC_COMPLETE)) {
+				} else if (command.getCommand().equals(DialogueRunner.EXEC_COMPLETE)) {
 					execution_complete = true;
 				} else {
 					next_result = command;

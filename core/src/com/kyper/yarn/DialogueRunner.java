@@ -12,7 +12,7 @@ import com.kyper.yarn.Library.FunctionInfo;
 import com.kyper.yarn.Program.Instruction;
 import com.kyper.yarn.Program.Node;
 
-public class VirtualMachine {
+public class DialogueRunner {
 
 	public static enum ExecutionState {
 		/** Stopped */
@@ -38,7 +38,7 @@ public class VirtualMachine {
 
 	private Node current_node;
 
-	protected VirtualMachine(Dialogue d, Program p) {
+	protected DialogueRunner(Dialogue d, Program p) {
 		this.dialogue = d;
 		this.program = p;
 		execution_state = ExecutionState.Running;
