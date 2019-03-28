@@ -22,7 +22,7 @@ public class VirtualMachine {
 		/** Running */
 		Running
 	}
-	
+
 	protected static final String EXEC_COMPLETE = "execution_complete_command";
 
 	private LineHandler line_handler;
@@ -59,7 +59,7 @@ public class VirtualMachine {
 		dialogue.debug_logger.log("Running node " + name);
 
 		// clear the special variables
-		dialogue.continuity.setValue(SpecialVariables.ShuffleOptions, new Value(false));
+		dialogue.storage.setValue(SpecialVariables.ShuffleOptions, new Value(false));
 
 		current_node = program.nodes.get(name);
 		resetState();
@@ -88,25 +88,25 @@ public class VirtualMachine {
 			dialogue.error_logger.log("Cannot continue running dialogue. Still waiting on option selection.");
 			//execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
-			
+
 			return;
 		}
 
 		if (execution_state == ExecutionState.Stopped)
 			setExecutionState(ExecutionState.Running);
-		
-		
-		
-		
+
+
+
+
 		Instruction current_instruction = current_node.instructions.get(state.program_counter);
 
 		runInstruction(current_instruction);
-		
+
 		//DEBUG instruction sets ---
 		//System.out.println(current_instruction.toString(program, dialogue.library));
 
 		state.program_counter++;
-		
+
 		if (state.program_counter >= current_node.instructions.size) {
 			node_complte_handler.handle(new NodeCompleteResult(null));
 			//execution_state = ExecutionState.Stopped;
@@ -116,9 +116,9 @@ public class VirtualMachine {
 		}
 
 
-		
 
-		
+
+
 	}
 
 	/**
@@ -197,16 +197,16 @@ public class VirtualMachine {
 
 			{
 				int param_count = function.getParamCount();
-		
+
 				// if this function takes -1 params, it is variadic.
 				// expect the compiler to have palced the number of params
 				// actually passed at the top of the stack.
 				if (param_count == -1) {
 					param_count = (int) state.popValue().asNumber();
 				}
-		
+
 				Value result;
-		
+
 				if (param_count == 0) {
 					result = function.invoke();
 				} else {
@@ -215,35 +215,35 @@ public class VirtualMachine {
 					for (int i = param_count - 1; i >= 0; i--) {
 						params[i] = state.popValue();
 					}
-		
+
 					// invoke the function
 					result = function.invokeWithArray(params);
 				}
-		
+
 				// if the function returns a value push it
 				if (function.returnsValue()) {
 					state.pushValue(result);
 				}
-		
+
 			}
 			break;
 		case PushVariable:
 			// get contents of a variable and push it to the stack
 			String var_name = (String)instruction.operandA();
-			Value loaded = dialogue.continuity.getValue(var_name);
+			Value loaded = dialogue.storage.getValue(var_name);
 			state.pushValue(loaded);
 			break;
 		case StoreVariable:
 			// store the top value on the stack in a variable
 			Value topval = state.peekValue();
 			String destinationVarName = String.valueOf(instruction.operandA());
-			dialogue.continuity.setValue(destinationVarName, topval);
+			dialogue.storage.setValue(destinationVarName, topval);
 			break;
 		case Stop:
 			// stop execution immidiately and report it
 			node_complte_handler.handle(new NodeCompleteResult(null));
 			command_handler.handle(new CommandResult(EXEC_COMPLETE));
-			
+
 			//execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
 			break;
@@ -288,7 +288,7 @@ public class VirtualMachine {
 				break;
 			}
 
-			if (dialogue.continuity.getValue(SpecialVariables.ShuffleOptions).asBool()) {
+			if (dialogue.storage.getValue(SpecialVariables.ShuffleOptions).asBool()) {
 				// shuffle the dialogue options if needed
 				int n = state.current_options.size;
 				for (int opt1 = 0; opt1 < n; opt1++) {
@@ -408,7 +408,7 @@ public class VirtualMachine {
 
 		/**
 		 * pop a value from the value stack
-		 * 
+		 *
 		 * @return
 		 */
 		public Value popValue() {
@@ -417,7 +417,7 @@ public class VirtualMachine {
 
 		/**
 		 * peek at a value from the stack
-		 * 
+		 *
 		 * @return
 		 */
 		public Value peekValue() {

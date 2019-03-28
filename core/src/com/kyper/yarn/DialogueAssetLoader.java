@@ -42,7 +42,7 @@ public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, Dialo
             parameter = defaultParam;
         }
         if(dialogue == null){
-            dialogue = new Dialogue(parameter.continuity, parameter.debugLogger, parameter.errorLogger);
+            dialogue = new Dialogue(parameter.storage, parameter.debugLogger, parameter.errorLogger);
         }
         dialogue.loadString(resolve(fileName).readString(), fileName, parameter.showTokens, parameter.showParseTree, parameter.onlyConsider);
         return dialogue;
@@ -63,7 +63,7 @@ public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, Dialo
      */
     static public class DialogParameter extends AssetLoaderParameters<Dialogue> {
         /** The logger to log debug logs with. The default implementation does nothing. */
-        public Dialogue.YarnLogger debugLogger = new Dialogue.YarnLogger() {
+        public Dialogue.YarnLogger      debugLogger = new Dialogue.YarnLogger() {
             @Override
             public void log(String message) {
             }
@@ -74,7 +74,7 @@ public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, Dialo
             public void log(String message) {
             }
         };
-        public Dialogue.VariableStorage continuity;
+        public Dialogue.VariableStorage storage;
         public boolean                  showTokens    = false;
         public boolean                  showParseTree = false;
         public String                   onlyConsider  = null;

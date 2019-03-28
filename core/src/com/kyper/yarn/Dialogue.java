@@ -17,7 +17,7 @@ import com.kyper.yarn.VirtualMachine.OptionsHandler;
 
 public class Dialogue {
 
-	protected VariableStorage continuity;
+	protected VariableStorage storage;
 
 	public YarnLogger debug_logger;
 	public YarnLogger error_logger;
@@ -44,15 +44,15 @@ public class Dialogue {
 	/**
 	 * creates a yarn dialogue
 	 *
-	 * @param continuity
+	 * @param storage
 	 *            - will be used to store/get values
 	 * @param debug
 	 *            - debug logger implementation
 	 * @param error
 	 *            - error logger implementation
 	 */
-	public Dialogue(VariableStorage continuity, YarnLogger debug, YarnLogger error) {
-		this.continuity = continuity;
+	public Dialogue(VariableStorage storage, YarnLogger debug, YarnLogger error) {
+		this.storage = storage;
 		loader = new Loader(this);
 		library = new Library();
 
@@ -88,11 +88,11 @@ public class Dialogue {
 	/**
 	 * creates a dialogue with a default debug and error implementation
 	 *
-	 * @param continuity
+	 * @param storage
 	 *            - will be used to store/get values
 	 */
-	public Dialogue(VariableStorage continuity) {
-		this(continuity, new YarnLogger() {
+	public Dialogue(VariableStorage storage) {
+		this(storage, new YarnLogger() {
 
 			@Override
 			public void log(String message) {

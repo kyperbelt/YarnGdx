@@ -155,7 +155,7 @@ public class YarnLibgdx extends ApplicationAdapter {
 		test_dialogue.loadFile(ship_file, show_tokens, show_parse_tree, only_consider);
 
 		// load the sally dialogue from file -- notice that we load it to the same
-		// dialogue. This allows us to retain the same continuity and use the same
+		// dialogue. This allows us to retain the same storage and use the same
 		// libraries -
 		test_dialogue.loadFile(sally_file, show_tokens, show_parse_tree, null);
 
