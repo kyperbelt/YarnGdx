@@ -69,15 +69,15 @@ public class DialogueAssetLoader extends AsynchronousAssetLoader<Dialogue, Dialo
             }
         };
         /** The logger to log errors with. The default implementation does nothing. */
-        public Dialogue.YarnLogger errorLogger = new Dialogue.YarnLogger() {
+        public Dialogue.YarnLogger      errorLogger   = new Dialogue.YarnLogger() {
             @Override
             public void log(String message) {
             }
         };
         public Dialogue.VariableStorage continuity;
-        public boolean showTokens = false;
-        public boolean showParseTree = false;
-        public String onlyConsider = null;
+        public boolean                  showTokens    = false;
+        public boolean                  showParseTree = false;
+        public String                   onlyConsider  = null;
     }
 
 }

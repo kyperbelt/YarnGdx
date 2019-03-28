@@ -6,10 +6,9 @@ import com.kyper.yarn.Dialogue.VariableStorage;
 import com.kyper.yarn.Value.Type;
 
 /**
- * A data table that stores Values
- *
+ * A data structure that stores Values
  */
-public class DialogueData implements VariableStorage {
+public class DialogueStorage implements VariableStorage {
 
 	private static final String NAME = "$USERDATA_NAME";
 
@@ -18,7 +17,7 @@ public class DialogueData implements VariableStorage {
 
 	private String name;
 
-	public DialogueData(String name) {
+	public DialogueStorage(String name) {
 		this.name = name;
 		variables = new ObjectMap<String, Value>();
 	}
@@ -34,13 +33,13 @@ public class DialogueData implements VariableStorage {
 	public void put(String name, Object object) {
 		setValue(name, new Value(object));
 	}
-	
+
 	public boolean contains(String name) {
 		if(variables.containsKey(name))
 			return true;
 		return false;
 	}
-	
+
 	public Value remove(String name) {
 		if(contains(name)) {
 			return variables.remove(name);

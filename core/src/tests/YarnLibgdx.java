@@ -16,7 +16,7 @@ import com.kyper.yarn.Dialogue.LineResult;
 import com.kyper.yarn.Dialogue.NodeCompleteResult;
 import com.kyper.yarn.Dialogue.OptionResult;
 import com.kyper.yarn.Library.Function;
-import com.kyper.yarn.DialogueData;
+import com.kyper.yarn.DialogueStorage;
 import com.kyper.yarn.Value;
 
 public class YarnLibgdx extends ApplicationAdapter {
@@ -48,7 +48,7 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 	// Used to store values by dialogue (or your game, access is not limited) - can
 	// export/import as json
-	DialogueData data = new DialogueData("Test_data");
+	DialogueStorage dialogueStorage = new DialogueStorage("Test_data");
 
 	// this is the class that loads and hold the dialogue for now
 	Dialogue test_dialogue;
@@ -111,18 +111,18 @@ public class YarnLibgdx extends ApplicationAdapter {
 		// enter some variables for our dialogue to use -
 		// we do not need to do this but just to access them before the dialogue
 		// we do for testing purposes
-		data.put(see_ship_var, false);
-		data.put(sally_warning_var, false);
-		data.put(poop, "empty");
+		dialogueStorage.put(see_ship_var, false);
+		dialogueStorage.put(sally_warning_var, false);
+		dialogueStorage.put(poop, "empty");
 		option_string = new StringBuilder(400);
 
 		font = new BitmapFont(Gdx.files.internal("default.fnt"));
 
 		batch = new SpriteBatch();
 
-		// we first create the dialogue and pass in what data storage we would like for
+		// we first create the dialogue and pass in what dialogueStorage storage we would like for
 		// it to use
-		test_dialogue = new Dialogue(data);
+		test_dialogue = new Dialogue(dialogueStorage);
 
 		// we will register a custom function to the library that takes in
 		// one parameter - sally's action sprite
@@ -149,7 +149,7 @@ public class YarnLibgdx extends ApplicationAdapter {
 		});
 
 		// alternatively we could pass in custom loggers
-		// test_dialogue = new Dialogue(data,YarnLogger_debug,YarnLogger_error)
+		// test_dialogue = new Dialogue(dialogueStorage,YarnLogger_debug,YarnLogger_error)
 
 		// load the ship dialogue from file
 		test_dialogue.loadFile(ship_file, show_tokens, show_parse_tree, only_consider);
@@ -170,13 +170,13 @@ public class YarnLibgdx extends ApplicationAdapter {
 	}
 
 	final String poop ="$poop";
-	
+
 	@Override
 	public void render() {
-	
+
 		// --- ignore
 
-		
+
 		if (screenwidth == 0) {
 			screenwidth = Gdx.graphics.getWidth();
 			screenheight = Gdx.graphics.getHeight();
@@ -274,9 +274,9 @@ public class YarnLibgdx extends ApplicationAdapter {
 		// draw debug vars ---
 		option_string.setLength(0);
 		option_string.appendLine(vars);
-		option_string.append(see_ship_var).append('=').append(data.getBoolean(see_ship_var)).append('\n');
-		option_string.append(sally_warning_var).append('=').append(data.getBoolean(sally_warning_var)).append('\n');
-		option_string.append(poop).append('=').append(data.getString(poop));
+		option_string.append(see_ship_var).append('=').append(dialogueStorage.getBoolean(see_ship_var)).append('\n');
+		option_string.append(sally_warning_var).append('=').append(dialogueStorage.getBoolean(sally_warning_var)).append('\n');
+		option_string.append(poop).append('=').append(dialogueStorage.getString(poop));
 
 		font.draw(batch, option_string, screenwidth * .3f, screenheight);
 
@@ -333,8 +333,8 @@ public class YarnLibgdx extends ApplicationAdapter {
 	public void updateInput() {
 
 		if (Gdx.input.isKeyJustPressed(Keys.D)) {
-			// dump data
-			System.out.println(data.toJson());
+			// dump dialogueStorage
+			System.out.println(dialogueStorage.toJson());
 		}
 
 		if (complete) {

@@ -43,7 +43,7 @@ public class Dialogue {
 
 	/**
 	 * creates a yarn dialogue
-	 * 
+	 *
 	 * @param continuity
 	 *            - will be used to store/get values
 	 * @param debug
@@ -87,7 +87,7 @@ public class Dialogue {
 
 	/**
 	 * creates a dialogue with a default debug and error implementation
-	 * 
+	 *
 	 * @param continuity
 	 *            - will be used to store/get values
 	 */
@@ -109,7 +109,7 @@ public class Dialogue {
 	/**
 	 * load all nodes contained in the text to the dialogue unless otherwise
 	 * specified
-	 * 
+	 *
 	 * @param text
 	 *            - the text containing node info
 	 * @param file_name
@@ -147,7 +147,7 @@ public class Dialogue {
 	/**
 	 * load all nodes contained in the text to the dialogue unless otherwise
 	 * specified
-	 * 
+	 *
 	 * @param text
 	 *            - the text containing node info
 	 * @param name
@@ -163,7 +163,7 @@ public class Dialogue {
 	/**
 	 * load all nodes contained in the text to the dialogue unless otherwise
 	 * specified
-	 * 
+	 *
 	 * @param text
 	 *            - the text containing node info
 	 * @param name
@@ -174,7 +174,7 @@ public class Dialogue {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param file
 	 *            - path to the file to load
 	 * @param show_tokens
@@ -192,7 +192,7 @@ public class Dialogue {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param file
 	 *            - path to the file to load
 	 * @param only_consider
@@ -206,7 +206,7 @@ public class Dialogue {
 	/**
 	 * @param file
 	 *            - path to the file to load
-	 * 
+	 *
 	 */
 	public void loadFile(String file) {
 		loadFile(file, null);
@@ -293,7 +293,7 @@ public class Dialogue {
 
 	/**
 	 * update the virtual machine counter.
-	 * 
+	 *
 	 */
 	protected boolean update() {
 		if (vm != null && !execution_complete && vm.getExecutionState() != ExecutionState.WaitingOnOptionSelection) {
@@ -305,7 +305,7 @@ public class Dialogue {
 
 	/**
 	 * get the next result - if it is null it will attempt to populate it
-	 * 
+	 *
 	 * @return
 	 */
 	public RunnerResult getNext() {
@@ -320,7 +320,7 @@ public class Dialogue {
 
 	/**
 	 * get the next result - will return null if there is no result
-	 * 
+	 *
 	 * @return
 	 */
 	public RunnerResult nextRaw() {
@@ -329,7 +329,7 @@ public class Dialogue {
 
 	/**
 	 * checks the next result - if it is null it will attempt to populate it
-	 * 
+	 *
 	 * @return
 	 */
 	public RunnerResult checkNext() {
@@ -340,7 +340,7 @@ public class Dialogue {
 
 	/**
 	 * check if the next result is an options result
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isNextOptions() {
@@ -349,7 +349,7 @@ public class Dialogue {
 
 	/**
 	 * check if the next result is a line result
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isNextLine() {
@@ -358,7 +358,7 @@ public class Dialogue {
 
 	/**
 	 * check if the next result is a custom command result
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isNextCommand() {
@@ -367,7 +367,7 @@ public class Dialogue {
 
 	/**
 	 * check if the next result is a node complete result
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isNextComplete() {
@@ -377,7 +377,7 @@ public class Dialogue {
 	/**
 	 * get the next result as a line if the next result is not a line it will return
 	 * null
-	 * 
+	 *
 	 * @return
 	 */
 	public LineResult getNextAsLine() {
@@ -387,7 +387,7 @@ public class Dialogue {
 	/**
 	 * get the next result as an options result if the next result is not an options
 	 * result then this will return null
-	 * 
+	 *
 	 * @return
 	 */
 	public OptionResult getNextAsOptions() {
@@ -397,7 +397,7 @@ public class Dialogue {
 	/**
 	 * get the next result as a command result (must be parsed by the programmer) if
 	 * the next result is not a commandreslt then this will return null
-	 * 
+	 *
 	 * @return
 	 */
 	public CommandResult getNextAsCommand() {
@@ -407,7 +407,7 @@ public class Dialogue {
 	/**
 	 * get the next result as a node complete result if the next result is not a
 	 * node compelte result then this will return null
-	 * 
+	 *
 	 * @return
 	 */
 	public NodeCompleteResult getNextAsComplete() {
@@ -525,7 +525,7 @@ public class Dialogue {
 
 	/**
 	 * get the source code for the node
-	 * 
+	 *
 	 * @param node
 	 * @return
 	 */
@@ -555,7 +555,7 @@ public class Dialogue {
 
 	/**
 	 * unload all nodes
-	 * 
+	 *
 	 * @param clear_visisted_nodes
 	 */
 	public void unloadAll(boolean clear_visisted_nodes) {
@@ -767,8 +767,8 @@ public class Dialogue {
 	}
 
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * information that the client should handle
 	 */
 	public static class Line {
@@ -820,7 +820,7 @@ public class Dialogue {
 	}
 
 	/**
-	 * variable storage TODO: try to use {@link com.kyper.yarn.DialogueData UserData}
+	 * variable storage TODO: try to use {@link DialogueStorage UserData}
 	 */
 	public static interface VariableStorage {
 		public void setValue(String name, Value value);
