@@ -651,7 +651,7 @@ public class Lexer {
       if (value != null) {
         return String.format("%1$s (%2$s) at %3$s:%4$s (state: %5$s)",
                              type.name(),
-                             value.toString(),
+                             value,
                              lineNumber,
                              columnNumber,
                              lexerState);

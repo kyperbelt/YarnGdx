@@ -10,7 +10,7 @@ import com.kyper.yarn.Lexer.TokenList;
 import com.kyper.yarn.Lexer.TokeniserException;
 import com.kyper.yarn.Loader.NodeInfo.Position;
 import com.kyper.yarn.Parser.Node;
-import com.kyper.yarn.Program.ParseException;
+import com.kyper.yarn.YarnProgram.ParseException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,8 +18,9 @@ import java.io.StringReader;
 import java.util.regex.Matcher;
 
 public class Loader {
-  private Dialogue dialogue;
-  private Program  program;
+  private Dialogue    dialogue;
+  private YarnProgram yarnProgram;
+
   public Loader(Dialogue d){
     if (d == null) throw new IllegalArgumentException("dialogue d is null");
     this.dialogue = d;
@@ -40,8 +41,8 @@ public class Loader {
     return format;
   }
 
-  public Program getProgram(){
-    return program;
+  public YarnProgram getYarnProgram(){
+    return yarnProgram;
   }
 
   /**
@@ -92,8 +93,8 @@ public class Loader {
    *
    * @return the number of nodes that were loaded
    */
-  public Program load(String text, Library library, String fileName, Program include, boolean showTokens,
-											boolean showParseTree, String onlyconsiderNode, NodeFormat format){
+  public YarnProgram load(String text, Library library, String fileName, YarnProgram include, boolean showTokens,
+                          boolean showParseTree, String onlyconsiderNode, NodeFormat format){
 
     if (format == NodeFormat.Unkown) {
       format = getFormatFromFileName(fileName);
@@ -117,8 +118,7 @@ public class Loader {
       try {
 
         if (nodes.containsKey(info.title)) {
-          throw new IllegalStateException("Attempted to load node called " + info.title + ", but a node with that " +
-																									"name already exists!");
+          throw new IllegalStateException("Attempted to load node called " + info.title + ", but a node with that " + "name already exists!");
         }
 
         Lexer lexer = new Lexer();
@@ -170,9 +170,9 @@ public class Loader {
       compiler.compileNode(n.value);
     }
 
-    if (include != null) compiler.program.include(include);
+    if (include != null) compiler.yarnProgram.include(include);
 
-    return compiler.program;
+    return compiler.yarnProgram;
   }
 
   /**
@@ -455,8 +455,6 @@ public class Loader {
       public void setX(int x){
         this.x = x;
       }
-
-      ;
 
       public int getY(){
         return y;

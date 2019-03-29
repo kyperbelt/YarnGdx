@@ -4,16 +4,16 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap.Entry;
 import com.badlogic.gdx.utils.ObjectSet;
 import com.kyper.yarn.Analyser.Diagnosis.Severity;
-import com.kyper.yarn.Program.Instruction;
+import com.kyper.yarn.YarnProgram.Instruction;
 
 public class Analyser {
 
   public static class Diagnosis {
 
-    public String message;
-    public String nodeName;
-    public int    lineNumber;
-    public int    colNumber;
+    public String   message;
+    public String   nodeName;
+    public int      lineNumber;
+    public int      colNumber;
     public Severity severity;
 
     public Diagnosis(String message, Severity severity, String nodeName, int lineNumber, int colNumber){
@@ -100,9 +100,9 @@ public class Analyser {
     }
 
 
-    protected void addProgramToAnalysis(Program program){
+    protected void addProgramToAnalysis(YarnProgram yarnProgram){
       for (CompiledProgramAnalyser a : analysers) {
-        a.diagnose(program);
+        a.diagnose(yarnProgram);
       }
     }
 
@@ -122,7 +122,7 @@ public class Analyser {
   }
 
   protected static abstract class CompiledProgramAnalyser {
-    public abstract void diagnose(Program program);
+    public abstract void diagnose(YarnProgram yarnProgram);
 
     public abstract Array<Diagnosis> gatherDiagnoses();
   }
@@ -132,13 +132,13 @@ public class Analyser {
     protected ObjectSet<String> variables = new ObjectSet<String>();
 
     @Override
-    public void diagnose(Program program){
+    public void diagnose(YarnProgram yarnProgram){
       //each node, find all reads and writes to variables
-      for (Entry<String, Program.Node> nodeinfo : program.nodes) {
+      for (Entry<String, YarnProgram.Node> nodeinfo : yarnProgram.nodes) {
 
-        Program.Node theNode = nodeinfo.value;
+        YarnProgram.Node theNode = nodeinfo.value;
 
-        for (Program.Instruction instruction : theNode.instructions) {
+        for (YarnProgram.Instruction instruction : theNode.instructions) {
           switch (instruction.getOperation()) {
             case PushVariable:
             case StoreVariable:
@@ -168,12 +168,12 @@ public class Analyser {
     private ObjectSet<String> writtenVars = new ObjectSet<String>();
 
     @Override
-    public void diagnose(Program program){
+    public void diagnose(YarnProgram yarnProgram){
       //in each node, find all reads and writes to variables
-      for (Entry<String, Program.Node> nodeinfo : program.nodes) {
+      for (Entry<String, YarnProgram.Node> nodeinfo : yarnProgram.nodes) {
 
 
-        Program.Node       node         = nodeinfo.value;
+        YarnProgram.Node   node         = nodeinfo.value;
         Array<Instruction> instructions = node.instructions;
         for (int i = 0; i < instructions.size; i++) {
           Instruction instruction = instructions.get(i);

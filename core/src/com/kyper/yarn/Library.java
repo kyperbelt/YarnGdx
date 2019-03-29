@@ -52,12 +52,12 @@ public class Library {
     if (functions.containsKey(name)) functions.remove(name);
   }
 
-  public static interface ReturningFunc {
-    public Object invoke(Value... params);
+  public interface ReturningFunc {
+    Object invoke(Value... params);
   }
 
-  public static interface Function {
-    public void invoke(Value... params);
+  public interface Function {
+    void invoke(Value... params);
   }
 
   protected static class FunctionInfo {

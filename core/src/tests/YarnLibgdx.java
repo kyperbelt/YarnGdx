@@ -22,62 +22,62 @@ import com.kyper.yarn.Value;
 public class YarnLibgdx extends ApplicationAdapter {
 
   // some strings we can re-use -- because making STRINGS IS BAD!
-  final String ps              = "PRESS SPACE TO CONTINUE";
-  final String finished        = "You finished!";
-  final String vars            = "Variables:";
-  final String seeShipVar      = "$shouldSeeShip";
-  final String sallyWarningVar = "$sallyWarning";
-  final String talkToShip      = "Talk to Ship";
-  final String talkToSally     = "Talk to Sally";
-  final String TAB             = "    ";
-  final String poop = "$poop";
+  final String ps                 = "PRESS SPACE TO CONTINUE";
+  final String finished           = "You finished!";
+  final String vars               = "Variables:";
+  final String seeShipVar         = "$shouldSeeShip";
+  final String sallyWarningVar    = "$sallyWarning";
+  final String talkToShip         = "Talk to Ship";
+  final String talkToSally        = "Talk to Sally";
+  final String TAB                = "    ";
+  final String poop               = "$poop";
   final String setspriteCommand   = "setsprite";
   final String shipfaceIdentifier = "ShipFace";
   // what keys to check for input when options are presented - supports up to 5
   // options
   // NOTE: dialogue can support an arbitrary number of options i am just choosing
   // to only support 5 for this example - not that we will even use that many.
-  int[] OP_KEYS = {Keys.NUM_1, Keys.NUM_2, Keys.NUM_3, Keys.NUM_4, Keys.NUM_5};
+  int[]              OP_KEYS         = {Keys.NUM_1, Keys.NUM_2, Keys.NUM_3, Keys.NUM_4, Keys.NUM_5};
   // used to place font
-  int screenwidth;
-  int screenheight;
+  int                screenwidth;
+  int                screenheight;
   // file of ship containing all the ship dialogue
-  String shipFile = "ship.json";
+  String             shipFile        = "ship.json";
   // file of sally containing all the sally dialogue
-  String sallyFile = "sally.json";
+  String             sallyFile       = "sally.json";
   // print all the tokens that are spat out by the parser
-  boolean showTokens = false;
+  boolean            showTokens      = false;
   // print out tree created by the parser from list of tokens
-  boolean showParseTree = false;
+  boolean            showParseTree   = false;
   // will only load this node - loads entire file if this is null
-  String onlyConsider = null;
+  String             onlyConsider    = null;
   // Used to store values by dialogue (or your game, access is not limited) - can
   // export/import as json
-  DialogueStorage dialogueStorage = new DialogueStorage("TestData");
+  DialogueStorage    dialogueStorage = new DialogueStorage("TestData");
   // this is the class that loads and hold the dialogue for now
-  Dialogue testDialogue;
+  Dialogue           testDialogue;
   // our results
-  LineResult         currentLine    = null;
-  OptionResult       currentOptions = null;
-  CommandResult      currentCommand = null;
-  NodeCompleteResult nodeComplete   = null;
+  LineResult         currentLine     = null;
+  OptionResult       currentOptions  = null;
+  CommandResult      currentCommand  = null;
+  NodeCompleteResult nodeComplete    = null;
   // test font & spritebatch
-  BitmapFont  font;
-  SpriteBatch batch;
+  BitmapFont         font;
+  SpriteBatch        batch;
 
   // TEXTURES
   // String builder to avoid string creation-because you know strings in gdx is
   // bad n stuff
-  StringBuilder optionString;
+  StringBuilder              optionString;
   // use this to check if the dialogue is complete -- aka there are no more nodes
   // to run
-  boolean complete        = true;
+  boolean                    complete        = true;
   // should dump bytecode when complete
-  boolean byteCodePrinted = false;
+  boolean                    byteCodePrinted = false;
   ObjectMap<String, Texture> shipTextures;
   ObjectMap<String, Texture> sallyTextures;
-  Texture shipFace;
-  Texture sally;
+  Texture                    shipFace;
+  Texture                    sally;
 
   @Override
   public void create(){

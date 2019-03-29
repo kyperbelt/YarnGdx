@@ -5,16 +5,16 @@ import com.kyper.yarn.Dialogue.YarnRuntimeException;
 /** values to be used by yarn */
 public class Value implements Comparable<Value> {
 
-  public static final Value NULL = new Value();
-  private static final String NULL_STRING  = "null";
-  private static final String FALSE_STRING = "false";
-  private static final String TRUE_STRING  = "true";
-  private static final String NAN          = "NaN";
-  private Type    type;
-  private float   numberValue;
-  private String  variableName;
-  private String  stringValue;
-  private boolean boolValue;
+  public static final  Value   NULL         = new Value();
+  private static final String  NULL_STRING  = "null";
+  private static final String  FALSE_STRING = "false";
+  private static final String  TRUE_STRING  = "true";
+  private static final String  NAN          = "NaN";
+  private              Type    type;
+  private              float   numberValue;
+  private              String  variableName;
+  private              String  stringValue;
+  private              boolean boolValue;
 
   public Value(){
     this(null);
@@ -67,8 +67,8 @@ public class Value implements Comparable<Value> {
       return;
     }
 
-    String error = String.format("Attempted to create a Value using a %s; currently, " + "Values can only be numbers," +
-																				 " strings, bools or null.",
+    String error = String.format("Attempted to create a Value using a %s; currently, " + "Values can only be numbers,"
+                                         + " strings, bools or null.",
                                  value.getClass().getSimpleName());
     throw new YarnRuntimeException(error);
   }

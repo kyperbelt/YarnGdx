@@ -7,7 +7,7 @@ import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.FunctionInfo;
 import com.kyper.yarn.Parser.Operator.OperatorInfo;
-import com.kyper.yarn.Program.ParseException;
+import com.kyper.yarn.YarnProgram.ParseException;
 
 public class Parser {
 
@@ -259,7 +259,7 @@ public class Parser {
   //Statements = <TEXT>
   protected static class Statement extends ParseNode {
 
-    private Type type;
+    private Type                type;
     //possible types of statements we can have
     private Block               block;
     private IfStatement         ifStatement;
@@ -268,6 +268,7 @@ public class Parser {
     private CustomCommand       customCommand;
     private String              line;
     private ShortcutOptionGroup shortcutOptionGroup;
+
     protected Statement(ParseNode parent, Parser p){
       super(parent, p);
 
@@ -294,8 +295,8 @@ public class Parser {
         type = Type.Line;
       } else {
         throw ParseException.make(p.tokens.first(),
-                                  "Expected a statement here but got " + p.tokens.first().toString() + " instead (was" +
-                                          " there an unbalanced if statement earlier?)");
+                                  "Expected a statement here but got " + p.tokens.first().toString() + " instead " +
+                                          "(was" + " there an unbalanced if statement earlier?)");
       }
       //parse the optional tags that follow this statement
       Array<String> tags = new Array<String>();
@@ -396,9 +397,10 @@ public class Parser {
   // CustomCommand = BeginCommand <ANY>* EndCommand
   protected static class CustomCommand extends ParseNode {
 
-    protected Type type;
-    private Expression expression;
-    private String     clientCommand;
+    protected Type       type;
+    private   Expression expression;
+    private   String     clientCommand;
+
     protected CustomCommand(ParseNode parent, Parser p){
       super(parent, p);
       p.expectSymbol(TokenType.BeginCommand);
@@ -924,10 +926,11 @@ public class Parser {
   // Expression = Value
   protected static class Expression extends ParseNode {
 
-    protected Type type;
-    protected ValueNode value;
+    protected Type              type;
+    protected ValueNode         value;
     protected FunctionInfo      function;
     protected Array<Expression> params;
+
     protected Expression(ParseNode parent, ValueNode value, Parser p){
       super(parent, p);
       this.type = Type.Value;
@@ -1152,8 +1155,8 @@ public class Parser {
 
             //ensure that this call has the right number of params;
             if (!info.isParamCountCorrect(next.parameterCount)) {
-              String error = StringUtils.format("Error parsing expression: " + "Unsupported number of parameters for " +
-                                                        "function %1$s (expected %2$s, got %3$s)",
+              String error = StringUtils.format("Error parsing expression: " + "Unsupported number of parameters for "
+                                                        + "function %1$s (expected %2$s, got %3$s)",
                                                 next.value,
                                                 info.getParamCount(),
                                                 next.parameterCount);
@@ -1218,11 +1221,7 @@ public class Parser {
         return true;
       }
 
-      if (o1Info.associativity == Operator.Associativity.Right && o1Info.precedence < o2Info.precedence) {
-        return true;
-      }
-
-      return false;
+      return o1Info.associativity == Operator.Associativity.Right && o1Info.precedence < o2Info.precedence;
 
     }
 
@@ -1373,7 +1372,8 @@ public class Parser {
 
               TokenType.Add, TokenType.Minus, TokenType.Divide, TokenType.Multiply, TokenType.Modulo,
 
-              TokenType.EqualToOrAssign, TokenType.EqualTo, TokenType.GreaterThan, TokenType.GreaterThanOrEqualTo, TokenType.LessThan, TokenType.LessThanOrEqualTo, TokenType.NotEqualTo,
+              TokenType.EqualToOrAssign, TokenType.EqualTo, TokenType.GreaterThan, TokenType.GreaterThanOrEqualTo,
+              TokenType.LessThan, TokenType.LessThanOrEqualTo, TokenType.NotEqualTo,
 
               TokenType.And, TokenType.Or,
 

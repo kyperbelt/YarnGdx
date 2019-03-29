@@ -9,25 +9,25 @@ import com.kyper.yarn.DialogueRunner.*;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.ReturningFunc;
 import com.kyper.yarn.Loader.NodeFormat;
-import com.kyper.yarn.Program.LineInfo;
+import com.kyper.yarn.YarnProgram.LineInfo;
 
 public class Dialogue {
 
   // node we start from
-  public static final String DEFAULT_START = "Start";
-  public YarnLogger debugLogger;
-  public YarnLogger errorLogger;
+  public static final String                     DEFAULT_START    = "Start";
+  public              YarnLogger                 debugLogger;
+  public              YarnLogger                 errorLogger;
   // collection of nodes that we've seen
-  public ObjectMap<String, Integer> visitedNodeCount = new ObjectMap<String, Integer>();
-  protected VariableStorage storage;
+  public              ObjectMap<String, Integer> visitedNodeCount = new ObjectMap<String, Integer>();
+  protected           VariableStorage            storage;
   // loader contains all the nodes we're going to run
-  protected Loader loader;
-  // the program is the compiled yarn program
-  protected Program program;
+  protected           Loader                     loader;
+  // the yarnProgram is the compiled yarn yarnProgram
+  protected           YarnProgram                yarnProgram;
   // the library contains all the functions and operators we know about
-  protected Library library;
-  protected boolean executionCompleted;
-  protected ReturningFunc yarnFunctionIsNodeVisited = new ReturningFunc() {
+  protected           Library                    library;
+  protected           boolean                    executionCompleted;
+  protected ReturningFunc  yarnFunctionIsNodeVisited  = new ReturningFunc() {
     @Override
     public Object invoke(Value... params){
       boolean visited = (Integer) yarnFunctionNodeVisitCount.invoke(params) > 0;
@@ -35,12 +35,12 @@ public class Dialogue {
     }
   };
   ObjectMap<String, String> textForNodes;
-  private DialogueRunner runner;
+  private   DialogueRunner runner;
   /**
    * A function exposed to yarn that returns the number of times a node has been run. if no parameters are supplied,
    * returns the number of times the current node has been run.
    */
-  protected ReturningFunc yarnFunctionNodeVisitCount = new ReturningFunc() {
+  protected ReturningFunc  yarnFunctionNodeVisitCount = new ReturningFunc() {
     @Override
     public Object invoke(Value... params){
 
@@ -70,7 +70,7 @@ public class Dialogue {
       return visitCount;
     }
   };
-  private RunnerResult runnerResult;
+  private   RunnerResult   runnerResult;
 
   /**
    * creates a yarn dialogue
@@ -138,6 +138,7 @@ public class Dialogue {
     return runner.getExecutionState();
   }
 
+
   /**
    * load all nodes contained in the text to the dialogue unless otherwise specified
    *
@@ -165,7 +166,7 @@ public class Dialogue {
       format = NodeFormat.SingleNodeText;
     }
 
-    program = loader.load(text, library, fileName, program, showTokens, showTree, onlyConsider, format);
+    yarnProgram = loader.load(text, library, fileName, yarnProgram, showTokens, showTree, onlyConsider, format);
   }
 
   /**
@@ -202,12 +203,12 @@ public class Dialogue {
       throw new YarnRuntimeException("errorLogger must be set before running");
     }
 
-    if (program == null) {
-      errorLogger.log("Dialogue.run was called but no program was loaded.");
+    if (yarnProgram == null) {
+      errorLogger.log("Dialogue.run was called but no yarnProgram was loaded.");
       return false;
     }
 
-    runner = new DialogueRunner(this, program);
+    runner = new DialogueRunner(this, yarnProgram);
 
     runner.setLineHandler(new LineHandler() {
       @Override
@@ -251,11 +252,7 @@ public class Dialogue {
       }
     });
 
-    if (!runner.setNode(start)) {
-      return false;
-    }
-
-    return true;
+    return runner.setNode(start);
   }
 
   public boolean start(){
@@ -462,7 +459,7 @@ public class Dialogue {
   }
 
   public Array<String> allNodes(){
-    return program.nodes.keys().toArray();
+    return yarnProgram.nodes.keys().toArray();
   }
 
   public String currentNode(){
@@ -472,8 +469,8 @@ public class Dialogue {
   public ObjectMap<String, String> getTextForAllNodes(){
     if (textForNodes == null) textForNodes = new ObjectMap<String, String>();
     textForNodes.clear();
-    for (Entry<String, Program.Node> entry : program.nodes) {
-      String text = program.getTextForNode(entry.key);
+    for (Entry<String, YarnProgram.Node> entry : yarnProgram.nodes) {
+      String text = yarnProgram.getTextForNode(entry.key);
 
       if (text == null) continue;
 
@@ -491,11 +488,11 @@ public class Dialogue {
    * @return
    */
   public String getTextForNode(String node){
-    if (program.nodes.size == 0) {
+    if (yarnProgram.nodes.size == 0) {
       errorLogger.log("no nodes are loaded!");
       return null;
-    } else if (program.nodes.containsKey(node)) {
-      return program.getTextForNode(node);
+    } else if (yarnProgram.nodes.containsKey(node)) {
+      return yarnProgram.getTextForNode(node);
     } else {
       errorLogger.log("no node named " + node);
       return null;
@@ -503,15 +500,15 @@ public class Dialogue {
   }
 
   public void addStringTable(ObjectMap<String, String> stringTable){
-    program.loadStrings(stringTable);
+    yarnProgram.loadStrings(stringTable);
   }
 
   public ObjectMap<String, String> getStringTable(){
-    return program.strings;
+    return yarnProgram.strings;
   }
 
   protected ObjectMap<String, LineInfo> getStringInfoTable(){
-    return program.lineInfo;
+    return yarnProgram.lineInfo;
   }
 
   /**
@@ -521,24 +518,24 @@ public class Dialogue {
    */
   public void unloadAll(boolean clearVisistedNodes){
     if (clearVisistedNodes) visitedNodeCount.clear();
-    program = null;
+    yarnProgram = null;
   }
 
   public String getByteCode(){
-    return program.dumpCode(library);
+    return yarnProgram.dumpCode(library);
   }
 
   public boolean nodeExists(String nodeName){
-    if (program == null) {
+    if (yarnProgram == null) {
       errorLogger.log("no nodes compiled");
       return false;
     }
-    if (program.nodes.size == 0) {
-      errorLogger.log("no nodes in program");
+    if (yarnProgram.nodes.size == 0) {
+      errorLogger.log("no nodes in yarnProgram");
       return false;
     }
 
-    return program.nodes.containsKey(nodeName);
+    return yarnProgram.nodes.containsKey(nodeName);
 
   }
 
@@ -548,7 +545,7 @@ public class Dialogue {
   }
 
   public void analyse(Context context){
-    context.addProgramToAnalysis(program);
+    context.addProgramToAnalysis(yarnProgram);
   }
 
   public Array<String> getvisitedNodes(){
@@ -574,26 +571,26 @@ public class Dialogue {
   /**
    * option chooser lets client tell dialogue the response selected by the user
    */
-  public static interface OptionChooser {
-    public void choose(int selectedOptionIndex);
+  public interface OptionChooser {
+    void choose(int selectedOptionIndex);
   }
 
   /**
    * logger to let the client send output to the console logging/error logging
    */
-  public static interface YarnLogger {
-    public void log(String message);
+  public interface YarnLogger {
+    void log(String message);
   }
 
   /**
    * variable storage TODO: try to use {@link DialogueStorage UserData}
    */
-  public static interface VariableStorage {
-    public void setValue(String name, Value value);
+  public interface VariableStorage {
+    void setValue(String name, Value value);
 
-    public Value getValue(String name);
+    Value getValue(String name);
 
-    public void clear();
+    void clear();
   }
 
   /**

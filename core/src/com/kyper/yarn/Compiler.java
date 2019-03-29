@@ -4,31 +4,31 @@ import com.badlogic.gdx.utils.Array;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Parser.*;
 import com.kyper.yarn.Parser.IfStatement.Clause;
-import com.kyper.yarn.Program.ByteCode;
-import com.kyper.yarn.Program.Instruction;
+import com.kyper.yarn.YarnProgram.ByteCode;
+import com.kyper.yarn.YarnProgram.Instruction;
 
 public class Compiler {
 
-  public    String  programName;
-  protected Program program;
+  public    String      programName;
+  protected YarnProgram yarnProgram;
   CompileFlags flags = new CompileFlags();
   private int labelCount = 0;
 
   protected Compiler(String programName){
-    program = new Program();
+    yarnProgram = new YarnProgram();
     this.programName = programName;
   }
 
-  public Program getProgram(){
-    return program;
+  public YarnProgram getYarnProgram(){
+    return yarnProgram;
   }
 
   protected void compileNode(Parser.Node node){
-    if (program.nodes.containsKey(node.getName())) {
+    if (yarnProgram.nodes.containsKey(node.getName())) {
       throw new IllegalArgumentException("Diplicate node name " + node.getName());
     }
 
-    Program.Node compiledNode = new Program.Node();
+    YarnProgram.Node compiledNode = new YarnProgram.Node();
 
     compiledNode.name = node.getName();
     compiledNode.tags = node.getNodeTags();
@@ -38,11 +38,11 @@ public class Compiler {
       //dump the entire contents of this node into the string table
       //instead of compiling its contents
       //the line number is 0 because the string starts at the begining of the node
-      compiledNode.sourceStringId = program.registerString(node.getSource(),
-                                                           node.getName(),
-                                                           "line:" + node.getName(),
-                                                           0,
-                                                           true);
+      compiledNode.sourceStringId = yarnProgram.registerString(node.getSource(),
+                                                               node.getName(),
+                                                               "line:" + node.getName(),
+                                                               0,
+                                                               true);
     } else {
 
       //compile the node
@@ -92,10 +92,10 @@ public class Compiler {
 
     }
 
-    program.nodes.put(compiledNode.name, compiledNode);
+    yarnProgram.nodes.put(compiledNode.name, compiledNode);
   }
 
-  protected void emit(Program.Node node, ByteCode code, Object operandA, Object operandB){
+  protected void emit(YarnProgram.Node node, ByteCode code, Object operandA, Object operandB){
     Instruction instruction = new Instruction();
     instruction.setOperation(code);
     instruction.setOperandA(operandA);
@@ -109,11 +109,11 @@ public class Compiler {
     }
   }
 
-  protected void emit(Program.Node node, ByteCode code, Object operandA){
+  protected void emit(YarnProgram.Node node, ByteCode code, Object operandA){
     emit(node, code, operandA, null);
   }
 
-  protected void emit(Program.Node node, ByteCode code){
+  protected void emit(YarnProgram.Node node, ByteCode code){
     emit(node, code, null);
   }
 
@@ -125,7 +125,7 @@ public class Compiler {
   }
 
   //statements
-  protected void generateCode(Program.Node node, Statement statement){
+  protected void generateCode(YarnProgram.Node node, Statement statement){
     switch (statement.getType()) {
       case CustomCommand:
         generateCode(node, statement.getCustomCommand());
@@ -156,7 +156,7 @@ public class Compiler {
     }
   }
 
-  protected void generateCode(Program.Node node, CustomCommand statement){
+  protected void generateCode(YarnProgram.Node node, CustomCommand statement){
 
     //if this command is an evaluable expression, evaluate it
     if (statement.getExpression() != null) {
@@ -185,15 +185,15 @@ public class Compiler {
 
   }
 
-  protected void generateCode(Program.Node node, Statement parseNode, String line){
+  protected void generateCode(YarnProgram.Node node, Statement parseNode, String line){
     //does this line have #line:LINENUM tag? use it
     String lineId = getLineIDFromNodeTags(parseNode);
-    String num    = program.registerString(line, node.name, lineId, parseNode.lineNumber, true);
+    String num    = yarnProgram.registerString(line, node.name, lineId, parseNode.lineNumber, true);
 
     emit(node, ByteCode.RunLine, num);
   }
 
-  protected void generateCode(Program.Node node, ShortcutOptionGroup statement){
+  protected void generateCode(YarnProgram.Node node, ShortcutOptionGroup statement){
     String endofGroup = registerLabel("groupEnd");
 
     Array<String> labels = new Array<String>();
@@ -214,7 +214,11 @@ public class Compiler {
       }
 
       String labelLineId = getLineIDFromNodeTags(option);
-      String labelStringId = program.registerString(option.getLabel(), node.name, labelLineId, option.lineNumber, true);
+      String labelStringId = yarnProgram.registerString(option.getLabel(),
+                                                        node.name,
+                                                        labelLineId,
+                                                        option.lineNumber,
+                                                        true);
 
       emit(node, ByteCode.AddOption, labelStringId, optionDestination);
 
@@ -256,14 +260,14 @@ public class Compiler {
 
   }
 
-  protected void generateCode(Program.Node node, Array<Statement> statements){
+  protected void generateCode(YarnProgram.Node node, Array<Statement> statements){
     if (statements == null) return;
     for (Statement statement : statements) {
       generateCode(node, statement);
     }
   }
 
-  protected void generateCode(Program.Node node, IfStatement statement){
+  protected void generateCode(YarnProgram.Node node, IfStatement statement){
     //we will jump to this label at the end of every clause
     String endofIf = registerLabel("endif");
 
@@ -293,22 +297,22 @@ public class Compiler {
 
   }
 
-  protected void generateCode(Program.Node node, OptionStatement statement){
+  protected void generateCode(YarnProgram.Node node, OptionStatement statement){
     String destination = statement.getDestination();
 
     if (statement.getLabel() == null || statement.getLabel().isEmpty()) {
       //this is a jump to another node
       emit(node, ByteCode.RunNode, destination);
     } else {
-      String lineId = getLineIDFromNodeTags(statement.parent);
-      String stringId = program.registerString(statement.getLabel(), node.name, lineId, statement.lineNumber, true);
+      String lineId   = getLineIDFromNodeTags(statement.parent);
+      String stringId = yarnProgram.registerString(statement.getLabel(), node.name, lineId, statement.lineNumber, true);
 
       emit(node, ByteCode.AddOption, stringId, destination);
     }
 
   }
 
-  protected void generateCode(Program.Node node, AssignmentStatement statement){
+  protected void generateCode(YarnProgram.Node node, AssignmentStatement statement){
     //is it a straight assignment
     if (statement.getOperation() == TokenType.EqualToOrAssign) {
       //evaluate the expression which will result in a value
@@ -356,7 +360,7 @@ public class Compiler {
 
   }
 
-  protected void generateCode(Program.Node node, Expression expression){
+  protected void generateCode(YarnProgram.Node node, Expression expression){
 
     //expressions are either plain values or function calls
     switch (expression.type) {
@@ -386,14 +390,18 @@ public class Compiler {
 
   }
 
-  protected void generateCode(Program.Node node, ValueNode value){
+  protected void generateCode(YarnProgram.Node node, ValueNode value){
     //push value to on to the stack
     switch (value.getValue().getType()) {
       case NUMBER:
         emit(node, ByteCode.PushNumber, value.getValue().getNumberValue());
         break;
       case STRING:
-        String id = program.registerString(value.getValue().getStringValue(), node.name, null, value.lineNumber, false);
+        String id = yarnProgram.registerString(value.getValue().getStringValue(),
+                                               node.name,
+                                               null,
+                                               value.lineNumber,
+                                               false);
         emit(node, ByteCode.PushString, id);
         break;
       case BOOL:

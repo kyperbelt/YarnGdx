@@ -5,33 +5,33 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap.Entry;
 import com.kyper.yarn.Dialogue.*;
 import com.kyper.yarn.Library.FunctionInfo;
-import com.kyper.yarn.Program.Instruction;
-import com.kyper.yarn.Program.Node;
+import com.kyper.yarn.YarnProgram.Instruction;
+import com.kyper.yarn.YarnProgram.Node;
 
 public class DialogueRunner {
 
-  protected static final String EXEC_COMPLETE = "executionCompleteCommand";
-  private LineHandler         lineHandler;
-  private OptionsHandler      optionsHandler;
-  private CommandHandler      commandHandler;
-  private NodeCompleteHandler nodeCompleteHandler;
-  private Dialogue dialogue;
-  private Program  program;
-  private State    state = new State();
-  private ExecutionState executionState;
-  private Node currentNode;
+  protected static final String              EXEC_COMPLETE = "executionCompleteCommand";
+  private                LineHandler         lineHandler;
+  private                OptionsHandler      optionsHandler;
+  private                CommandHandler      commandHandler;
+  private                NodeCompleteHandler nodeCompleteHandler;
+  private                Dialogue            dialogue;
+  private                YarnProgram         yarnProgram;
+  private                State               state         = new State();
+  private                ExecutionState      executionState;
+  private                Node                currentNode;
 
-  protected DialogueRunner(Dialogue d, Program p){
+  protected DialogueRunner(Dialogue d, YarnProgram p){
     this.dialogue = d;
-    this.program = p;
+    this.yarnProgram = p;
     executionState = ExecutionState.Running;
   }
 
   /**
-   * set the current node the program is on log an error and stop execution if the node does not exist
+   * set the current node the yarnProgram is on log an error and stop execution if the node does not exist
    */
   public boolean setNode(String name){
-    if (!program.nodes.containsKey(name)) {
+    if (!yarnProgram.nodes.containsKey(name)) {
       String error = "no node named " + name;
       dialogue.errorLogger.log(error);
       setExecutionState(ExecutionState.Stopped);
@@ -43,7 +43,7 @@ public class DialogueRunner {
     // clear the special variables
     dialogue.storage.setValue(SpecialVariables.ShuffleOptions, new Value(false));
 
-    currentNode = program.nodes.get(name);
+    currentNode = yarnProgram.nodes.get(name);
     resetState();
     state.currentNodeName = name;
     return true;
@@ -82,7 +82,7 @@ public class DialogueRunner {
     runInstruction(currentInstruction);
 
     //DEBUG instruction sets ---
-    //System.out.println(currentInstruction.toString(program, dialogue.library));
+    //System.out.println(currentInstruction.toString(yarnProgram, dialogue.library));
 
     state.programCounter++;
 
@@ -118,7 +118,7 @@ public class DialogueRunner {
       case RunLine:
         // looks up a string from the string table
         // and passes it to the client as a line
-        String lineText = program.getString((String) instruction.operandA());
+        String lineText = yarnProgram.getString((String) instruction.operandA());
         if (lineText == null) {
           dialogue.errorLogger.log("no loaded string table includes line " + instruction.operandA());
           break;
@@ -132,7 +132,7 @@ public class DialogueRunner {
       case PushString:
         // pushes a string value onto the stack. the operand is an index into
         // the string table, so thats looked up first
-        state.pushValue(program.getString((String) instruction.operandA()));
+        state.pushValue(yarnProgram.getString((String) instruction.operandA()));
         break;
       case PushNumber:
         // pushes a number onto the stack
@@ -276,7 +276,7 @@ public class DialogueRunner {
         // present options to user to choose
         Array<String> optionStrings = new Array<String>();
         for (Entry<String, String> op : state.currentOptions) {
-          optionStrings.add(program.getString(op.key));
+          optionStrings.add(yarnProgram.getString(op.key));
         }
 
         // cant continue until client chooses option
@@ -304,7 +304,7 @@ public class DialogueRunner {
         break;
 
       default:
-        // no acepted bytecode, stop the program
+        // no acepted bytecode, stop the yarnProgram
         // and throw exeption
         //executionState = ExecutionState.Stopped;
         setExecutionState(ExecutionState.Stopped);
@@ -358,7 +358,7 @@ public class DialogueRunner {
     state = new State();
   }
 
-  public static enum ExecutionState {
+  public enum ExecutionState {
     /** Stopped */
     Stopped,
     /** Waiting on option selection */
@@ -367,22 +367,22 @@ public class DialogueRunner {
     Running
   }
 
-  public static interface LineHandler {
-    public void handle(LineResult line);
+  public interface LineHandler {
+    void handle(LineResult line);
   }
 
   // HANDLERS
 
-  public static interface OptionsHandler {
-    public void handle(OptionResult options);
+  public interface OptionsHandler {
+    void handle(OptionResult options);
   }
 
-  public static interface CommandHandler {
-    public void handle(CommandResult command);
+  public interface CommandHandler {
+    void handle(CommandResult command);
   }
 
-  public static interface NodeCompleteHandler {
-    public void handle(NodeCompleteResult compelte);
+  public interface NodeCompleteHandler {
+    void handle(NodeCompleteResult compelte);
   }
 
   protected static class SpecialVariables {

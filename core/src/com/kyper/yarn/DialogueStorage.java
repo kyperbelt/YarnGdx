@@ -10,10 +10,10 @@ import com.kyper.yarn.Value.Type;
  */
 public class DialogueStorage implements VariableStorage {
 
-  private static final String NAME = "$USERDATA_NAME";
-  private static Json                     MYFRIEND;
-  private        ObjectMap<String, Value> variables;
-  private String name;
+  private static final String                   NAME = "$USERDATA_NAME";
+  private static       Json                     MYFRIEND;
+  private              ObjectMap<String, Value> variables;
+  private              String                   name;
 
   public DialogueStorage(String name){
     this.name = name;
@@ -33,8 +33,7 @@ public class DialogueStorage implements VariableStorage {
   }
 
   public boolean contains(String name){
-    if (variables.containsKey(name)) return true;
-    return false;
+    return variables.containsKey(name);
   }
 
   public Value remove(String name){

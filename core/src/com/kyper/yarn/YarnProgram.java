@@ -9,16 +9,16 @@ import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.FunctionInfo;
 
-public class Program {
+public class YarnProgram {
 
   protected ObjectMap<String, String>   strings  = new ObjectMap<String, String>();
-  protected ObjectMap<String, LineInfo> lineInfo = new ObjectMap<String, Program.LineInfo>();
+  protected ObjectMap<String, LineInfo> lineInfo = new ObjectMap<String, YarnProgram.LineInfo>();
 
   protected ObjectMap<String, Node> nodes = new ObjectMap<String, Node>();
 
   private int stringCount = 0;
 
-  /// Loads a new string table into the program.
+  /// Loads a new string table into the yarnProgram.
 
   /**
    * The string table is merged with any existing strings, with the new table taking precedence over the old.
@@ -101,19 +101,20 @@ public class Program {
     return this.getString(key == null ? "" : key);
   }
 
-  public void include(Program otherProgram){
-    for (Entry<String, Node> other : otherProgram.nodes) {
+  public void include(YarnProgram otherYarnProgram){
+    for (Entry<String, Node> other : otherYarnProgram.nodes) {
       if (nodes.containsKey(other.key)) {
-        throw new IllegalStateException(String.format("This program already contains a node named %s", other.key));
+        throw new IllegalStateException(String.format("This yarnProgram already contains a node named %s", other.key));
       }
 
       nodes.put(other.key, other.value);
     }
 
-    for (Entry<String, String> other : otherProgram.strings) {
+    for (Entry<String, String> other : otherYarnProgram.strings) {
       //TODO: this seems fishy -- maybe check strings map instead?
       if (nodes.containsKey(other.key)) {
-        throw new IllegalStateException(String.format("This program already contains a string with key %s", other.key));
+        throw new IllegalStateException(String.format("This yarnProgram already contains a string with key %s",
+                                                      other.key));
       }
       strings.put(other.key, other.value);
     }
@@ -137,7 +138,7 @@ public class Program {
     return result;
   }
 
-  protected static enum ByteCode {
+  protected enum ByteCode {
     /// opA = string: label name
     Label,
     /// opA = string: label name
@@ -236,7 +237,7 @@ public class Program {
 
   protected static class Node {
 
-    public Array<Instruction> instructions = new Array<Program.Instruction>();
+    public Array<Instruction> instructions = new Array<YarnProgram.Instruction>();
     public String             name;
 
     //the entry in the programs string table that contains
@@ -287,7 +288,7 @@ public class Program {
       this.operantB = operandB;
     }
 
-    public String toString(Program p, Library l){
+    public String toString(YarnProgram p, Library l){
       // Labels are easy: just dump out the name
       if (operation == ByteCode.Label) {
         return operandA + ":";
@@ -352,7 +353,7 @@ public class Program {
         case AddOption:
 
           // Add the string for this option, if it has one
-          if ((String) operandA != null) {
+          if (operandA != null) {
             String text = p.getString((String) operandA);
             comment += String.format("\"%s\"", text);
           }
