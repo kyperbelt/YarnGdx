@@ -7,12 +7,12 @@ public class Value implements Comparable<Value> {
 
 	public static final Value NULL = new Value();
 
-	private Type type;
-	private float number_value;
-	private String variable_name;
-	private String string_value;
-	private boolean bool_value;
-	
+	private Type    type;
+	private float   numberValue;
+	private String  variableName;
+	private String  stringValue;
+	private boolean boolValue;
+
 	private static final String NULL_STRING = "null";
 	private static final String FALSE_STRING = "false";
 	private static final String TRUE_STRING = "true";
@@ -25,20 +25,20 @@ public class Value implements Comparable<Value> {
 	public Value(Object value) {
 		//coppy existing value
 		if (value instanceof Value) {
-			Value other_value = (Value) value;
-			this.type = other_value.type;
+			Value otherValue = (Value) value;
+			this.type = otherValue.type;
 			switch (type) {
 			case NUMBER:
-				setNumberValue(other_value.getNumberValue());
+				setNumberValue(otherValue.getNumberValue());
 				break;
 			case STRING:
-				setStringValue(other_value.getStringValue());
+				setStringValue(otherValue.getStringValue());
 				break;
 			case BOOL:
-				setBoolValue(other_value.getBoolValue());
+				setBoolValue(otherValue.getBoolValue());
 				break;
 			case VARNAME:
-				setVarName(other_value.getVarName());
+				setVarName(otherValue.getVarName());
 				break;
 			case NULL:
 				break;
@@ -73,55 +73,55 @@ public class Value implements Comparable<Value> {
 				+ "Values can only be numbers, strings, bools or null.", value.getClass().getSimpleName());
 		throw new YarnRuntimeException(error);
 	}
-	
+
 	public Type getType() {
 		return type;
 	}
-	
+
 	protected void setType(Type type) {
 		this.type = type;
 	}
 
 	public float getNumberValue() {
-		return number_value;
+		return numberValue;
 	}
 
-	private void setNumberValue(float number_value) {
-		this.number_value = number_value;
+	private void setNumberValue(float numberValue) {
+		this.numberValue = numberValue;
 	}
 
 	public String getVarName() {
-		return variable_name;
+		return variableName;
 	}
 
-	public void setVarName(String variable_name) {
-		this.variable_name = variable_name;
+	public void setVarName(String variableName) {
+		this.variableName = variableName;
 	}
 
 	public String getStringValue() {
-		return string_value;
+		return stringValue;
 	}
 
-	private void setStringValue(String string_value) {
-		this.string_value = string_value;
+	private void setStringValue(String stringValue) {
+		this.stringValue = stringValue;
 	}
 
 	public boolean getBoolValue() {
-		return bool_value;
+		return boolValue;
 	}
 
-	private void setBoolValue(boolean bool_value) {
-		this.bool_value = bool_value;
+	private void setBoolValue(boolean boolValue) {
+		this.boolValue = boolValue;
 	}
 
 	public boolean asBool() {
 		switch (type) {
 		case NUMBER:
-			return !Float.isNaN(number_value) && number_value != 0f;
+			return !Float.isNaN(numberValue) && numberValue != 0f;
 		case STRING:
-			return string_value != null && !string_value.isEmpty();
+			return stringValue != null && !stringValue.isEmpty();
 		case BOOL:
-			return bool_value;
+			return boolValue;
 		case NULL:
 			return false;
 		default:
@@ -132,15 +132,15 @@ public class Value implements Comparable<Value> {
 	public float asNumber() {
 		switch (type) {
 		case NUMBER:
-			return number_value;
+			return numberValue;
 		case STRING:
 			try {
-				return Float.parseFloat(string_value);
+				return Float.parseFloat(stringValue);
 			} catch (NumberFormatException e) {
 				return 0f;
 			}
 		case BOOL:
-			return bool_value ? 1f : 0f;
+			return boolValue ? 1f : 0f;
 		case NULL:
 			return 0f;
 		default:
@@ -151,14 +151,14 @@ public class Value implements Comparable<Value> {
 	public String asString() {
 		switch (type) {
 		case NUMBER:
-			if (Float.isNaN(number_value))
+			if (Float.isNaN(numberValue))
 				return NAN;
 			else
-				Float.toString(number_value);
+				Float.toString(numberValue);
 		case STRING:
-			return string_value;
+			return stringValue;
 		case BOOL:
-			return bool_value?TRUE_STRING:FALSE_STRING;
+			return boolValue ?TRUE_STRING:FALSE_STRING;
 		case NULL:
 			return NULL_STRING;
 		default:
@@ -172,11 +172,11 @@ public class Value implements Comparable<Value> {
 		case NULL:
 			return null;
 		case STRING:
-			return this.string_value;
+			return this.stringValue;
 		case NUMBER:
-			return this.number_value;
+			return this.numberValue;
 		case BOOL:
-			return this.bool_value;
+			return this.boolValue;
 			default:break;
 		}
 
@@ -198,11 +198,11 @@ public class Value implements Comparable<Value> {
 			case NULL:
 				return 0;
 			case STRING:
-				return this.string_value.compareTo(o.getStringValue());
+				return this.stringValue.compareTo(o.getStringValue());
 			case NUMBER:
-				return Float.valueOf(number_value).compareTo(o.getNumberValue());
+				return Float.valueOf(numberValue).compareTo(o.getNumberValue());
 			case BOOL:
-				return Boolean.valueOf(bool_value).compareTo(o.getBoolValue());
+				return Boolean.valueOf(boolValue).compareTo(o.getBoolValue());
 			default:
 				break;
 			}
@@ -251,7 +251,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * add this value and the parameter
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -285,7 +285,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * subtract paramert to this value
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -301,7 +301,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * multiply parameter with this value
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -317,7 +317,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * divide parameter with this value
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -333,7 +333,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * modulo
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -348,7 +348,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * get negative of this value
-	 * 
+	 *
 	 * @return
 	 */
 	public Value negative() {
@@ -367,7 +367,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * check if this is greater than parameter
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -378,7 +378,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * check if this is less than parameter
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -389,7 +389,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * check if this is greater than or = to param
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -400,7 +400,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * check if this is less than or equal to param
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */

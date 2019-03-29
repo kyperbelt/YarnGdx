@@ -1,71 +1,71 @@
 package com.kyper.yarn;
 
 public class StringUtils {
-	private static final int START_CAPACITY = 200;
-	private static StringBuilder string_builder;
+	private static final int     START_CAPACITY = 200;
+	private static StringBuilder stringBuilder;
 
 	private static StringBuilder getBuilder() {
-		if (string_builder == null)
-			string_builder = new StringBuilder(START_CAPACITY);
-		return string_builder;
+		if (stringBuilder == null)
+			stringBuilder = new StringBuilder(START_CAPACITY);
+		return stringBuilder;
 	}
 
-	public static String format(String format_string, Object... params) {
+	public static String format(String formatString, Object... params) {
 		StringBuilder builder = getBuilder();
 		builder.setLength(0);
 
-		builder.append(format_string);
+		builder.append(formatString);
 
-		int found_start = 0;
-		int found_end = 0;
-		int last_param_used = 1;
-		int paramd1 = 0;	
+		int foundStart = 0;
+		int foundEnd = 0;
+		int lastParamUsed = 1;
+		int paramd1 = 0;
 		int offset = 0;
 
-		for (int i = 0; i < format_string.length(); i++) {
-			char c = format_string.charAt(i);
-			
+		for (int i = 0; i < formatString.length(); i++) {
+			char c = formatString.charAt(i);
+
 			if (c == '%') {
 				if(i > 0) {
-					char p = format_string.charAt(i-1);
+					char p = formatString.charAt(i-1);
 					if(p == '\\')
 						continue;
 				}
-				paramd1 = last_param_used;
-				found_start = i;
+				paramd1 = lastParamUsed;
+				foundStart = i;
 				i++;
-				while (i < format_string.length() && c != 's' && c != 'd') {
-					
-					c = format_string.charAt(i);
+				while (i < formatString.length() && c != 's' && c != 'd') {
+
+					c = formatString.charAt(i);
 					if (isDigit(c)) {
 						paramd1 = getNumericValue(c);
-						if (isDigit(format_string.charAt(i + 1))) {
+						if (isDigit(formatString.charAt(i + 1))) {
 							i++;
 							paramd1 *= 10;
-							c = format_string.charAt(i);
+							c = formatString.charAt(i);
 							int paramd2 = getNumericValue(c);
 							paramd1 += paramd2;
 						}
 						if (paramd1 > params.length)
 							throw new IllegalArgumentException(
-									"Illegal Format String [\"" + format_string + "\"] not enough params");
+									"Illegal Format String [\"" + formatString + "\"] not enough params");
 
 					}
 					i++;
 				}
-				found_end = i;
-				if (paramd1 == last_param_used) {
-					last_param_used++;
+				foundEnd = i;
+				if (paramd1 == lastParamUsed) {
+					lastParamUsed++;
 				}
 				String paramused = params[paramd1-1].toString();
-				builder.replace(found_start+offset, found_end+offset, paramused);
-				offset += paramused.length()-(found_end-found_start);
+				builder.replace(foundStart+offset, foundEnd+offset, paramused);
+				offset += paramused.length()-(foundEnd-foundStart);
 			}
 		}
 
 		return builder.toString();
 	}
-	
+
 	public static boolean isDigit(char c) {
 		switch(c) {
 		case '0':
@@ -82,7 +82,7 @@ public class StringUtils {
 		}
 		return false;
 	}
-	
+
 	public static int getNumericValue(char c) {
 		switch(c) {
 		case '0': return 0;

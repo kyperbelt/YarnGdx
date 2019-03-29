@@ -15,68 +15,68 @@ public class Analyser {
 		}
 
 		public String message;
-		public String node_name;
-		public int line_number;
-		public int col_number;
+		public String nodeName;
+		public int lineNumber;
+		public int colNumber;
 
 		public Severity severity;
 
-		public Diagnosis(String message, Severity severity, String node_name, int line_number, int col_number) {
+		public Diagnosis(String message, Severity severity, String nodeName, int lineNumber, int colNumber) {
 			this.message = message;
 			this.severity = severity;
-			this.node_name = node_name;
-			this.line_number = line_number;
-			this.col_number = col_number;
+			this.nodeName = nodeName;
+			this.lineNumber = lineNumber;
+			this.colNumber = colNumber;
 		}
 
-		public Diagnosis(String message, Severity severity, String node_name, int line_number) {
-			this(message, severity, node_name, line_number, -1);
+		public Diagnosis(String message, Severity severity, String nodeName, int lineNumber) {
+			this(message, severity, nodeName, lineNumber, -1);
 		}
 
-		public Diagnosis(String message, Severity severity, String node_name) {
-			this(message, severity, node_name, -1);
+		public Diagnosis(String message, Severity severity, String nodeName) {
+			this(message, severity, nodeName, -1);
 		}
 
 		public Diagnosis(String message, Severity severity) {
 			this(message, severity, null);
 		}
 
-		public String toString(boolean show_severity) {
-			String context_label = "";
-			if (show_severity) {
+		public String toString(boolean showSeverity) {
+			String contextLabel = "";
+			if (showSeverity) {
 				switch (severity) {
 				case Error:
-					context_label = "ERROR: ";
+					contextLabel = "ERROR: ";
 					break;
 				case Warning:
-					context_label = "WARNING: ";
+					contextLabel = "WARNING: ";
 					break;
 				case Note:
-					context_label = "Note: ";
+					contextLabel = "Note: ";
 					break;
 				default:
 					throw new IllegalArgumentException();
 				}
 			}
 
-			if (node_name != null) {
-				context_label += node_name;
+			if (nodeName != null) {
+				contextLabel += nodeName;
 
-				if (line_number != -1) {
-					context_label += StringUtils.format(": %s", line_number);
+				if (lineNumber != -1) {
+					contextLabel += StringUtils.format(": %s", lineNumber);
 
-					if (col_number != -1) {
-						context_label += StringUtils.format(":%s", col_number);
+					if (colNumber != -1) {
+						contextLabel += StringUtils.format(":%s", colNumber);
 					}
 				}
 			}
 
 			String message;
 
-			if (context_label == null || context_label.isEmpty()) {
+			if (contextLabel == null || contextLabel.isEmpty()) {
 				message = this.message;
 			} else {
-				message = StringUtils.format(" %1$s: %2$s", context_label, this.message);
+				message = StringUtils.format(" %1$s: %2$s", contextLabel, this.message);
 			}
 
 			return message;
@@ -85,25 +85,25 @@ public class Analyser {
 	}
 
 	public static class Context {
-		
+
 		private Array<CompiledProgramAnalyser> analysers;
 		public Context() {
 			analysers = new Array<Analyser.CompiledProgramAnalyser>();
 			analysers.add(new VariableLister());
 			analysers.add(new UnusedVariableChecker());
 		}
-		
+
 		public Context(CompiledProgramAnalyser...analysers) {
 			this.analysers = new Array<Analyser.CompiledProgramAnalyser>(analysers);
 		}
-		
-		
+
+
 		protected void addProgramToAnalysis(Program program) {
 			for (CompiledProgramAnalyser a : analysers) {
 				a.diagnose(program);
 			}
 		}
-		
+
 		public Iterable<Diagnosis> finalAnalysis(){
 			Array<Diagnosis> diagnoses = new Array<Analyser.Diagnosis>();
 			for (CompiledProgramAnalyser a : analysers) {
@@ -111,8 +111,8 @@ public class Analyser {
 			}
 			return diagnoses;
 		}
-		
-		
+
+
 
 	}
 
@@ -135,9 +135,9 @@ public class Analyser {
 			//each node, find all reads and writes to variables
 			for (Entry<String, Program.Node> nodeinfo : program.nodes) {
 
-				Program.Node the_node = nodeinfo.value;
+				Program.Node theNode = nodeinfo.value;
 
-				for (Program.Instruction instruction : the_node.instructions) {
+				for (Program.Instruction instruction : theNode.instructions) {
 					switch (instruction.getOperation()) {
 					case PushVariable:
 					case StoreVariable:
@@ -163,15 +163,15 @@ public class Analyser {
 	}
 
 	protected static class UnusedVariableChecker extends CompiledProgramAnalyser {
-		private ObjectSet<String> read_vars = new ObjectSet<String>();
-		private ObjectSet<String> written_vars = new ObjectSet<String>();
+		private ObjectSet<String> readVars = new ObjectSet<String>();
+		private ObjectSet<String> writtenVars = new ObjectSet<String>();
 
 		@Override
 		public void diagnose(Program program) {
 			//in each node, find all reads and writes to variables
 			for (Entry<String, Program.Node> nodeinfo : program.nodes) {
-				
-				
+
+
 				Program.Node node = nodeinfo.value;
 				Array<Instruction> instructions = node.instructions;
 				for (int i = 0; i < instructions.size; i++) {
@@ -179,10 +179,10 @@ public class Analyser {
 
 					switch (instruction.getOperation()) {
 					case PushVariable:
-						read_vars.add((String) instruction.operandA());
+						readVars.add((String) instruction.operandA());
 						break;
 					case StoreVariable:
-						written_vars.add((String) instruction.operandA());
+						writtenVars.add((String) instruction.operandA());
 						break;
 					default:
 						break;
@@ -193,30 +193,30 @@ public class Analyser {
 
 		@Override
 		public Array<Diagnosis> gatherDiagnoses() {
-			
+
 			//exclude read variables that are also written
-			Array<String> read_only = new Array<String>();
-			read_only.addAll(read_vars.iterator().toArray());
-			read_only.removeAll(written_vars.iterator().toArray(), false);
-			
+			Array<String> readOnly = new Array<String>();
+			readOnly.addAll(readVars.iterator().toArray());
+			readOnly.removeAll(writtenVars.iterator().toArray(), false);
+
 			//exclude write vars that are read
-			Array<String> write_only = new Array<String>();
-			write_only.addAll(written_vars.iterator().toArray());
-			write_only.removeAll(read_vars.iterator().toArray(), false);
-			
+			Array<String> writeOnly = new Array<String>();
+			writeOnly.addAll(writtenVars.iterator().toArray());
+			writeOnly.removeAll(readVars.iterator().toArray(), false);
+
 			//generate diagnoses
 			Array<Diagnosis> diagnoses = new Array<Analyser.Diagnosis>();
-			
-			for (String ro : read_only) {
+
+			for (String ro : readOnly) {
 				String message = StringUtils.format("Variable %s is read from, but nevver assigned", ro);
 				diagnoses.add(new Diagnosis(message, Severity.Warning));
 			}
-			
-			for (String wo : write_only) {
+
+			for (String wo : writeOnly) {
 				String message = StringUtils.format("Variable %s is assigned, but never read from", wo);
 				diagnoses.add(new Diagnosis(message, Severity.Warning));
 			}
-			
+
 			return diagnoses;
 		}
 

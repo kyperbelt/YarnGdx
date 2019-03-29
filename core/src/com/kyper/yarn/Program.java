@@ -12,38 +12,38 @@ import com.kyper.yarn.Library.FunctionInfo;
 public class Program {
 
 	protected ObjectMap<String, String> strings = new ObjectMap<String, String>();
-	protected ObjectMap<String, LineInfo> line_info = new ObjectMap<String, Program.LineInfo>();
+	protected ObjectMap<String, LineInfo> lineInfo = new ObjectMap<String, Program.LineInfo>();
 
 	protected ObjectMap<String, Node> nodes = new ObjectMap<String, Node>();
 
-	private int string_count = 0;
+	private int stringCount = 0;
 
 	/// Loads a new string table into the program.
 	/**
 	 * The string table is merged with any existing strings, with the new table
 	 * taking precedence over the old.
 	 */
-	public void loadStrings(ObjectMap<String, String> new_strings) {
-		for (Entry<String, String> line : new_strings) {
+	public void loadStrings(ObjectMap<String, String> newStrings) {
+		for (Entry<String, String> line : newStrings) {
 			strings.put(line.key, line.value);
 		}
 	}
 
-	public String registerString(String string, String node_name, String line_id, int line_number,
+	public String registerString(String string, String nodeName, String lineId, int lineNumber,
 			boolean localisable) {
 		String key;
 
-		if (line_id == null)
-			key = String.format("%1$s - %2$s", node_name, string_count++);
+		if (lineId == null)
+			key = String.format("%1$s - %2$s", nodeName, stringCount++);
 		else
-			key = line_id;
+			key = lineId;
 
 		//its not int he list; append it
 		strings.put(key, string);
 
 		if (localisable) {
 			//additionally, keep info about this string around
-			line_info.put(key, new LineInfo(node_name, line_number));
+			lineInfo.put(key, new LineInfo(nodeName, lineNumber));
 		}
 
 		return key;
@@ -61,50 +61,50 @@ public class Program {
 
 		for (Entry<String, Node> entry : nodes) {
 			sb.appendLine("Node " + entry.key + ":");
-			int instruction_count = 0;
+			int instructionCount = 0;
 
 			Array<Instruction> instructions = entry.value.instructions;
 			for (int i = 0; i < instructions.size; i++) {
 				Instruction instruction = instructions.get(i);
-				String instruction_text = null;
+				String instructionText = null;
 
 				if (instruction.getOperation() == ByteCode.Label) {
-					instruction_text = instruction.toString(this, lib);
+					instructionText = instruction.toString(this, lib);
 				} else {
-					instruction_text = "    " + instruction.toString(this, lib);
+					instructionText = "    " + instruction.toString(this, lib);
 				}
 
 				String preface;
-				if (instruction_count % 5 == 0 || instruction_count == entry.value.instructions.size - 1) {
-					preface = String.format("%1$6s", instruction_count + "");
+				if (instructionCount % 5 == 0 || instructionCount == entry.value.instructions.size - 1) {
+					preface = String.format("%1$6s", instructionCount + "");
 				} else {
 					preface = String.format("%1$6s    ", " ");
 				}
 
-				sb.appendLine(preface + instruction_text);
-				instruction_count++;
+				sb.appendLine(preface + instructionText);
+				instructionCount++;
 			}
 			sb.appendLine("");
 		}
 
 		for (Entry<String, String> entry : strings) {
-			LineInfo line_info = this.line_info.get(entry.key);
-			if(line_info == null)
+			LineInfo lineInfo = this.lineInfo.get(entry.key);
+			if(lineInfo == null)
 				continue;
-			sb.appendLine(String.format("%1$s: %2$s  (%3$s:%4$s)", entry.key, entry.value, line_info.getNodeName(),
-					line_info.getLineNumber()));
+			sb.appendLine(String.format("%1$s: %2$s  (%3$s:%4$s)", entry.key, entry.value, lineInfo.getNodeName(),
+					lineInfo.getLineNumber()));
 		}
 
 		return sb.toString();
 	}
 
-	public String getTextForNode(String node_name) {
-		String key = nodes.get(node_name).source_string_id;
+	public String getTextForNode(String nodeName) {
+		String key = nodes.get(nodeName).sourceStringId;
 		return this.getString(key == null ? "" : key);
 	}
 
-	public void include(Program other_program) {
-		for (Entry<String, Node> other : other_program.nodes) {
+	public void include(Program otherProgram) {
+		for (Entry<String, Node> other : otherProgram.nodes) {
 			if (nodes.containsKey(other.key)) {
 				throw new IllegalStateException(
 						String.format("This program already contains a node named %s", other.key));
@@ -113,7 +113,7 @@ public class Program {
 			nodes.put(other.key, other.value);
 		}
 
-		for (Entry<String, String> other : other_program.strings) {
+		for (Entry<String, String> other : otherProgram.strings) {
 			//TODO: this seems fishy -- maybe check strings map instead?
 			if (nodes.containsKey(other.key)) {
 				throw new IllegalStateException(
@@ -144,51 +144,51 @@ public class Program {
 	protected static class ParseException extends RuntimeException {
 		private static final long serialVersionUID = -6422941521497633431L;
 
-		protected int line_number = 0;
+		protected int lineNumber = 0;
 
 		public ParseException(String message) {
 			super(message);
 		}
 
-		protected static ParseException make(Token found_token, TokenType... expected_types) {
-			int line_number = found_token.line_number + 1;
+		protected static ParseException make(Token foundToken, TokenType... expectedTypes) {
+			int lineNumber = foundToken.lineNumber + 1;
 
-			Array<String> expected_type_names = new Array<String>();
-			for (TokenType type : expected_types) {
-				expected_type_names.add(type.name());
+			Array<String> expectedTypeNames = new Array<String>();
+			for (TokenType type : expectedTypes) {
+				expectedTypeNames.add(type.name());
 			}
-			String possible_values = String.join(",", expected_type_names);
-			String message = String.format("Line %1$s:%2$s: Expected %3$s, but found %4$s", line_number,
-					found_token.column_number, possible_values, found_token.type.name());
+			String possibleValues = String.join(",", expectedTypeNames);
+			String message = String.format("Line %1$s:%2$s: Expected %3$s, but found %4$s", lineNumber,
+					foundToken.columnNumber, possibleValues, foundToken.type.name());
 			ParseException e = new ParseException(message);
-			e.line_number = line_number;
+			e.lineNumber = lineNumber;
 			return e;
 		}
 
-		protected static ParseException make(Token most_recent_token, String message) {
-			int line_number = most_recent_token.line_number + 1;
-			String m = String.format("Line %1$s:%2$s: %3$s", line_number, most_recent_token.column_number, message);
+		protected static ParseException make(Token mostRecentToken, String message) {
+			int lineNumber = mostRecentToken.lineNumber + 1;
+			String m = String.format("Line %1$s:%2$s: %3$s", lineNumber, mostRecentToken.columnNumber, message);
 			ParseException e = new ParseException(m);
-			e.line_number = line_number;
+			e.lineNumber = lineNumber;
 			return e;
 		}
 	}
 
 	protected static class LineInfo {
-		private int line_number;
-		private String node_name;
+		private int lineNumber;
+		private String nodeName;
 
-		public LineInfo(String node_name, int line_number) {
-			this.node_name = node_name;
-			this.line_number = line_number;
+		public LineInfo(String nodeName, int lineNumber) {
+			this.nodeName = nodeName;
+			this.lineNumber = lineNumber;
 		}
 
 		public int getLineNumber() {
-			return line_number;
+			return lineNumber;
 		}
 
 		public String getNodeName() {
-			return node_name==null?"null":node_name;
+			return nodeName==null?"null":nodeName;
 		}
 	}
 
@@ -199,7 +199,7 @@ public class Program {
 
 		//the entry in the programs string table that contains
 		//the original text of this node. null if not available
-		public String source_string_id = null;
+		public String sourceStringId = null;
 
 		public ObjectMap<String, Integer> labels = new ObjectMap<String, Integer>();
 

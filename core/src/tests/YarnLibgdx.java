@@ -32,32 +32,32 @@ public class YarnLibgdx extends ApplicationAdapter {
 	int screenheight;
 
 	// file of ship containing all the ship dialogue
-	String ship_file = "ship.json";
+	String shipFile = "ship.json";
 
 	// file of sally containing all the sally dialogue
-	String sally_file = "sally.json";
+	String sallyFile = "sally.json";
 
 	// print all the tokens that are spat out by the parser
-	boolean show_tokens = false;
+	boolean showTokens = false;
 
 	// print out tree created by the parser from list of tokens
-	boolean show_parse_tree = false;
+	boolean showParseTree = false;
 
 	// will only load this node - loads entire file if this is null
-	String only_consider = null;
+	String onlyConsider = null;
 
 	// Used to store values by dialogue (or your game, access is not limited) - can
 	// export/import as json
-	DialogueStorage dialogueStorage = new DialogueStorage("Test_data");
+	DialogueStorage dialogueStorage = new DialogueStorage("TestData");
 
 	// this is the class that loads and hold the dialogue for now
-	Dialogue test_dialogue;
+	Dialogue testDialogue;
 
 	// our results
-	LineResult current_line = null;
-	OptionResult current_options = null;
-	CommandResult current_command = null;
-	NodeCompleteResult node_complete = null;
+	LineResult currentLine = null;
+	OptionResult currentOptions = null;
+	CommandResult currentCommand = null;
+	NodeCompleteResult nodeComplete = null;
 
 	// test font & spritebatch
 	BitmapFont font;
@@ -65,56 +65,56 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 	// String builder to avoid string creation-because you know strings in gdx is
 	// bad n stuff
-	StringBuilder option_string;
+	StringBuilder optionString;
 
 	// some strings we can re-use -- because making STRINGS IS BAD!
 	final String ps = "PRESS SPACE TO CONTINUE";
 	final String finished = "You finished!";
 	final String vars = "Variables:";
-	final String see_ship_var = "$should_see_ship";
-	final String sally_warning_var = "$sally_warning";
-	final String talk_to_ship = "Talk to Ship";
-	final String talk_to_sally = "Talk to Sally";
+	final String seeShipVar = "$shouldSeeShip";
+	final String sallyWarningVar = "$sallyWarning";
+	final String talkToShip = "Talk to Ship";
+	final String talkToSally = "Talk to Sally";
 	final String TAB = "    ";
 
 	// use this to check if the dialogue is complete -- aka there are no more nodes
 	// to run
 	boolean complete = true;
 	// should dump bytecode when complete
-	boolean byte_code_printed = false;
+	boolean byteCodePrinted = false;
 
 	// TEXTURES
 
-	ObjectMap<String, Texture> ship_textures;
-	ObjectMap<String, Texture> sally_textures;
+	ObjectMap<String, Texture> shipTextures;
+	ObjectMap<String, Texture> sallyTextures;
 
-	Texture ship_face;
+	Texture shipFace;
 	Texture sally;
 
 	@Override
 	public void create() {
 
 		// load some textures
-		ship_textures = new ObjectMap<String, Texture>();
-		ship_textures.put("happy", new Texture(Gdx.files.internal("happy.png")));
-		ship_textures.put("neutral", new Texture(Gdx.files.internal("neutral.png")));
+		shipTextures = new ObjectMap<String, Texture>();
+		shipTextures.put("happy", new Texture(Gdx.files.internal("happy.png")));
+		shipTextures.put("neutral", new Texture(Gdx.files.internal("neutral.png")));
 
-		ship_face = ship_textures.get("neutral");
+		shipFace = shipTextures.get("neutral");
 
-		sally_textures = new ObjectMap<String, Texture>();
-		sally_textures.put("default", new Texture(Gdx.files.internal("sally.png")));
-		sally_textures.put("angry", new Texture(Gdx.files.internal("sally_angry.png")));
-		sally_textures.put("talk", new Texture(Gdx.files.internal("sally_talk.png")));
+		sallyTextures = new ObjectMap<String, Texture>();
+		sallyTextures.put("default", new Texture(Gdx.files.internal("sally.png")));
+		sallyTextures.put("angry", new Texture(Gdx.files.internal("sally_angry.png")));
+		sallyTextures.put("talk", new Texture(Gdx.files.internal("sally_talk.png")));
 
-		sally = sally_textures.get("default");
+		sally = sallyTextures.get("default");
 
 		// enter some variables for our dialogue to use -
 		// we do not need to do this but just to access them before the dialogue
 		// we do for testing purposes
-		dialogueStorage.put(see_ship_var, false);
-		dialogueStorage.put(sally_warning_var, false);
+		dialogueStorage.put(seeShipVar, false);
+		dialogueStorage.put(sallyWarningVar, false);
 		dialogueStorage.put(poop, "empty");
-		option_string = new StringBuilder(400);
+		optionString = new StringBuilder(400);
 
 		font = new BitmapFont(Gdx.files.internal("default.fnt"));
 
@@ -122,11 +122,11 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 		// we first create the dialogue and pass in what dialogueStorage storage we would like for
 		// it to use
-		test_dialogue = new Dialogue(dialogueStorage);
+		testDialogue = new Dialogue(dialogueStorage);
 
 		// we will register a custom function to the library that takes in
 		// one parameter - sally's action sprite
-		test_dialogue.getLibrary().registerFunction("setSallyAction", 1, new Function() {
+		testDialogue.getLibrary().registerFunction("setSallyAction", 1, new Function() {
 			@Override
 			public void invoke(Value... params) {
 				// this function only has one parameter so check like so
@@ -138,33 +138,33 @@ public class YarnLibgdx extends ApplicationAdapter {
 				// and default
 
 				// see if the sprite exists
-				if (sally_textures.containsKey(action.getStringValue())) {
-					sally = sally_textures.get(action.getStringValue());// set it
+				if (sallyTextures.containsKey(action.getStringValue())) {
+					sally = sallyTextures.get(action.getStringValue());// set it
 				} else {
 					// otherwise set it to default
-					sally = sally_textures.get("default");
+					sally = sallyTextures.get("default");
 				}
 
 			}
 		});
 
 		// alternatively we could pass in custom loggers
-		// test_dialogue = new Dialogue(dialogueStorage,YarnLogger_debug,YarnLogger_error)
+		// testDialogue = new Dialogue(dialogueStorage,YarnLoggerDebug,YarnLoggerError)
 
 		// load the ship dialogue from file
-		test_dialogue.loadFile(ship_file, show_tokens, show_parse_tree, only_consider);
+		testDialogue.loadFile(shipFile, showTokens, showParseTree, onlyConsider);
 
 		// load the sally dialogue from file -- notice that we load it to the same
 		// dialogue. This allows us to retain the same storage and use the same
 		// libraries -
-		test_dialogue.loadFile(sally_file, show_tokens, show_parse_tree, null);
+		testDialogue.loadFile(sallyFile, showTokens, showParseTree, null);
 
 		// in order to begin updating and receiving results from our dialogue we must
 		// start it
-		// test_dialogue.start();
+		// testDialogue.start();
 		// this will start the dialogue at the default node of Start
 		// we could specify a different node if we wish
-		// test_dialogue.start("nameofnode");
+		// testDialogue.start("nameofnode");
 		// we will handle this in our input method down below
 
 	}
@@ -190,34 +190,34 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 		// if we currently dont have any command available check if next result is a
 		// command
-		if (current_command == null && test_dialogue.isNextCommand()) {
+		if (currentCommand == null && testDialogue.isNextCommand()) {
 			// assign it
-			current_command = test_dialogue.getNextAsCommand();
+			currentCommand = testDialogue.getNextAsCommand();
 		}
 		// if we dont have a line - check if next result is a line
-		else if (current_line == null && test_dialogue.isNextLine()) {
+		else if (currentLine == null && testDialogue.isNextLine()) {
 			// if there is a command result - execute it before the next line
 			executeCommand();
 			// assign the line
-			current_line = test_dialogue.getNextAsLine();
+			currentLine = testDialogue.getNextAsLine();
 
 		}
 		// if we dont have any options check if the next result is options
-		else if (current_options == null && test_dialogue.isNextOptions()) {
+		else if (currentOptions == null && testDialogue.isNextOptions()) {
 			// assign the options
-			current_options = test_dialogue.getNextAsOptions();
+			currentOptions = testDialogue.getNextAsOptions();
 		}
 		// if the node has not found a complete result - check if next result is a node
 		// complete result
-		else if (node_complete == null && test_dialogue.isNextComplete()) {
+		else if (nodeComplete == null && testDialogue.isNextComplete()) {
 			// assign node complete result
-			node_complete = test_dialogue.getNextAsComplete();
+			nodeComplete = testDialogue.getNextAsComplete();
 		} else {
 			// waiting to proccess line or no results available
 
 			// check if the current line is proccessed(null) and that we have a node
 			// complete result
-			if (current_line == null && node_complete != null) {
+			if (currentLine == null && nodeComplete != null) {
 				// execute any lingering commands
 				executeCommand();
 				// set complete to true
@@ -227,7 +227,7 @@ public class YarnLibgdx extends ApplicationAdapter {
 				resetAllResults();
 
 				// stop the dialogue
-				test_dialogue.stop();
+				testDialogue.stop();
 			}
 		}
 
@@ -241,89 +241,89 @@ public class YarnLibgdx extends ApplicationAdapter {
 		if (!complete) {
 
 			// draw dialogue
-			if (current_line != null) {
-				font.draw(batch, current_line.getText(), screenwidth * .1f, screenheight * .8f);
+			if (currentLine != null) {
+				font.draw(batch, currentLine.getText(), screenwidth * .1f, screenheight * .8f);
 
-				if (current_options == null)
+				if (currentOptions == null)
 					font.draw(batch, ps, screenwidth * .3f, screenheight * .1f);
 			}
 
 			// draw options
-			if (current_options != null) {
-				int check_limit = Math.min(current_options.getOptions().size, OP_KEYS.length); // we do this to avoid
+			if (currentOptions != null) {
+				int checkLimit = Math.min(currentOptions.getOptions().size, OP_KEYS.length); // we do this to avoid
 																								// array
 																								// index exceptions
-				for (int i = 0; i < check_limit; i++) {
-					String option = current_options.getOptions().get(i);
-					option_string.setLength(0);
-					option_string.append('[').append(i + 1).append(']').append(':').append(' ').append(option);
-					font.draw(batch, option_string, screenwidth * .3f, (screenheight * .5f) - (20 * i));
+				for (int i = 0; i < checkLimit; i++) {
+					String option = currentOptions.getOptions().get(i);
+					optionString.setLength(0);
+					optionString.append('[').append(i + 1).append(']').append(':').append(' ').append(option);
+					font.draw(batch, optionString, screenwidth * .3f, (screenheight * .5f) - (20 * i));
 				}
 			}
 
 		} else {
 
-			option_string.setLength(0);
-			option_string.append('[').append(1).append(']').append(':').append(talk_to_ship);
-			option_string.append(TAB).append(TAB).append(TAB).append(TAB).append(TAB).append(TAB).append(TAB)
+			optionString.setLength(0);
+			optionString.append('[').append(1).append(']').append(':').append(talkToShip);
+			optionString.append(TAB).append(TAB).append(TAB).append(TAB).append(TAB).append(TAB).append(TAB)
 					.append(TAB);
-			option_string.append('[').append(2).append(']').append(':').append(talk_to_sally);
-			font.draw(batch, option_string, screenwidth * .23f, screenheight * .5f);
+			optionString.append('[').append(2).append(']').append(':').append(talkToSally);
+			font.draw(batch, optionString, screenwidth * .23f, screenheight * .5f);
 		}
 
 		// draw debug vars ---
-		option_string.setLength(0);
-		option_string.appendLine(vars);
-		option_string.append(see_ship_var).append('=').append(dialogueStorage.getBoolean(see_ship_var)).append('\n');
-		option_string.append(sally_warning_var).append('=').append(dialogueStorage.getBoolean(sally_warning_var)).append('\n');
-		option_string.append(poop).append('=').append(dialogueStorage.getString(poop));
+		optionString.setLength(0);
+		optionString.appendLine(vars);
+		optionString.append(seeShipVar).append('=').append(dialogueStorage.getBoolean(seeShipVar)).append('\n');
+		optionString.append(sallyWarningVar).append('=').append(dialogueStorage.getBoolean(sallyWarningVar)).append('\n');
+		optionString.append(poop).append('=').append(dialogueStorage.getString(poop));
 
-		font.draw(batch, option_string, screenwidth * .3f, screenheight);
+		font.draw(batch, optionString, screenwidth * .3f, screenheight);
 
 		// draw sprites
 		if (sally != null)
 			batch.draw(sally, screenwidth - sally.getWidth() * 2f, screenheight * .4f);
 
-		if (ship_face != null)
-			batch.draw(ship_face, ship_face.getWidth(), screenheight * .4f);
+		if (shipFace != null)
+			batch.draw(shipFace, shipFace.getWidth(), screenheight * .4f);
 
 		batch.end();
 
 		// DRAW END -------------------
 	}
 
-	final String setsprite_command = "setsprite";
-	final String shipface_identifier = "ShipFace";
+	final String setspriteCommand = "setsprite";
+	final String shipfaceIdentifier = "ShipFace";
 
 	private void executeCommand() {
-		if (current_command != null) {
-			String params[] = current_command.getCommand().split("\\s+"); // commands are space delimited-- any space
+		if (currentCommand != null) {
+			String params[] = currentCommand.getCommand().split("\\s+"); // commands are space delimited-- any space
 			for (int i = 0; i < params.length; i++) {
 				params[i] = params[i].trim(); // just trim to make sure
 			}
 
 			// check the first param since it will almost always be the command
-			if (params[0].equals(setsprite_command)) {
+			if (params[0].equals(setspriteCommand)) {
 
 				// check if this is not the correct size
 				if (params.length == 3) {
 
 					// check to see if this is the ship face identifier
-					if (params[1].equals(shipface_identifier)) {
+					if (params[1].equals(shipfaceIdentifier)) {
 						// check if we have the right texture
-						if (ship_textures.containsKey(params[2])) {
+						if (shipTextures.containsKey(params[2])) {
 							// set the ship face to the correct texture
-							ship_face = ship_textures.get(params[2]);
+							shipFace = shipTextures.get(params[2]);
 						} else {
 							// set it to the default state of neutral
-							ship_face = ship_textures.get("neutral");
+							shipFace = shipTextures.get("neutral");
 						}
 					}
 
 				}
 			}
 
-			current_command = null;
+			currentCommand = null;
 		}
 	}
 
@@ -341,14 +341,14 @@ public class YarnLibgdx extends ApplicationAdapter {
 
 			if (Gdx.input.isKeyJustPressed(OP_KEYS[0])) {
 				// talk to ship
-				test_dialogue.start("Ship");
+				testDialogue.start("Ship");
 				complete = false;
 				resetAllResults();
 			}
 
 			if (Gdx.input.isKeyJustPressed(OP_KEYS[1])) {
 				// talk to sally
-				test_dialogue.start("Sally");
+				testDialogue.start("Sally");
 				complete = false;
 				resetAllResults();
 			}
@@ -358,26 +358,26 @@ public class YarnLibgdx extends ApplicationAdapter {
 		}
 
 		// space goes to next line unless there is options
-		if (current_line != null && current_options == null) {
+		if (currentLine != null && currentOptions == null) {
 			if (Gdx.input.isKeyJustPressed(Keys.SPACE)) {
 				clearLine();
 			}
 		}
 
 		// there is options so check all corresponding keys(1-5)
-		if (current_options != null) {
+		if (currentOptions != null) {
 			// check to see what is less - the amount of options or the size of keys we are
 			// using to accept options
-			int check_limit = Math.min(current_options.getOptions().size, OP_KEYS.length); // we do this to avoid array
+			int checkLimit = Math.min(currentOptions.getOptions().size, OP_KEYS.length); // we do this to avoid array
 																							// index exceptions
-			for (int i = 0; i < check_limit; i++) {
+			for (int i = 0; i < checkLimit; i++) {
 				// loop to see if any of the corresponding keys to options is pressed
 				if (Gdx.input.isKeyJustPressed(OP_KEYS[i])) {
 					// if yes then choose
-					current_options.choose(i);
+					currentOptions.choose(i);
 
 					// then clear options and current line - break out of for loop
-					current_options = null;
+					currentOptions = null;
 					clearLine();
 					break;
 				}
@@ -386,25 +386,25 @@ public class YarnLibgdx extends ApplicationAdapter {
 	}
 
 	private void clearLine() {
-		current_line = null;
+		currentLine = null;
 	}
 
 	private void resetAllResults() {
-		current_line = null;
-		current_options = null;
-		node_complete = null;
-		current_command = null;
+		currentLine = null;
+		currentOptions = null;
+		nodeComplete = null;
+		currentCommand = null;
 	}
 
 	@Override
 	public void dispose() {
 		batch.dispose();
 		font.dispose();
-		for (Entry<String, Texture> t : ship_textures) {
+		for (Entry<String, Texture> t : shipTextures) {
 			t.value.dispose();
 		}
 
-		for (Entry<String, Texture> t : sally_textures)
+		for (Entry<String, Texture> t : sallyTextures)
 			t.value.dispose();
 	}
 }

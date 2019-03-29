@@ -25,13 +25,13 @@ public class Compiler {
 
 	CompileFlags flags = new CompileFlags();
 	protected Program program;
-	public String program_name;
+	public String programName;
 
-	private int label_count = 0;
+	private int labelCount = 0;
 
-	protected Compiler(String program_name) {
+	protected Compiler(String programName) {
 		program = new Program();
-		this.program_name = program_name;
+		this.programName = programName;
 	}
 
 	public Program getProgram() {
@@ -43,27 +43,27 @@ public class Compiler {
 			throw new IllegalArgumentException("Diplicate node name " + node.getName());
 		}
 
-		Program.Node compiled_node = new Program.Node();
+		Program.Node compiledNode = new Program.Node();
 
-		compiled_node.name = node.getName();
-		compiled_node.tags = node.getNodeTags();
+		compiledNode.name = node.getName();
+		compiledNode.tags = node.getNodeTags();
 
 		//register the entire text of this node if we hav eit
 		if (node.getSource() != null) {
 			//dump the entire contents of this node into the string table
 			//instead of compiling its contents
 			//the line number is 0 because the string starts at the begining of the node
-			compiled_node.source_string_id = program.registerString(node.getSource(), node.getName(),
+			compiledNode.sourceStringId = program.registerString(node.getSource(), node.getName(),
 					"line:" + node.getName(), 0, true);
 		} else {
 
 			//compile the node
 
-			String start_label = registerLabel();
-			emit(compiled_node, ByteCode.Label, start_label);
+			String startLabel = registerLabel();
+			emit(compiledNode, ByteCode.Label, startLabel);
 
 			for (Statement statement : node.getStatements()) {
-				generateCode(compiled_node, statement);
+				generateCode(compiledNode, statement);
 			}
 
 			// Does this node end after emitting AddOptions codes
@@ -74,38 +74,38 @@ public class Compiler {
 			// TODO: A better solution would be for the parser to flag
 			// whether a node has Options at the end.
 
-			boolean has_remaining_options = false;
+			boolean hasRemainingOptions = false;
 
-			for (Instruction instruction : compiled_node.instructions) {
+			for (Instruction instruction : compiledNode.instructions) {
 				if(instruction.getOperation() == ByteCode.AddOption) {
-					has_remaining_options = true;
+					hasRemainingOptions = true;
 				}
 				if(instruction.getOperation() == ByteCode.ShowOptions)
-					has_remaining_options = false;
+					hasRemainingOptions = false;
 			}
 
 			//if this compiled node has no lingering options to show at the end of the node, then we stop at the end
-			if(!has_remaining_options) {
-				emit(compiled_node,ByteCode.Stop);
+			if(!hasRemainingOptions) {
+				emit(compiledNode,ByteCode.Stop);
 			}else {
 
 				//otherwise show the accumulated nodes and then jump to the selected node
 
-				emit(compiled_node, ByteCode.ShowOptions);
+				emit(compiledNode, ByteCode.ShowOptions);
 
 				if(flags.DisableShuffleOptionsAfterNextSet) {
-					emit(compiled_node, ByteCode.PushBool,false);
-					emit(compiled_node, ByteCode.StoreVariable, DialogueRunner.SpecialVariables.ShuffleOptions);
-					emit(compiled_node, ByteCode.Pop);
+					emit(compiledNode, ByteCode.PushBool,false);
+					emit(compiledNode, ByteCode.StoreVariable, DialogueRunner.SpecialVariables.ShuffleOptions);
+					emit(compiledNode, ByteCode.Pop);
 					flags.DisableShuffleOptionsAfterNextSet = false;
 				}
 
-				emit(compiled_node, ByteCode.RunNode);
+				emit(compiledNode, ByteCode.RunNode);
 			}
 
 		}
 
-		program.nodes.put(compiled_node.name, compiled_node);
+		program.nodes.put(compiledNode.name, compiledNode);
 	}
 
 	protected void emit(Program.Node node, ByteCode code, Object operandA, Object operandB) {
@@ -176,13 +176,13 @@ public class Compiler {
 		if (statement.getExpression() != null) {
 			generateCode(node, statement.getExpression());
 		} else {
-			String custom_command = statement.getClientCommand();
-			if (custom_command.equals("stop")) {
+			String customCommand = statement.getClientCommand();
+			if (customCommand.equals("stop")) {
 				//CASE: stop
 
 				emit(node, ByteCode.Stop);
 
-			} else if (custom_command.equals("shuffleNextOptions")) {
+			} else if (customCommand.equals("shuffleNextOptions")) {
 				//CASE : shuffleNextOptions
 
 				//emit code that sets VARSHUFFLE OPPTIONS to true
@@ -193,51 +193,51 @@ public class Compiler {
 
 			} else {
 				//DEFAULT
-				emit(node, ByteCode.RunCommand, custom_command);
+				emit(node, ByteCode.RunCommand, customCommand);
 			}
 		}
 
 	}
 
-	protected void generateCode(Program.Node node, Statement parse_node, String line) {
+	protected void generateCode(Program.Node node, Statement parseNode, String line) {
 		//does this line have #line:LINENUM tag? use it
-		String line_id = getLineIDFromNodeTags(parse_node);
-		String num = program.registerString(line, node.name, line_id, parse_node.line_number, true);
+		String lineId = getLineIDFromNodeTags(parseNode);
+		String num = program.registerString(line, node.name, lineId, parseNode.lineNumber, true);
 
 		emit(node, ByteCode.RunLine, num);
 	}
 
 	protected void generateCode(Program.Node node, ShortcutOptionGroup statement) {
-		String endof_group = registerLabel("group_end");
+		String endofGroup = registerLabel("groupEnd");
 
 		Array<String> labels = new Array<String>();
 
-		int option_count = 0;
+		int optionCount = 0;
 
 		for (ShortcutOption option : statement.getOptions()) {
-			String option_destination = registerLabel("option_" + (option_count + 1));
-			labels.add(option_destination);
+			String optionDestination = registerLabel("option_" + (optionCount + 1));
+			labels.add(optionDestination);
 
-			String endof_clause = null;
+			String endofClause = null;
 
 			if (option.getCondition() != null) {
-				endof_clause = registerLabel("conditional_" + option_count);
+				endofClause = registerLabel("conditional_" + optionCount);
 				generateCode(node, option.getCondition());
 
-				emit(node, ByteCode.JumpIfFalse, endof_clause);
+				emit(node, ByteCode.JumpIfFalse, endofClause);
 			}
 
-			String label_line_id = getLineIDFromNodeTags(option);
-			String label_string_id = program.registerString(option.getLabel(), node.name, label_line_id,
-					option.line_number, true);
+			String labelLineId = getLineIDFromNodeTags(option);
+			String labelStringId = program.registerString(option.getLabel(), node.name, labelLineId,
+					option.lineNumber, true);
 
-			emit(node, ByteCode.AddOption, label_string_id, option_destination);
+			emit(node, ByteCode.AddOption, labelStringId, optionDestination);
 
 			if (option.getCondition() != null) {
-				emit(node, ByteCode.Label, endof_clause);
+				emit(node, ByteCode.Label, endofClause);
 				emit(node, ByteCode.Pop);
 			}
-			option_count++;
+			optionCount++;
 		}
 
 		emit(node, ByteCode.ShowOptions);
@@ -251,21 +251,21 @@ public class Compiler {
 
 		emit(node, ByteCode.Jump);
 
-		option_count = 0;
+		optionCount = 0;
 		for (ShortcutOption option : statement.getOptions()) {
-			emit(node, ByteCode.Label, labels.get(option_count));
+			emit(node, ByteCode.Label, labels.get(optionCount));
 
 			if (option.getOptionNode() != null)
 				generateCode(node, option.getOptionNode().getStatements());
 
-			emit(node, ByteCode.JumpTo, endof_group);
+			emit(node, ByteCode.JumpTo, endofGroup);
 
-			option_count++;
+			optionCount++;
 
 		}
 
 		//reached the end of option group
-		emit(node,ByteCode.Label,endof_group);
+		emit(node,ByteCode.Label,endofGroup);
 
 		//clean up after jump
 		emit(node, ByteCode.Pop);
@@ -282,21 +282,21 @@ public class Compiler {
 
 	protected void generateCode(Program.Node node, IfStatement statement) {
 		//we will jump to this label at the end of every clause
-		String endof_if = registerLabel("endif");
+		String endofIf = registerLabel("endif");
 
 		for (Clause clause : statement.clauses) {
-			String endof_clause = registerLabel("skipclause");
+			String endofClause = registerLabel("skipclause");
 
 			if (clause.getExpression() != null) {
 				generateCode(node, clause.getExpression());
-				emit(node, ByteCode.JumpIfFalse, endof_clause);
+				emit(node, ByteCode.JumpIfFalse, endofClause);
 			}
 
 			generateCode(node, clause.getStatements());
-			emit(node, ByteCode.JumpTo, endof_if);
+			emit(node, ByteCode.JumpTo, endofIf);
 
 			if (clause.getExpression() != null) {
-				emit(node, ByteCode.Label, endof_clause);
+				emit(node, ByteCode.Label, endofClause);
 			}
 
 			//clean the stack by popping the expression that was tested earlier
@@ -306,7 +306,7 @@ public class Compiler {
 
 		}
 
-		emit(node, ByteCode.Label, endof_if);
+		emit(node, ByteCode.Label, endofIf);
 
 	}
 
@@ -317,11 +317,11 @@ public class Compiler {
 			//this is a jump to another node
 			emit(node, ByteCode.RunNode, destination);
 		} else {
-			String line_id = getLineIDFromNodeTags(statement.parent);
-			String string_id = program.registerString(statement.getLabel(), node.name, line_id, statement.line_number,
+			String lineId = getLineIDFromNodeTags(statement.parent);
+			String stringId = program.registerString(statement.getLabel(), node.name, lineId, statement.lineNumber,
 					true);
 
-			emit(node, ByteCode.AddOption, string_id, destination);
+			emit(node, ByteCode.AddOption, stringId, destination);
 		}
 
 	}
@@ -411,7 +411,7 @@ public class Compiler {
 			emit(node, ByteCode.PushNumber, value.getValue().getNumberValue());
 			break;
 		case STRING:
-			String id = program.registerString(value.getValue().getStringValue(), node.name, null, value.line_number,
+			String id = program.registerString(value.getValue().getStringValue(), node.name, null, value.lineNumber,
 					false);
 			emit(node, ByteCode.PushString, id);
 			break;
@@ -429,7 +429,7 @@ public class Compiler {
 	}
 
 	protected String registerLabel(String commentary) {
-		return "L" + (label_count++) + commentary;
+		return "L" + (labelCount++) + commentary;
 	}
 
 	protected String registerLabel() {

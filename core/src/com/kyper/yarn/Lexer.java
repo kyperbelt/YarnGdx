@@ -16,7 +16,7 @@ public class Lexer {
 
 	public static final String LINE_SEPARATOR = "\n";
 
-	//states consts 
+	//states consts
 	private static final String BASE = "base";
 	private static final String DASH = "-";
 	private static final String COMMAND = "command";
@@ -33,11 +33,11 @@ public class Lexer {
 
 	protected ObjectMap<String, LexerState> states;
 
-	protected LexerState default_state;
-	protected LexerState current_state;
+	protected LexerState defaultState;
+	protected LexerState currentState;
 
-	protected Array<IntBoolPair> indentation_stack;
-	protected boolean should_track_next_indent;
+	protected Array<IntBoolPair> indentationStack;
+	protected boolean            shouldTrackNextIndent;
 
 	public Lexer() {
 		createStates();
@@ -97,31 +97,31 @@ public class Lexer {
 		patterns.put(TokenType.ShortcutOption, "\\-\\>");
 
 		//compound states
-		String shortcut_option = SHORTCUT + DASH + OPTION;
-		String shortcut_option_tag = shortcut_option + DASH + TAG;
-		String command_or_expression = COMMAND + DASH + OR + DASH + EXPRESSION;
-		String link_destination = LINK + DASH + DESTINATION;
+		String shortcutOption = SHORTCUT + DASH + OPTION;
+		String shortcutOptionTag = shortcutOption + DASH + TAG;
+		String commandOrExpression = COMMAND + DASH + OR + DASH + EXPRESSION;
+		String linkDestination = LINK + DASH + DESTINATION;
 
 		states = new ObjectMap<String, Lexer.LexerState>();
 
 		states.put(BASE, new LexerState(patterns));
 		states.get(BASE).addTransition(TokenType.BeginCommand, COMMAND, true);
 		states.get(BASE).addTransition(TokenType.OptionStart, LINK, true);
-		states.get(BASE).addTransition(TokenType.ShortcutOption, shortcut_option);
+		states.get(BASE).addTransition(TokenType.ShortcutOption, shortcutOption);
 		states.get(BASE).addTransition(TokenType.TagMarker, TAG, true);
 		states.get(BASE).addTextRule(TokenType.Text);
 
 		states.put(TAG, new LexerState(patterns));
 		states.get(TAG).addTransition(TokenType.Identifier, BASE);
 
-		states.put(shortcut_option, new LexerState(patterns));
-		states.get(shortcut_option).track_next_indentation = true;
-		states.get(shortcut_option).addTransition(TokenType.BeginCommand, EXPRESSION, true);
-		states.get(shortcut_option).addTransition(TokenType.TagMarker, shortcut_option_tag, true);
-		states.get(shortcut_option).addTextRule(TokenType.Text, BASE);
+		states.put(shortcutOption, new LexerState(patterns));
+		states.get(shortcutOption).trackNextIndentation = true;
+		states.get(shortcutOption).addTransition(TokenType.BeginCommand, EXPRESSION, true);
+		states.get(shortcutOption).addTransition(TokenType.TagMarker, shortcutOptionTag, true);
+		states.get(shortcutOption).addTextRule(TokenType.Text, BASE);
 
-		states.put(shortcut_option_tag, new LexerState(patterns));
-		states.get(shortcut_option_tag).addTransition(TokenType.Identifier, shortcut_option);
+		states.put(shortcutOptionTag, new LexerState(patterns));
+		states.get(shortcutOptionTag).addTransition(TokenType.Identifier, shortcutOption);
 
 		states.put(COMMAND, new LexerState(patterns));
 		states.get(COMMAND).addTransition(TokenType.If, EXPRESSION);
@@ -130,13 +130,13 @@ public class Lexer {
 		states.get(COMMAND).addTransition(TokenType.EndIf);
 		states.get(COMMAND).addTransition(TokenType.Set, ASSIGNMENT);
 		states.get(COMMAND).addTransition(TokenType.EndCommand, BASE, true);
-		states.get(COMMAND).addTransition(TokenType.Identifier, command_or_expression);
+		states.get(COMMAND).addTransition(TokenType.Identifier, commandOrExpression);
 		states.get(COMMAND).addTextRule(TokenType.Text);
 
-		states.put(command_or_expression, new LexerState(patterns));
-		states.get(command_or_expression).addTransition(TokenType.LeftParen, EXPRESSION);
-		states.get(command_or_expression).addTransition(TokenType.EndCommand, BASE, true);
-		states.get(command_or_expression).addTextRule(TokenType.Text);
+		states.put(commandOrExpression, new LexerState(patterns));
+		states.get(commandOrExpression).addTransition(TokenType.LeftParen, EXPRESSION);
+		states.get(commandOrExpression).addTransition(TokenType.EndCommand, BASE, true);
+		states.get(commandOrExpression).addTextRule(TokenType.Text);
 
 		states.put(ASSIGNMENT, new LexerState(patterns));
 		states.get(ASSIGNMENT).addTransition(TokenType.Variable);
@@ -177,14 +177,14 @@ public class Lexer {
 
 		states.put(LINK, new LexerState(patterns));
 		states.get(LINK).addTransition(TokenType.OptionEnd, BASE, true);
-		states.get(LINK).addTransition(TokenType.OptionDelimit, link_destination, true);
+		states.get(LINK).addTransition(TokenType.OptionDelimit, linkDestination, true);
 		states.get(LINK).addTextRule(TokenType.Text);
 
-		states.put(link_destination, new LexerState(patterns));
-		states.get(link_destination).addTransition(TokenType.Identifier);
-		states.get(link_destination).addTransition(TokenType.OptionEnd, BASE);
+		states.put(linkDestination, new LexerState(patterns));
+		states.get(linkDestination).addTransition(TokenType.Identifier);
+		states.get(linkDestination).addTransition(TokenType.OptionEnd, BASE);
 
-		default_state = states.get(BASE);
+		defaultState = states.get(BASE);
 
 		for (Entry<String, LexerState> entry : states) {
 			entry.value.name = entry.key;
@@ -195,41 +195,41 @@ public class Lexer {
 	public TokenList tokenise(String text) {
 
 		//setup
-		indentation_stack = new Array<Lexer.IntBoolPair>();
-		indentation_stack.add(new IntBoolPair(0, false));
-		should_track_next_indent = false;
+		indentationStack = new Array<Lexer.IntBoolPair>();
+		indentationStack.add(new IntBoolPair(0, false));
+		shouldTrackNextIndent = false;
 
 		TokenList tokens = new TokenList();
 
-		current_state = default_state;
+		currentState = defaultState;
 
 		//parse each line
 		Array<String> lines = new Array<String>(text.split(LINE_SEPARATOR));
 		//blank line to ensure 0 indentation end
 		lines.add("");
 
-		int line_number = 1;
-		
+		int lineNumber = 1;
+
 		for (String line : lines) {
-			tokens.addAll(tokeniseLine(line, line_number));
-			line_number++;
+			tokens.addAll(tokeniseLine(line, lineNumber));
+			lineNumber++;
 		}
-		
-		Token end_of_input = new Token(TokenType.EndOfInput, current_state,line_number,0);
-		//tokens.insert(0,end_of_input);
-		tokens.add(end_of_input);
+
+		Token endOfInput = new Token(TokenType.EndOfInput, currentState, lineNumber, 0);
+		//tokens.insert(0,endOfInput);
+		tokens.add(endOfInput);
 		//=====================================
 		//TODO: TO REVERSE INPUT PLEAS EUSE THIS
 		//tokens.reverse();
-		//TODO: REVERSE TOKENS 
+		//TODO: REVERSE TOKENS
 		//====================================
-		
+
 
 		return tokens;
 	}
 
-	public TokenList tokeniseLine(String line, int line_number) {
-		Array<Token> line_tokens_stack = new Array<Token>();
+	public TokenList tokeniseLine(String line, int lineNumber) {
+		Array<Token> lineTokensStack = new Array<Token>();
 
 		//replace tabs with four spaces
 		line = line.replaceAll("\t", "    ");
@@ -238,62 +238,62 @@ public class Lexer {
 		line = line.replaceAll("\r", "");
 
 		//record the indentation level if previous state wants us to
-		int this_indentation = lineIndentation(line);
-		IntBoolPair previous_indentation = indentation_stack.peek();
-		
-		if (should_track_next_indent && this_indentation > previous_indentation.key) {
+		int thisIndentation = lineIndentation(line);
+		IntBoolPair previousIndentation = indentationStack.peek();
+
+		if (shouldTrackNextIndent && thisIndentation > previousIndentation.key) {
 			//if we are more indented than before, emit an
 			//indent token and record this indent level
-			indentation_stack.add(new IntBoolPair(this_indentation, true));
+			indentationStack.add(new IntBoolPair(thisIndentation, true));
 
-			Token indent = new Token(TokenType.Indent, current_state, line_number, previous_indentation.key);
-			indent.value = padLeft("", this_indentation - previous_indentation.key);
-			
+			Token indent = new Token(TokenType.Indent, currentState, lineNumber, previousIndentation.key);
+			indent.value = padLeft("", thisIndentation - previousIndentation.key);
 
-			should_track_next_indent = false;
 
-			line_tokens_stack.add(indent);
-			
-		} else if (this_indentation < previous_indentation.key) {
+			shouldTrackNextIndent = false;
 
-			//if we are less indented, emit a dedent for every 
+			lineTokensStack.add(indent);
+
+		} else if (thisIndentation < previousIndentation.key) {
+
+			//if we are less indented, emit a dedent for every
 			//indentation level that we passed on the way back to 0 that also
 			//emitted an indentation token.
 			//at the same time, remove those indent levels from the stack
 
-			while (this_indentation < indentation_stack.peek().key) {
-				
-				IntBoolPair top_level = indentation_stack.pop();
+			while (thisIndentation < indentationStack.peek().key) {
 
-				if (top_level.value) {
-					Token dedent = new Token(TokenType.Dedent, current_state, line_number, 0);
-					line_tokens_stack.add(dedent);
+				IntBoolPair topLevel = indentationStack.pop();
+
+				if (topLevel.value) {
+					Token dedent = new Token(TokenType.Dedent, currentState, lineNumber, 0);
+					lineTokensStack.add(dedent);
 				}
 			}
 		}
 
 		//now we start finding tokens
-		int column_number = this_indentation;
-		
+		int columnNumber = thisIndentation;
+
 		Regex whitespace = WHITESPACE;
-		
-		while (column_number < line.length()) {
+
+		while (columnNumber < line.length()) {
 
 			//if we are about to hit a line comment, abort processing line
 			//asap
-			if (line.substring(column_number).startsWith(LINE_COMMENT))
+			if (line.substring(columnNumber).startsWith(LINE_COMMENT))
 				break;
 
 			boolean matched = false;
 
-			for (TokenRule rule : current_state.token_rules) {
+			for (TokenRule rule : currentState.tokenRules) {
 
-				Matcher myMatch = rule.altRegex.match(line,column_number);
+				Matcher myMatch = rule.altRegex.match(line,columnNumber);
 				Matcher match = rule.regex.match(line);
-				
+
 				if (!myMatch.find(0))
 					continue;
-				String token_text;
+				String tokenText;
 
 				if (rule.type == TokenType.Text) {
 					//if this is text, then back up to the most recent text
@@ -306,150 +306,150 @@ public class Lexer {
 					//instead, we want to match as this
 					//  BeginCommand text("flip Harley3 +1") EndCommand
 
-					int text_start_index = this_indentation;
+					int textStartIndex = thisIndentation;
 
-					if (line_tokens_stack.size > 0) {
-						while (line_tokens_stack.peek().type == TokenType.Identifier) {
-							line_tokens_stack.pop();
+					if (lineTokensStack.size > 0) {
+						while (lineTokensStack.peek().type == TokenType.Identifier) {
+							lineTokensStack.pop();
 						}
 
-						Token start_delimiter_token = line_tokens_stack.peek();
-						text_start_index = start_delimiter_token.column_number;
-						if (start_delimiter_token.type == TokenType.Indent)
-							text_start_index += start_delimiter_token.value.length();
-						if (start_delimiter_token.type == TokenType.Dedent)
-							text_start_index = this_indentation;
+						Token startDelimiterToken = lineTokensStack.peek();
+						textStartIndex = startDelimiterToken.columnNumber;
+						if (startDelimiterToken.type == TokenType.Indent)
+							textStartIndex += startDelimiterToken.value.length();
+						if (startDelimiterToken.type == TokenType.Dedent)
+							textStartIndex = thisIndentation;
 					}
 
-					column_number = text_start_index;
-					
+					columnNumber = textStartIndex;
 
-					match.find(column_number);
+
+					match.find(columnNumber);
 
 					//TODO: ====
 					//THIS IS PROBABLY WRONG
-					int text_end_index = match.start()+match.group().length();
-					token_text = line.substring(text_start_index,text_end_index);
+					int textEndIndex = match.start()+match.group().length();
+					tokenText = line.substring(textStartIndex,textEndIndex);
 
 				}else {
-					token_text = myMatch.group();
-					
+					tokenText = myMatch.group();
+
 				}
-				
-				column_number+=token_text.length();
-				
-				
-				
+
+				columnNumber+=tokenText.length();
+
+
+
 				//if this was a string, lop off the quotes at the start and end
 				//and un-escape the quotes and slashes
 				if(rule.type == TokenType.Str) {
-					
-					token_text = token_text.substring(1, token_text.length()-1);
-					token_text = token_text.replaceAll("\\\\", "\\");
-					token_text = token_text.replaceAll("\\\"", "\"");
+
+					tokenText = tokenText.substring(1, tokenText.length()-1);
+					tokenText = tokenText.replaceAll("\\\\", "\\");
+					tokenText = tokenText.replaceAll("\\\"", "\"");
 				}
-				
-				//System.out.println("line:"+line_number+" col:"+column_number+" text:"+token_text);
-				
-				Token token = new Token(rule.type, current_state,line_number,column_number,token_text);
-				token.delimits_text = rule.delimits_text;
-				
-				line_tokens_stack.add(token);
-				
-				if(rule.enter_state!=null) {
-					if(!states.containsKey(rule.enter_state))
-						throw new TokeniserException(line_number, column_number, "Unkown tokeniser state "+rule.enter_state);
-					
-					
-					enterState(states.get(rule.enter_state));
-					
-					if(should_track_next_indent == true) {
-						if(indentation_stack.peek().key < this_indentation) {
-							indentation_stack.add(new IntBoolPair(this_indentation, false));
+
+				//System.out.println("line:"+lineNumber+" col:"+columnNumber+" text:"+tokenText);
+
+				Token token = new Token(rule.type, currentState, lineNumber, columnNumber, tokenText);
+				token.delimitsText = rule.delimitsText;
+
+				lineTokensStack.add(token);
+
+				if(rule.enterState!=null) {
+					if(!states.containsKey(rule.enterState))
+						throw new TokeniserException(lineNumber, columnNumber, "Unkown tokeniser state "+rule.enterState);
+
+
+					enterState(states.get(rule.enterState));
+
+					if(shouldTrackNextIndent == true) {
+						if(indentationStack.peek().key < thisIndentation) {
+							indentationStack.add(new IntBoolPair(thisIndentation, false));
 						}
 					}
 				}
-				
+
 				matched = true;
 				break;
 			}
-			
-			
+
+
 			if(!matched) {
-				throw TokeniserException.expectedTokens(line_number, column_number, current_state);
+				throw TokeniserException.expectedTokens(lineNumber, columnNumber, currentState);
 			}
-			
-			Matcher last_white_space = whitespace.match(line);
-			if(last_white_space.find(column_number)) {
-				column_number=last_white_space.end();
+
+			Matcher lastWhiteSpace = whitespace.match(line);
+			if(lastWhiteSpace.find(columnNumber)) {
+				columnNumber=lastWhiteSpace.end();
 			}
 		}
-		
-		TokenList list_to_return = new TokenList(line_tokens_stack);
-		//list_to_return.reverse();
-		
-		return list_to_return;
+
+		TokenList listToReturn = new TokenList(lineTokensStack);
+		//listToReturn.reverse();
+
+		return listToReturn;
 	}
 
-	Regex initial_indent_regex;
+	Regex initialIndentRegex;
 
 	private int lineIndentation(String line) {
-		if (initial_indent_regex == null)
-			initial_indent_regex = new Regex("^(\\s*)");
-		Matcher match = initial_indent_regex.match(line);
-		
+		if (initialIndentRegex == null)
+			initialIndentRegex = new Regex("^(\\s*)");
+		Matcher match = initialIndentRegex.match(line);
+
 		if (!match.find() || match.group(0) == null)
 			return 0;
 		return match.group(0).length();
 	}
 
 	private void enterState(LexerState state) {
-		current_state = state;
-		if (current_state.track_next_indentation)
-			should_track_next_indent = true;
+		currentState = state;
+		if (currentState.trackNextIndentation)
+			shouldTrackNextIndent = true;
 	}
 
 	protected static class TokeniserException extends IllegalStateException {
 		private static final long serialVersionUID = 337269479504244415L;
 
-		public int line_number;
-		public int column_number;
+		public int lineNumber;
+		public int columnNumber;
 
 		public TokeniserException(String message) {
 			super(message);
 		}
 
-		public TokeniserException(int line_number, int column_number, String message) {
-			super(String.format("%1$s : %2$s : %3$s", line_number, column_number, message));
-			this.line_number = line_number;
-			this.column_number = column_number;
+		public TokeniserException(int lineNumber, int columnNumber, String message) {
+			super(String.format("%1$s : %2$s : %3$s", lineNumber, columnNumber, message));
+			this.lineNumber = lineNumber;
+			this.columnNumber = columnNumber;
 		}
-		
-		public static TokeniserException expectedTokens(int line_number,int column_number,LexerState state) {
+
+		public static TokeniserException expectedTokens(int lineNumber,int columnNumber,LexerState state) {
 			Array<String> names = new Array<String>();
-			for (TokenRule rule : state.token_rules) {
+			for (TokenRule rule : state.tokenRules) {
 				names.add(rule.type.name());
 			}
-			
-			String name_list;
-			
+
+			String nameList;
+
 			if(names.size > 1) {
-				String last_item = names.pop();
-				name_list = String.join(", ", names);
-				name_list+= ", or "+last_item;
+				String lastItem = names.pop();
+				nameList = String.join(", ", names);
+				nameList+= ", or "+lastItem;
 			}else {
-				name_list = names.first();
+				nameList = names.first();
 			}
-			
-			String message = String.format("Expected %s", name_list);
-			
-			return new TokeniserException(line_number,column_number,message);
+
+			String message = String.format("Expected %s", nameList);
+
+			return new TokeniserException(lineNumber,columnNumber,message);
 		}
 
 	}
 
 	/**
-	 *  
+	 *
 	 */
 	public class TokenList extends Array<Token> {
 
@@ -555,45 +555,45 @@ public class Lexer {
 		public String value; //optional
 
 		//where we found this token
-		public int line_number;
-		public int column_number;
+		public int lineNumber;
+		public int columnNumber;
 		public String context;
 
-		public boolean delimits_text = false;
+		public boolean delimitsText = false;
 
 		//if this is a function in an expression
 		//this is the number of parameters
-		public int parameter_count;
+		public int parameterCount;
 
 		//the state that the lexer was in when the token was emitted
-		public String lexer_state;
+		public String lexerState;
 
-		public Token(TokenType type, LexerState lexer_state, int line_number, int column_number, String value) {
+		public Token(TokenType type, LexerState lexerState, int lineNumber, int columnNumber, String value) {
 			this.type = type;
-			this.lexer_state = lexer_state.name;
-			this.line_number = line_number;
-			this.column_number = column_number;
+			this.lexerState = lexerState.name;
+			this.lineNumber = lineNumber;
+			this.columnNumber = columnNumber;
 			this.value = value;
 		}
 
-		public Token(TokenType type, LexerState lexer_state, int line_number, int column_number) {
-			this(type, lexer_state, line_number, column_number, null);
+		public Token(TokenType type, LexerState lexerState, int lineNumber, int columnNumber) {
+			this(type, lexerState, lineNumber, columnNumber, null);
 		}
 
-		public Token(TokenType type, LexerState lexer_state, int line_number) {
-			this(type, lexer_state, line_number, -1);
+		public Token(TokenType type, LexerState lexerState, int lineNumber) {
+			this(type, lexerState, lineNumber, -1);
 		}
 
-		public Token(TokenType type, LexerState lexer_state) {
-			this(type, lexer_state, -1);
+		public Token(TokenType type, LexerState lexerState) {
+			this(type, lexerState, -1);
 		}
 
 		@Override
 		public String toString() {
 			if (value != null) {
-				 return String.format("%1$s (%2$s) at %3$s:%4$s (state: %5$s)", type.name(), value.toString(), line_number, column_number, lexer_state);
+				 return String.format("%1$s (%2$s) at %3$s:%4$s (state: %5$s)", type.name(), value.toString(), lineNumber, columnNumber, lexerState);
 			}
-			return String.format("%1$s at %2$s :%3$s (state: %4$s)", type, line_number, column_number, lexer_state);
+			return String.format("%1$s at %2$s :%3$s (state: %4$s)", type, lineNumber, columnNumber, lexerState);
 		}
 
 	}
@@ -602,27 +602,27 @@ public class Lexer {
 
 		public String name;
 		private ObjectMap<TokenType, String> patterns;
-		public Array<TokenRule> token_rules;
-		public boolean track_next_indentation;
+		public Array<TokenRule> tokenRules;
+		public boolean trackNextIndentation;
 
 		public LexerState(ObjectMap<TokenType, String> patterns) {
 
 			this.patterns = patterns;
-			token_rules = new Array<Lexer.TokenRule>();
-			track_next_indentation = false;
+			tokenRules = new Array<Lexer.TokenRule>();
+			trackNextIndentation = false;
 
 		}
 
-		public TokenRule addTransition(TokenType type, String enter_state, boolean delimits_text) {
+		public TokenRule addTransition(TokenType type, String enterState, boolean delimitsText) {
 
 			String pattern = String.format("\\G%1$s", patterns.get(type));
-			TokenRule rule = new TokenRule(type, new Regex(pattern), enter_state, delimits_text);
-			token_rules.add(rule);
+			TokenRule rule = new TokenRule(type, new Regex(pattern), enterState, delimitsText);
+			tokenRules.add(rule);
 			return rule;
 		}
 
-		public TokenRule addTransition(TokenType type, String enter_state) {
-			return addTransition(type, enter_state, false);
+		public TokenRule addTransition(TokenType type, String enterState) {
+			return addTransition(type, enterState, false);
 		}
 
 		public TokenRule addTransition(TokenType type) {
@@ -632,28 +632,28 @@ public class Lexer {
 		/**
 		 * a text rule matches everything that it possibly can, up to Any of the rules
 		 * that already exist.
-		 * 
+		 *
 		 * @return {@link TokenRule} - text rule
 		 */
-		public TokenRule addTextRule(TokenType type, String enter_state) {
+		public TokenRule addTextRule(TokenType type, String enterState) {
 			if (containsTextRule()) {
 				throw new IllegalStateException("State already contains a text rule");
 			}
-			Array<String> delimiter_rules = new Array<String>();
+			Array<String> delimiterRules = new Array<String>();
 
-			for (TokenRule other_rule : token_rules) {
-				if (other_rule.delimits_text)
-					delimiter_rules.add(String.format("(%1$s)", other_rule.regex.toString().substring(2)));
+			for (TokenRule otherRule : tokenRules) {
+				if (otherRule.delimitsText)
+					delimiterRules.add(String.format("(%1$s)", otherRule.regex.toString().substring(2)));
 			}
 
 			//create a regex that matches all text up to but not including
 			//any of the delimiter rules
 
-			String pattern = String.format("\\G((?!%1$s).)*", String.join("|", delimiter_rules));
+			String pattern = String.format("\\G((?!%1$s).)*", String.join("|", delimiterRules));
 
-			TokenRule rule = addTransition(type, enter_state);
+			TokenRule rule = addTransition(type, enterState);
 			rule.regex = new Regex(pattern);
-			rule.is_text_rule = true;
+			rule.isTextRule = true;
 
 			return rule;
 
@@ -664,8 +664,8 @@ public class Lexer {
 		}
 
 		public boolean containsTextRule() {
-			for (TokenRule rule : token_rules) {
-				if (rule.is_text_rule)
+			for (TokenRule rule : tokenRules) {
+				if (rule.isTextRule)
 					return true;
 			}
 			return false;
@@ -676,18 +676,18 @@ public class Lexer {
 	protected class TokenRule {
 		public Regex regex = null;
 		public Regex altRegex = null;
-		
-		//set to null if should stay in same state
-		public String enter_state;
-		public TokenType type;
-		public boolean is_text_rule = false;
-		public boolean delimits_text = false;
 
-		public TokenRule(TokenType type, Regex regex, String enter_state, boolean delimits_text) {
+		//set to null if should stay in same state
+		public String enterState;
+		public TokenType type;
+		public boolean isTextRule = false;
+		public boolean delimitsText = false;
+
+		public TokenRule(TokenType type, Regex regex, String enterState, boolean delimitsText) {
 			this.regex = regex;
-			this.enter_state = enter_state;
+			this.enterState = enterState;
 			this.type = type;
-			this.delimits_text = delimits_text;
+			this.delimitsText = delimitsText;
 			altRegex = new Regex(regex.pattern.toString().replace("\\G","^"));
 		}
 
@@ -732,15 +732,15 @@ public class Lexer {
 			return pattern.matcher(text);
 		}
 
-		public Matcher match(String text, int begin_index) {
+		public Matcher match(String text, int beginIndex) {
 			stringBuilder.setLength(0);
-			stringBuilder.append(text, begin_index, text.length());
+			stringBuilder.append(text, beginIndex, text.length());
 			return match(stringBuilder);
 		}
 
-		public Matcher match(String text, int begin_index, int end_index) {
+		public Matcher match(String text, int beginIndex, int endIndex) {
 			stringBuilder.setLength(0);
-			stringBuilder.append(text, begin_index, end_index);
+			stringBuilder.append(text, beginIndex, endIndex);
 			return match(stringBuilder);
 		}
 	}

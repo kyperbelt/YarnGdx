@@ -12,7 +12,7 @@ import com.kyper.yarn.Program.ParseException;
 public class Parser {
 
 	//we will be consuming tokens fast
-	//TODO: i think becuase im not using a queue some issues might be caused by 
+	//TODO: i think becuase im not using a queue some issues might be caused by
 	//TODO: lexer function that reverses the tokens array
 	protected Array<Token> tokens;
 	protected Library library;
@@ -21,7 +21,7 @@ public class Parser {
 		this.tokens = tokens;
 		//TODO:================================
 		//TODO: fix? this.tokens.reverse();
-		//this.tokens.reverse(); 
+		//this.tokens.reverse();
 		///TODO: ===============================
 		this.library = library;
 	}
@@ -33,30 +33,30 @@ public class Parser {
 
 	/**
 	 * return true if the next symbol is part of the valid types;
-	 * 
+	 *
 	 * @return
 	 */
-	public boolean nextSymbolIs(TokenType... valid_types) {
-		
+	public boolean nextSymbolIs(TokenType... validTypes) {
+
 		TokenType t = this.tokens.first().type;
-		for (TokenType valid_type : valid_types) {
-			if (t == valid_type)
+		for (TokenType validType : validTypes) {
+			if (t == validType)
 				return true;
 		}
 		return false;
 	}
 
 	/**
-	 * used to look ahead - return true if the symbols are of the valid_types. good
+	 * used to look ahead - return true if the symbols are of the validTypes. good
 	 * for when looking for '<<' 'else' ect.
-	 * 
-	 * @param valid_types
+	 *
+	 * @param validTypes
 	 * @return
 	 */
-	public boolean nextSymbolsAre(TokenType... valid_types) {
+	public boolean nextSymbolsAre(TokenType... validTypes) {
 		Array<Token> temp = new Array<Lexer.Token>(tokens);
 		//temp.reverse();
-		for (TokenType type : valid_types) {
+		for (TokenType type : validTypes) {
 			if (temp.removeIndex(0).type != type)
 				return false;
 		}
@@ -65,7 +65,7 @@ public class Parser {
 
 	/**
 	 * return the next token,which must be of the 'type' or throw an exception
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */
@@ -79,7 +79,7 @@ public class Parser {
 
 	/**
 	 * return the next token which an only be of any type except endOfInput
-	 * 
+	 *
 	 * @return
 	 */
 	public Token expectSymbol() {
@@ -91,25 +91,25 @@ public class Parser {
 	}
 
 	/**
-	 * return the next token, which must be one of th e valid_types. or throws an
+	 * return the next token, which must be one of th e validTypes. or throws an
 	 * exception
-	 * 
-	 * @param valid_types
+	 *
+	 * @param validTypes
 	 * @return
 	 */
-	public Token expectSymbol(TokenType... valid_types) {
+	public Token expectSymbol(TokenType... validTypes) {
 		Token t = this.tokens.removeIndex(0);
-		for (TokenType valid_type : valid_types) {
-			if (t.type == valid_type)
+		for (TokenType validType : validTypes) {
+			if (t.type == validType)
 				return t;
 		}
-		throw ParseException.make(t, valid_types);
+		throw ParseException.make(t, validTypes);
 	}
 
 	//indents are 'input' String 'indentLevel' times;
-	private static String tab(int indent_level, String input, boolean newline) {
+	private static String tab(int indentLevel, String input, boolean newline) {
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < indent_level; i++) {
+		for (int i = 0; i < indentLevel; i++) {
 			sb.append("| ");
 		}
 		sb.append(input);
@@ -119,15 +119,15 @@ public class Parser {
 		return sb.toString();
 	}
 
-	private static String tab(int indent_level, String input) {
-		return tab(indent_level, input, true);
+	private static String tab(int indentLevel, String input) {
+		return tab(indentLevel, input, true);
 	}
 
 	public static abstract class ParseNode {
 		protected ParseNode parent;
 
 		//the line that this prase node begins on.
-		protected int line_number;
+		protected int lineNumber;
 
 		protected Array<String> tags;
 
@@ -136,27 +136,27 @@ public class Parser {
 		protected ParseNode(ParseNode parent, Parser p) {
 			this.parent = parent;
 			if (p.tokens.size > 0)
-				this.line_number = p.tokens.first().line_number;
+				this.lineNumber = p.tokens.first().lineNumber;
 			else
-				this.line_number = -1;
+				this.lineNumber = -1;
 			tags = new Array<String>();
 		}
 
 		/**
 		 * recursively prints the ParseNode and all of its child ParseNodes
-		 * 
-		 * @param indent_level
+		 *
+		 * @param indentLevel
 		 * @return
 		 */
-		public abstract String printTree(int indent_level);
+		public abstract String printTree(int indentLevel);
 
-		public String tagsToString(int indent_level) {
+		public String tagsToString(int indentLevel) {
 			if (tags.size > 0) {
 				StringBuilder s = new StringBuilder();
 
-				s.append(tab(indent_level + 1, "Tags:"));
+				s.append(tab(indentLevel + 1, "Tags:"));
 				for (String tag : this.tags) {
-					s.append(tab(indent_level + 2, "#" + tag));
+					s.append(tab(indentLevel + 2, "#" + tag));
 				}
 				return s.toString();
 			} else {
@@ -191,7 +191,7 @@ public class Parser {
 		private String source;
 
 		//defined in the yarn editor
-		private Array<String> node_tags;
+		private Array<String> nodeTags;
 
 		private Array<Statement> statements = new Array<Statement>();
 
@@ -205,27 +205,27 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(tab(indent_level, "Node " + name + " {"));
+			sb.append(tab(indentLevel, "Node " + name + " {"));
 			for (Statement statement : statements) {
-				sb.append(statement.printTree(indent_level + 1));
+				sb.append(statement.printTree(indentLevel + 1));
 			}
-			sb.append(tab(indent_level, "}"));
+			sb.append(tab(indentLevel, "}"));
 			return sb.toString();
 		}
 
-		/** read_only private accesor for statements */
+		/** readOnly private accesor for statements */
 		public Array<Statement> getStatements() {
 			return statements;
 		}
 
 		public Array<String> getNodeTags() {
-			return node_tags;
+			return nodeTags;
 		}
 
-		public void setNodeTags(Array<String> node_tags) {
-			this.node_tags = node_tags;
+		public void setNodeTags(Array<String> nodeTags) {
+			this.nodeTags = nodeTags;
 		}
 
 		public String getName() {
@@ -264,34 +264,34 @@ public class Parser {
 
 		//possible types of statements we can have
 		private Block block;
-		private IfStatement if_statement;
-		private OptionStatement option_satement;
-		private AssignmentStatement assignment_statement;
-		private CustomCommand custom_command;
+		private IfStatement ifStatement;
+		private OptionStatement optionSatement;
+		private AssignmentStatement assignmentStatement;
+		private CustomCommand customCommand;
 		private String line;
-		private ShortcutOptionGroup shortcut_option_group;
+		private ShortcutOptionGroup shortcutOptionGroup;
 
 		protected Statement(ParseNode parent, Parser p) {
 			super(parent, p);
-			
+
 			if (Block.canParse(p)) {
                 type = Type.Block;
                 block = new Block(this, p);
             } else if (IfStatement.canParse(p)) {
                 type = Type.IfStatement;
-                if_statement = new IfStatement(this, p);
+                ifStatement = new IfStatement(this, p);
             } else if (OptionStatement.canParse(p)) {
                 type = Type.OptionStatement;
-                option_satement = new OptionStatement(this, p);
+                optionSatement = new OptionStatement(this, p);
             } else if (AssignmentStatement.canParse(p)) {
                 type = Type.AssignmentStatement;
-                assignment_statement = new AssignmentStatement(this, p);
+                assignmentStatement = new AssignmentStatement(this, p);
             } else if (ShortcutOptionGroup.canParse(p)) {
                 type = Type.ShortcutOptionGroup;
-                shortcut_option_group = new ShortcutOptionGroup(this, p);
+                shortcutOptionGroup = new ShortcutOptionGroup(this, p);
             } else if (CustomCommand.canParse(p)) {
                 type = Type.CustomCommand;
-                custom_command = new CustomCommand(this, p);
+                customCommand = new CustomCommand(this, p);
             } else if (p.nextSymbolIs(TokenType.Text)) {
                 line = p.expectSymbol(TokenType.Text).value;
                 type = Type.Line;
@@ -300,47 +300,47 @@ public class Parser {
             }
 			//parse the optional tags that follow this statement
 			Array<String> tags = new Array<String>();
-			
+
 			while(p.nextSymbolIs(TokenType.TagMarker)) {
 				p.expectSymbol(TokenType.TagMarker);
 				String tag = p.expectSymbol(TokenType.Identifier).value;
 				tags.add(tag);
 			}
-			
+
 			if(tags.size>0)
 				this.tags = tags;
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			  StringBuilder s = new StringBuilder ();
               switch (type) {
               case Block:
-                  s.append(block.printTree (indent_level));
+                  s.append(block.printTree (indentLevel));
                   break;
               case IfStatement:
-                  s.append (if_statement.printTree (indent_level));
+                  s.append (ifStatement.printTree (indentLevel));
                   break;
               case OptionStatement:
-                  s.append (option_satement.printTree (indent_level));
+                  s.append (optionSatement.printTree (indentLevel));
                   break;
               case AssignmentStatement:
-                  s.append (assignment_statement.printTree (indent_level));
+                  s.append (assignmentStatement.printTree (indentLevel));
                   break;
               case ShortcutOptionGroup:
-                  s.append (shortcut_option_group.printTree (indent_level));
+                  s.append (shortcutOptionGroup.printTree (indentLevel));
                   break;
               case CustomCommand:
-                  s.append (custom_command.printTree (indent_level));
+                  s.append (customCommand.printTree (indentLevel));
                   break;
               case Line:
-                  s.append (tab (indent_level, "Line: " + line));
+                  s.append (tab (indentLevel, "Line: " + line));
                   break;
               default:
                   throw new IllegalArgumentException ();
               }
 
-              s.append (tagsToString(indent_level));
+              s.append (tagsToString(indentLevel));
 
               return s.toString ();
 		}
@@ -354,19 +354,19 @@ public class Parser {
 		}
 
 		public IfStatement getIfStatement() {
-			return if_statement;
+			return ifStatement;
 		}
 
 		public OptionStatement getOptionStatement() {
-			return option_satement;
+			return optionSatement;
 		}
 
 		public AssignmentStatement getAssignmentStatement() {
-			return assignment_statement;
+			return assignmentStatement;
 		}
 
 		public CustomCommand getCustomCommand() {
-			return custom_command;
+			return customCommand;
 		}
 
 		public String getLine() {
@@ -374,7 +374,7 @@ public class Parser {
 		}
 
 		public ShortcutOptionGroup getShortcutOptionGroup() {
-			return shortcut_option_group;
+			return shortcutOptionGroup;
 		}
 
 	}
@@ -391,46 +391,46 @@ public class Parser {
 		protected Type type;
 
 		private Expression expression;
-		private String client_command;
+		private String clientCommand;
 
 		protected CustomCommand(ParseNode parent, Parser p) {
 			super(parent, p);
 			p.expectSymbol(TokenType.BeginCommand);
 
-			//custom commands can have any token in them, Read them all until we hit the 
+			//custom commands can have any token in them, Read them all until we hit the
 			//end of command token
-			Array<Token> command_tokens = new Array<Lexer.Token>();
+			Array<Token> commandTokens = new Array<Lexer.Token>();
 			do {
-				command_tokens.add(p.expectSymbol());
+				commandTokens.add(p.expectSymbol());
 			} while (!p.nextSymbolIs(TokenType.EndCommand));
 			p.expectSymbol(TokenType.EndCommand);
 
 			//if the first token is an identifier and the second is
 			//a left paren, it may be a function call expression;
 			//evaluate it as such
-			if (command_tokens.size > 1 && command_tokens.get(0).type == TokenType.Identifier
-					&& command_tokens.get(1).type == TokenType.LeftParen) {
-				
-				Parser parser = new Parser(command_tokens, p.library);
+			if (commandTokens.size > 1 && commandTokens.get(0).type == TokenType.Identifier
+					&& commandTokens.get(1).type == TokenType.LeftParen) {
+
+				Parser parser = new Parser(commandTokens, p.library);
 				Expression expression = Expression.parse(this, parser);
 				type = Type.Expression;
 				this.expression = expression;
 			} else {
 				//otherwise, evaluate it as a command
 				type = Type.ClientCommand;
-				this.client_command = command_tokens.get(0).value;
+				this.clientCommand = commandTokens.get(0).value;
 
 			}
 
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			switch (type) {
 			case Expression:
-				return tab(indent_level, "Expression: ") + expression.printTree(indent_level + 1);
+				return tab(indentLevel, "Expression: ") + expression.printTree(indentLevel + 1);
 			case ClientCommand:
-				return tab(indent_level, "Command: " + client_command);
+				return tab(indentLevel, "Command: " + clientCommand);
 			}
 			return "";
 		}
@@ -440,7 +440,7 @@ public class Parser {
 		}
 
 		public String getClientCommand() {
-			return client_command;
+			return clientCommand;
 		}
 
 		protected static boolean canParse(Parser p) {
@@ -460,11 +460,11 @@ public class Parser {
 		protected ShortcutOptionGroup(ParseNode parent, Parser p) {
 			super(parent, p);
 
-			//keep parsing options until we cant, but expect at least one (otherwise its 
+			//keep parsing options until we cant, but expect at least one (otherwise its
 			//not actually a list of options)
-			int shortcut_index = 1;//give each option a number so it can name itself
+			int shortcutIndex = 1;//give each option a number so it can name itself
 			do {
-				options.add(new ShortcutOption(shortcut_index++, this, p));
+				options.add(new ShortcutOption(shortcutIndex++, this, p));
 			} while (p.nextSymbolIs(TokenType.ShortcutOption));
 		}
 
@@ -473,14 +473,14 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(tab(indent_level, "Shortcut option group {"));
+			sb.append(tab(indentLevel, "Shortcut option group {"));
 
 			for (ShortcutOption option : options) {
-				sb.append(option.printTree(indent_level + 1));
+				sb.append(option.printTree(indentLevel + 1));
 			}
-			sb.append(tab(indent_level, "}"));
+			sb.append(tab(indentLevel, "}"));
 
 			return sb.toString();
 		}
@@ -496,9 +496,9 @@ public class Parser {
 
 		private String label;
 		private Expression condition;
-		private Node option_node;
+		private Node optionNode;
 
-		protected ShortcutOption(int option_index, ParseNode parent, Parser p) {
+		protected ShortcutOption(int optionIndex, ParseNode parent, Parser p) {
 			super(parent, p);
 			p.expectSymbol(TokenType.ShortcutOption);
 			label = p.expectSymbol(TokenType.Text).value;
@@ -526,7 +526,7 @@ public class Parser {
 			//parse the statements belonging to this option if has any
 			if (p.nextSymbolIs(TokenType.Indent)) {
 				p.expectSymbol(TokenType.Indent);
-				option_node = new Node(nodeParent().name + "." + option_index, this, p);
+				optionNode = new Node(nodeParent().name + "." + optionIndex, this, p);
 				p.expectSymbol(TokenType.Dedent);
 			}
 
@@ -537,7 +537,7 @@ public class Parser {
 		}
 
 		public Node getOptionNode() {
-			return option_node;
+			return optionNode;
 		}
 
 		protected String getLabel() {
@@ -545,23 +545,23 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(tab(indent_level, "Option \"" + label + "\""));
+			sb.append(tab(indentLevel, "Option \"" + label + "\""));
 
 			if (condition != null) {
-				sb.append(tab(indent_level + 1, "(when:"));
-				sb.append(condition.printTree(indent_level + 2));
-				sb.append(tab(indent_level + 1, "),"));
+				sb.append(tab(indentLevel + 1, "(when:"));
+				sb.append(condition.printTree(indentLevel + 2));
+				sb.append(tab(indentLevel + 1, "),"));
 			}
 
-			if (option_node != null) {
-				sb.append(tab(indent_level, "{"));
-				sb.append(option_node.printTree(indent_level + 1));
-				sb.append(tab(indent_level, "}"));
+			if (optionNode != null) {
+				sb.append(tab(indentLevel, "{"));
+				sb.append(optionNode.printTree(indentLevel + 1));
+				sb.append(tab(indentLevel, "}"));
 			}
 
-			sb.append(tagsToString(indent_level));
+			sb.append(tagsToString(indentLevel));
 
 			return sb.toString();
 		}
@@ -596,13 +596,13 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(tab(indent_level, "Block {"));
+			sb.append(tab(indentLevel, "Block {"));
 			for (Statement statement : getStatements()) {
-				sb.append(statement.printTree(indent_level + 1));
+				sb.append(statement.printTree(indentLevel + 1));
 			}
-			sb.append(tab(indent_level, "}"));
+			sb.append(tab(indentLevel, "}"));
 
 			return sb.toString();
 		}
@@ -624,33 +624,33 @@ public class Parser {
 			super(parent, p);
 
 			//the meaning of the string(s) we have changes
-			//depending on whether we have one or two, so 
+			//depending on whether we have one or two, so
 			//keep them both and decide their meaning once
 			//we know more
 
-			String first_string;
-			String second_string;
+			String firstString;
+			String secondString;
 
 			//Parse "[[LABEL"
 			p.expectSymbol(TokenType.OptionStart);
-			first_string = p.expectSymbol(TokenType.Text).value;
+			firstString = p.expectSymbol(TokenType.Text).value;
 
 			//if there's a | in there, get the string that comes after it
 			if (p.nextSymbolIs(TokenType.OptionDelimit)) {
 
 				p.expectSymbol(TokenType.OptionDelimit);
-				second_string = p.expectSymbol(TokenType.Text, TokenType.Identifier).value;
+				secondString = p.expectSymbol(TokenType.Text, TokenType.Identifier).value;
 
 				//two strings mean that the first is the label, and the second
 				//is the name of the node that we should head to if the option
 				//is selected
-				label = first_string;
-				destination = second_string;
+				label = firstString;
+				destination = secondString;
 
 			} else {
 				//one string means we dont have a label
 				label = null;
-				destination = first_string;
+				destination = firstString;
 			}
 
 			//parse the closing "]]"
@@ -666,11 +666,11 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			if (label != null) {
-				return tab(indent_level, StringUtils.format("Option: \"%1$s\" -> %2$s", label, destination));
+				return tab(indentLevel, StringUtils.format("Option: \"%1$s\" -> %2$s", label, destination));
 			} else {
-				return tab(indent_level, StringUtils.format("Option: -> %s", destination));
+				return tab(indentLevel, StringUtils.format("Option: -> %s", destination));
 			}
 		}
 
@@ -691,11 +691,11 @@ public class Parser {
 			super(parent, p);
 
 			//all if statements begin with "<<if EXPRESSION>>", so parse that
-			Clause primary_clause = new Clause();
+			Clause primaryClause = new Clause();
 
 			p.expectSymbol(TokenType.BeginCommand);
 			p.expectSymbol(TokenType.If);
-			primary_clause.setExpression(Expression.parse(this, p));
+			primaryClause.setExpression(Expression.parse(this, p));
 			p.expectSymbol(TokenType.EndCommand);
 
 			//read the statements for this clause until we hit an <<endif or <<else
@@ -713,25 +713,25 @@ public class Parser {
 
 			}
 
-			primary_clause.setStatements(statements);
-			clauses.add(primary_clause);
+			primaryClause.setStatements(statements);
+			clauses.add(primaryClause);
 
 			//Handle as many <<elseif clauses as we find
 			while (p.nextSymbolsAre(TokenType.BeginCommand, TokenType.ElseIf)) {
-				Clause else_if_clause = new Clause();
+				Clause elseIfClause = new Clause();
 
 				//parse the syntax for this clauses condition
 				p.expectSymbol(TokenType.BeginCommand);
 				p.expectSymbol(TokenType.ElseIf);
-				else_if_clause.setExpression(Expression.parse(this, p));
+				elseIfClause.setExpression(Expression.parse(this, p));
 				p.expectSymbol(TokenType.EndCommand);
 
 				//read statements until we hit an <<endif, <<else or another <<elseif
-				Array<Statement> clause_statements = new Array<Parser.Statement>();
+				Array<Statement> clauseStatements = new Array<Parser.Statement>();
 				while (!p.nextSymbolsAre(TokenType.BeginCommand, TokenType.EndIf)
 						&& !p.nextSymbolsAre(TokenType.BeginCommand, TokenType.Else)
 						&& !p.nextSymbolsAre(TokenType.BeginCommand, TokenType.ElseIf)) {
-					clause_statements.add(new Statement(this, p));
+					clauseStatements.add(new Statement(this, p));
 
 					//ignore any dedents
 					while (p.nextSymbolIs(TokenType.Dedent))
@@ -739,8 +739,8 @@ public class Parser {
 
 				}
 
-				else_if_clause.setStatements(clause_statements);
-				clauses.add(else_if_clause);
+				elseIfClause.setStatements(clauseStatements);
+				clauses.add(elseIfClause);
 			}
 
 			//handle <<else>> if we have one
@@ -752,15 +752,15 @@ public class Parser {
 				p.expectSymbol(TokenType.EndCommand);
 
 				//and parse statements until we hit <<endif
-				Clause else_clause = new Clause();
-				Array<Statement> clause_statements = new Array<Parser.Statement>();
+				Clause elseClause = new Clause();
+				Array<Statement> clauseStatements = new Array<Parser.Statement>();
 
 				while (!p.nextSymbolsAre(TokenType.BeginCommand, TokenType.EndIf)) {
-					clause_statements.add(new Statement(this, p));
+					clauseStatements.add(new Statement(this, p));
 				}
 
-				else_clause.setStatements(clause_statements);
-				clauses.add(else_clause);
+				elseClause.setStatements(clauseStatements);
+				clauses.add(elseClause);
 
 				//ignore any dedents
 				while (p.nextSymbolIs(TokenType.Dedent))
@@ -775,19 +775,19 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			StringBuilder sb = new StringBuilder();
 			boolean first = true;
 			for (Clause clause : clauses) {
 				if (first) {
-					sb.append(tab(indent_level, "If:"));
+					sb.append(tab(indentLevel, "If:"));
 					first = false;
 				} else if (clause.expression != null) {
-					sb.append(tab(indent_level, "Else If:"));
+					sb.append(tab(indentLevel, "Else If:"));
 				} else {
-					sb.append(tab(indent_level, "Else:"));
+					sb.append(tab(indentLevel, "Else:"));
 				}
-				sb.append(clause.printTree(indent_level + 1));
+				sb.append(clause.printTree(indentLevel + 1));
 			}
 
 			return sb.toString();
@@ -831,15 +831,15 @@ public class Parser {
 				return statements;
 			}
 
-			public String printTree(int indent_level) {
+			public String printTree(int indentLevel) {
 				StringBuilder sb = new StringBuilder();
 				if (expression != null)
-					sb.append(expression.printTree(indent_level));
-				sb.append(tab(indent_level, "{"));
+					sb.append(expression.printTree(indentLevel));
+				sb.append(tab(indentLevel, "{"));
 				for (Statement statement : statements) {
-					sb.append(statement.printTree(indent_level + 1));
+					sb.append(statement.printTree(indentLevel + 1));
 				}
-				sb.append(tab(indent_level, "}"));
+				sb.append(tab(indentLevel, "}"));
 				return sb.toString();
 			}
 
@@ -863,19 +863,19 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 
 			switch (value.getType()) {
 			case NUMBER:
-				return tab(indent_level, "" + value.getNumberValue());
+				return tab(indentLevel, "" + value.getNumberValue());
 			case STRING:
-				return tab(indent_level, StringUtils.format("\"%s\"", value.getStringValue()));
+				return tab(indentLevel, StringUtils.format("\"%s\"", value.getStringValue()));
 			case BOOL:
-				return tab(indent_level, value.asString());
+				return tab(indentLevel, value.asString());
 			case VARNAME:
-				return tab(indent_level, value.getVarName());
+				return tab(indentLevel, value.getVarName());
 			case NULL:
-				return tab(indent_level, "(null)");
+				return tab(indentLevel, "(null)");
 			}
 			throw new IllegalArgumentException();
 		}
@@ -945,28 +945,28 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			StringBuilder sb = new StringBuilder();
 			switch (type) {
 			case Value:
-				return value.printTree(indent_level);
+				return value.printTree(indentLevel);
 			case FunctionCall:
 
 				if (params.size == 0) {
-					sb.append(tab(indent_level, "Function call to " + function.getName() + " (no parameters)"));
+					sb.append(tab(indentLevel, "Function call to " + function.getName() + " (no parameters)"));
 				} else {
-					sb.append(tab(indent_level,
+					sb.append(tab(indentLevel,
 							"Function call to " + function.getName() + " (" + params.size + " parameters) {"));
 					for (Expression param : params) {
-						sb.append(param.printTree(indent_level + 1));
+						sb.append(param.printTree(indentLevel + 1));
 					}
-					sb.append(tab(indent_level, "}"));
+					sb.append(tab(indentLevel, "}"));
 				}
 				return sb.toString();
 
 			}
 
-			return tab(indent_level, "<error printing expression!>");
+			return tab(indentLevel, "<error printing expression!>");
 		}
 
 		protected static Expression parse(ParseNode parent, Parser p) {
@@ -974,69 +974,69 @@ public class Parser {
 			// Applies Djikstra's "shunting-yard" algorithm to convert the
 			// stream of infix expressions into postfix notation; we then
 			// build a tree of expressions from the result
-			// https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+			// https://en.wikipedia.org/wiki/Shunting-yardAlgorithm
 
 			Array<Token> expression_RPN = new Array<Lexer.Token>();
-			Array<Token> operator_stack = new Array<Lexer.Token>();
+			Array<Token> operatorStack = new Array<Lexer.Token>();
 
 			//used for keeping count of parameters for each function
-			Array<Token> function_stack = new Array<Lexer.Token>();
-			
-			Array<TokenType> valid_token_types = new Array<Lexer.TokenType>(Operator.operatorTypes());
-			valid_token_types.add(TokenType.Number);
-			valid_token_types.add(TokenType.Variable);
-			valid_token_types.add(TokenType.Str);
-			valid_token_types.add(TokenType.LeftParen);
-			valid_token_types.add(TokenType.RightParen);
-			valid_token_types.add(TokenType.Identifier);
-			valid_token_types.add(TokenType.Comma);
-			valid_token_types.add(TokenType.True);
-			valid_token_types.add(TokenType.False);
-			valid_token_types.add(TokenType.Null);
+			Array<Token> functionStack = new Array<Lexer.Token>();
 
-			Token last_token = null;
+			Array<TokenType> validTokenTypes = new Array<Lexer.TokenType>(Operator.operatorTypes());
+			validTokenTypes.add(TokenType.Number);
+			validTokenTypes.add(TokenType.Variable);
+			validTokenTypes.add(TokenType.Str);
+			validTokenTypes.add(TokenType.LeftParen);
+			validTokenTypes.add(TokenType.RightParen);
+			validTokenTypes.add(TokenType.Identifier);
+			validTokenTypes.add(TokenType.Comma);
+			validTokenTypes.add(TokenType.True);
+			validTokenTypes.add(TokenType.False);
+			validTokenTypes.add(TokenType.Null);
+
+			Token lastToken = null;
 
 			//read all the contents of the expression
-			while (p.tokens.size > 0 && p.nextSymbolIs(valid_token_types.toArray())) {
-				Token next_token = p.expectSymbol(valid_token_types.toArray());
+			while (p.tokens.size > 0 && p.nextSymbolIs(validTokenTypes.toArray())) {
+				Token nextToken = p.expectSymbol(validTokenTypes.toArray());
 
-				if (next_token.type == TokenType.Number 
-						|| next_token.type == TokenType.Variable
-						|| next_token.type == TokenType.Str 
-						|| next_token.type == TokenType.True
-						|| next_token.type == TokenType.False 
-						|| next_token.type == TokenType.Null) {
+				if (nextToken.type == TokenType.Number
+						|| nextToken.type == TokenType.Variable
+						|| nextToken.type == TokenType.Str
+						|| nextToken.type == TokenType.True
+						|| nextToken.type == TokenType.False
+						|| nextToken.type == TokenType.Null) {
 
 					//primitive values go straight to output
-					expression_RPN.add(next_token);
-				} else if (next_token.type == TokenType.Identifier) {
-					operator_stack.add(next_token);//push 
-					function_stack.add(next_token);//push
+					expression_RPN.add(nextToken);
+				} else if (nextToken.type == TokenType.Identifier) {
+					operatorStack.add(nextToken);//push
+					functionStack.add(nextToken);//push
 
 					//next token must be a left paren, so process that immediately
-					next_token = p.expectSymbol(TokenType.LeftParen);
-					
+					nextToken = p.expectSymbol(TokenType.LeftParen);
+
 					//enter that sub expression
-					operator_stack.add(next_token); //push
-					
-				} else if (next_token.type == TokenType.Comma) {
+					operatorStack.add(nextToken); //push
+
+				} else if (nextToken.type == TokenType.Comma) {
 
 					//Resolve this sub expression before moving on
 					try {
 						//pop operators until we reach a left paren
-						while (operator_stack.peek().type != TokenType.LeftParen)
-							expression_RPN.add(operator_stack.pop());
+						while (operatorStack.peek().type != TokenType.LeftParen)
+							expression_RPN.add(operatorStack.pop());
 
 					} catch (IllegalStateException e) {
 						//we reached end of stack too early
 						//this means unbalanced parenthesis
-						throw ParseException.make(next_token, "Error parsing expression:  unbalanced parentheses");
+						throw ParseException.make(nextToken, "Error parsing expression:  unbalanced parentheses");
 					}
 
 					//we expect the top of the stack to now contain the left paren that
 					//begain the list of parameters
-					if (operator_stack.peek().type != TokenType.LeftParen) {
-						throw ParseException.make(operator_stack.peek(),
+					if (operatorStack.peek().type != TokenType.LeftParen) {
+						throw ParseException.make(operatorStack.peek(),
 								"Expression parser got " + "confused dealing with a function");
 					}
 
@@ -1048,9 +1048,9 @@ public class Parser {
 
 					//find the closest function on the stack
 					//and increment the number of params
-					function_stack.peek().parameter_count++;
+					functionStack.peek().parameterCount++;
 
-				} else if (Operator.isOperator(next_token.type)) {
+				} else if (Operator.isOperator(nextToken.type)) {
 					//this is an operator
 
 					//if this is a minus, we need to determine if it is a
@@ -1061,14 +1061,14 @@ public class Parser {
 					//but its easier when we realize that a minus
 					//is only unary when the last token was a left paren,
 					//an operator, or its the first token.
-					if (next_token.type == TokenType.Minus) {
-						
-						if (last_token == null ||
-								last_token.type == TokenType.LeftParen
-								|| Operator.isOperator(last_token.type)) {
+					if (nextToken.type == TokenType.Minus) {
+
+						if (lastToken == null ||
+								lastToken.type == TokenType.LeftParen
+								|| Operator.isOperator(lastToken.type)) {
 
 							//this is unary minus
-							next_token.type = TokenType.UnaryMinus;
+							nextToken.type = TokenType.UnaryMinus;
 
 						}
 					}
@@ -1077,8 +1077,8 @@ public class Parser {
 					//saying "foo = 2" in an expression does not assign foo to 2
 					//and then evaluate to 2. instead, yarn defines this
 					//to mean "foo == 2"
-					if (next_token.type == TokenType.EqualToOrAssign) {
-						next_token.type = TokenType.EqualTo;
+					if (nextToken.type == TokenType.EqualToOrAssign) {
+						nextToken.type = TokenType.EqualTo;
 					}
 
 					// O1 = this operator
@@ -1086,34 +1086,34 @@ public class Parser {
 					// While O2 is an operator, and EITHER: 1. O1 is left-associative and
 					// has precedence <= O2, or 2. O1 is right-associative and
 					// has precedence > O2:
-					while (shouldApplyPrecedence(next_token.type, operator_stack)) {
-						Token o = operator_stack.pop();
+					while (shouldApplyPrecedence(nextToken.type, operatorStack)) {
+						Token o = operatorStack.pop();
 						expression_RPN.add(o);
 					}
 
-					operator_stack.add(next_token);
+					operatorStack.add(nextToken);
 
-				} else if (next_token.type == TokenType.LeftParen) {
+				} else if (nextToken.type == TokenType.LeftParen) {
 
 					//Record that we have entered a paren delimited
 					//subexpression
-					operator_stack.add(next_token);
+					operatorStack.add(nextToken);
 
-				} else if (next_token.type == TokenType.RightParen) {
+				} else if (nextToken.type == TokenType.RightParen) {
 
 					//we are leaving a subexpression; time to resolve the
 					//order of operations that we saw in between the parens;
 					try {
-						while (operator_stack.peek().type != TokenType.LeftParen) {
-							expression_RPN.add(operator_stack.pop());
+						while (operatorStack.peek().type != TokenType.LeftParen) {
+							expression_RPN.add(operatorStack.pop());
 						}
 						//pop left paren
-						operator_stack.pop();
+						operatorStack.pop();
 					} catch (IllegalStateException e) {
-						throw ParseException.make(next_token, "Error parsing expression: unbalanced parentheses");
+						throw ParseException.make(nextToken, "Error parsing expression: unbalanced parentheses");
 					}
 
-					if (operator_stack.peek().type == TokenType.Identifier) {
+					if (operatorStack.peek().type == TokenType.Identifier) {
 						//this whole paren-delimited subexpression is actually
 						//a function call
 
@@ -1121,25 +1121,25 @@ public class Parser {
 						//was a function with no params; otherwise, we
 						//have an additional parameter (on top of the ones we counter
 						//while encountering commas)
-						if (last_token.type != TokenType.LeftParen) {
-							function_stack.peek().parameter_count++;
+						if (lastToken.type != TokenType.LeftParen) {
+							functionStack.peek().parameterCount++;
 						}
 
-						expression_RPN.add(operator_stack.pop());
-						function_stack.pop();
+						expression_RPN.add(operatorStack.pop());
+						functionStack.pop();
 					}
 
 				}
 
 				//record this as the last token we saw; well use it
 				//to figure out if the minuses are unary or not
-				last_token = next_token;
+				lastToken = nextToken;
 
 			}
 
 			//no more tokens; pop all operators onto the output queue
-			while (operator_stack.size > 0) {
-				expression_RPN.add(operator_stack.pop());
+			while (operatorStack.size > 0) {
+				expression_RPN.add(operatorStack.pop());
 			}
 
 			//if the output queue is empty, then this is not an expression
@@ -1149,8 +1149,8 @@ public class Parser {
 
 			//we now have this in more easly parsed RPN form;
 			//time to build the expression tree
-			Token first_token = expression_RPN.first();
-			Array<Expression> evaluation_stack = new Array<Parser.Expression>();
+			Token firstToken = expression_RPN.first();
+			Array<Expression> evaluationStack = new Array<Parser.Expression>();
 			while (expression_RPN.size > 0) {
 
 				Token next = expression_RPN.removeIndex(0);
@@ -1159,22 +1159,22 @@ public class Parser {
 					//this is an operation
 
 					OperatorInfo info = Operator.infoForOperator(next.type);
-					if (evaluation_stack.size < info.arguments) {
+					if (evaluationStack.size < info.arguments) {
 						throw ParseException.make(next,
 								"Error parsing expression: not enough " + "arguments for operator " + next.type.name());
 					}
 
 					Array<Expression> params = new Array<Parser.Expression>();
 					for (int i = 0; i < info.arguments; i++) {
-						params.add(evaluation_stack.pop());
+						params.add(evaluationStack.pop());
 					}
 					params.reverse();
 
-					FunctionInfo operator_function = p.library.getFunction(next.type.name());
+					FunctionInfo operatorFunction = p.library.getFunction(next.type.name());
 
-					Expression exp = new Expression(parent, operator_function, params, p);
+					Expression exp = new Expression(parent, operatorFunction, params, p);
 
-					evaluation_stack.add(exp);
+					evaluationStack.add(exp);
 
 				} else if (next.type == TokenType.Identifier) {
 					//thhis is a function call
@@ -1187,10 +1187,10 @@ public class Parser {
 						info = p.library.getFunction(next.value);
 
 						//ensure that this call has the right number of params;
-						if (!info.isParamCountCorrect(next.parameter_count)) {
+						if (!info.isParamCountCorrect(next.parameterCount)) {
 							String error = StringUtils.format("Error parsing expression: "
 									+ "Unsupported number of parameters for function %1$s (expected %2$s, got %3$s)",
-									next.value, info.getParamCount(), next.parameter_count);
+									next.value, info.getParamCount(), next.parameterCount);
 							throw ParseException.make(next, error);
 						}
 
@@ -1199,37 +1199,37 @@ public class Parser {
 						//use a dummy FunctionInfo to represent info about
 						//the fact that a function is called; note that
 						//attempting to call this will fail
-						info = new FunctionInfo(next.value, next.parameter_count);
+						info = new FunctionInfo(next.value, next.parameterCount);
 					}
 
-					Array<Expression> param_list = new Array<Parser.Expression>();
-					for (int i = 0; i < next.parameter_count; i++) {
-						param_list.add(evaluation_stack.pop());
+					Array<Expression> paramList = new Array<Parser.Expression>();
+					for (int i = 0; i < next.parameterCount; i++) {
+						paramList.add(evaluationStack.pop());
 					}
 
-					param_list.reverse();
+					paramList.reverse();
 
-					Expression exp = new Expression(parent, info, param_list, p);
+					Expression exp = new Expression(parent, info, paramList, p);
 
-					evaluation_stack.add(exp);
+					evaluationStack.add(exp);
 
 				} else {
 					//this is a raw value
 					ValueNode v = new ValueNode(parent, next, p);
 					Expression exp = new Expression(parent, v, p);
-					evaluation_stack.add(exp);
+					evaluationStack.add(exp);
 				}
 
 			}
-			
+
 			//we should now have a single expression in this stack, which is the root
 			//of the expressions tree. if we have more than one, then we have a problem
-			if (evaluation_stack.size != 1) {
-				throw ParseException.make(first_token, "Error parsing expression (stack did not reduce correctly)");
+			if (evaluationStack.size != 1) {
+				throw ParseException.make(firstToken, "Error parsing expression (stack did not reduce correctly)");
 			}
 
 			//return it
-			return evaluation_stack.pop();
+			return evaluationStack.pop();
 
 		}
 
@@ -1237,26 +1237,26 @@ public class Parser {
 		 * used to determine weather shunting-yard algorithm should pop operators from
 		 * the operator stack
 		 */
-		private static boolean shouldApplyPrecedence(TokenType o1, Array<Token> operator_stack) {
-			if (operator_stack.size == 0)
+		private static boolean shouldApplyPrecedence(TokenType o1, Array<Token> operatorStack) {
+			if (operatorStack.size == 0)
 				return false;
 
 			if (!Operator.isOperator(o1))
 				throw new ParseException("Internal error parsing expression");
 
-			TokenType o2 = operator_stack.peek().type;
+			TokenType o2 = operatorStack.peek().type;
 
 			if (Operator.isOperator(o2) == false)
 				return false;
 
-			OperatorInfo o1_info = Operator.infoForOperator(o1);
-			OperatorInfo o2_info = Operator.infoForOperator(o2);
+			OperatorInfo o1Info = Operator.infoForOperator(o1);
+			OperatorInfo o2Info = Operator.infoForOperator(o2);
 
-			if (o1_info.associativity == Operator.Associativity.Left && o1_info.precedence <= o2_info.precedence) {
+			if (o1Info.associativity == Operator.Associativity.Left && o1Info.precedence <= o2Info.precedence) {
 				return true;
 			}
 
-			if (o1_info.associativity == Operator.Associativity.Right && o1_info.precedence < o2_info.precedence) {
+			if (o1Info.associativity == Operator.Associativity.Right && o1Info.precedence < o2Info.precedence) {
 				return true;
 			}
 
@@ -1269,26 +1269,26 @@ public class Parser {
 	// AssignmentStatement = BeginCommand Set <variable> <operation> Expression EndCommand
 	protected static class AssignmentStatement extends ParseNode {
 
-		private String destination_variable;
-		private Expression value_expression;
+		private String destinationVariable;
+		private Expression valueExpression;
 		private TokenType operation;
 
 		protected AssignmentStatement(ParseNode parent, Parser p) {
 			super(parent, p);
 			p.expectSymbol(TokenType.BeginCommand);
 			p.expectSymbol(TokenType.Set);
-			destination_variable = p.expectSymbol(TokenType.Variable).value;
+			destinationVariable = p.expectSymbol(TokenType.Variable).value;
 			operation = p.expectSymbol(validOperators()).type;
-			value_expression = Expression.parse(this, p);
+			valueExpression = Expression.parse(this, p);
 			p.expectSymbol(TokenType.EndCommand);
 		}
 
 		protected String getDestinationVariable() {
-			return destination_variable;
+			return destinationVariable;
 		}
 
 		protected Expression getValueExpression() {
-			return value_expression;
+			return valueExpression;
 		}
 
 		protected TokenType getOperation() {
@@ -1301,12 +1301,12 @@ public class Parser {
 		}
 
 		@Override
-		public String printTree(int indent_level) {
+		public String printTree(int indentLevel) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(tab(indent_level, "Set:"));
-			sb.append(tab(indent_level + 1, destination_variable));
-			sb.append(tab(indent_level + 1, operation.toString()));
-			sb.append(getValueExpression().printTree(indent_level + 1));
+			sb.append(tab(indentLevel, "Set:"));
+			sb.append(tab(indentLevel + 1, destinationVariable));
+			sb.append(tab(indentLevel + 1, operation.toString()));
+			sb.append(getValueExpression().printTree(indentLevel + 1));
 			return sb.toString();
 		}
 
@@ -1319,7 +1319,7 @@ public class Parser {
 	// Operators are used in expressions - things like + - / * != neq
 	protected static class Operator extends ParseNode {
 
-		private TokenType operator_type;
+		private TokenType operatorType;
 
 		protected enum Associativity {
 			Left, // resolve leftmost operand first
@@ -1329,17 +1329,17 @@ public class Parser {
 
 		protected Operator(ParseNode parent, TokenType t, Parser p) {
 			super(parent, p);
-			operator_type = t;
+			operatorType = t;
 		}
 
 		protected Operator(ParseNode parent, Parser p) {
 			super(parent, p);
-			operator_type = p.expectSymbol(operatorTypes()).type;
+			operatorType = p.expectSymbol(operatorTypes()).type;
 		}
 
 		@Override
-		public String printTree(int indent_level) {
-			return tab(indent_level, operator_type.name());
+		public String printTree(int indentLevel) {
+			return tab(indentLevel, operatorType.name());
 		}
 
 		protected static OperatorInfo infoForOperator(TokenType op) {
@@ -1389,18 +1389,18 @@ public class Parser {
 		}
 
 		protected static TokenType[] operatorTypes() {
-			TokenType[] t = new TokenType[] { 
+			TokenType[] t = new TokenType[] {
 					TokenType.Not,
 					TokenType.UnaryMinus,
 
-					TokenType.Add, 
-					TokenType.Minus, 
+					TokenType.Add,
+					TokenType.Minus,
 					TokenType.Divide,
-					TokenType.Multiply, 
+					TokenType.Multiply,
 					TokenType.Modulo,
 
 					TokenType.EqualToOrAssign,
-					TokenType.EqualTo, 
+					TokenType.EqualTo,
 					TokenType.GreaterThan,
 					TokenType.GreaterThanOrEqualTo,
 					TokenType.LessThan,

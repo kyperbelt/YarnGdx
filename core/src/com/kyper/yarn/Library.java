@@ -25,30 +25,30 @@ public class Library {
 	 * loads functions from another lib. if the other lib contains a function with
 	 * the same name as ours, ours will be replaced
 	 */
-	public void importLibrary(Library other_lib) {
-		for (Entry<String, FunctionInfo> entry : other_lib.functions) {
+	public void importLibrary(Library otherLib) {
+		for (Entry<String, FunctionInfo> entry : otherLib.functions) {
 			functions.put(entry.key, entry.value);
 		}
 	}
-	
+
 	public void registerFunction(FunctionInfo function) {
 		functions.put(function.name, function);
 	}
-	
-	public void registerFunction(String name,int param_count,ReturningFunc implementation) {
-		FunctionInfo info = new FunctionInfo(name, param_count, implementation);
+
+	public void registerFunction(String name,int paramCount,ReturningFunc implementation) {
+		FunctionInfo info = new FunctionInfo(name, paramCount, implementation);
 		registerFunction(info);
 	}
-	
-	public void registerFunction(String name,int param_count,Function implementation) {
-		FunctionInfo info = new FunctionInfo(name, param_count, implementation);
+
+	public void registerFunction(String name,int paramCount,Function implementation) {
+		FunctionInfo info = new FunctionInfo(name, paramCount, implementation);
 		registerFunction(info);
 	}
-	
+
 	public boolean functionExists(String name) {
 		return functions.containsKey(name);
 	}
-	
+
 	public void deregisterFunction(String name) {
 		if(functions.containsKey(name))
 			functions.remove(name);
@@ -67,35 +67,35 @@ public class Library {
 		private String name;
 		//the number of parameters this function requores.
 		//-1 = the function will accept any number of params
-		private int param_count;
+		private int    paramCount;
 
 		//the actual implementation of the function
 		//comes in two flavours: a returning one, and a non returning one.
 		//doing this means that you dont have to add a return null
 		//to the end of a function if it doesnt return values
-		private Function function;
-		private ReturningFunc ret_function;
+		private Function      function;
+		private ReturningFunc returningFunc;
 
 		//TODO: support for typed parameters
 		//TODO: support for return type
-		protected FunctionInfo(String name, int param_count, Function implementation) {
+		protected FunctionInfo(String name, int paramCount, Function implementation) {
 			this.name = name;
-			this.param_count = param_count;
+			this.paramCount = paramCount;
 			this.function = implementation;
-			this.ret_function = null;
+			this.returningFunc = null;
 		}
 
-		protected FunctionInfo(String name, int param_count, ReturningFunc implementation) {
+		protected FunctionInfo(String name, int paramCount, ReturningFunc implementation) {
 			this.name = name;
-			this.param_count = param_count;
-			this.ret_function = implementation;
+			this.paramCount = paramCount;
+			this.returningFunc = implementation;
 			this.function = null;
 		}
-		
-		protected FunctionInfo(String name, int param_count) {
+
+		protected FunctionInfo(String name, int paramCount) {
 			this.name = name;
-			this.param_count = param_count;
-			this.ret_function = null;
+			this.paramCount = paramCount;
+			this.returningFunc = null;
 			this.function = null;
 		}
 
@@ -104,7 +104,7 @@ public class Library {
 		}
 
 		public ReturningFunc getReturningFunction() {
-			return ret_function;
+			return returningFunc;
 		}
 
 		public String getName() {
@@ -112,12 +112,12 @@ public class Library {
 		}
 
 		public int getParamCount() {
-			return param_count;
+			return paramCount;
 		}
 
 		//does this function return a value?
 		public boolean returnsValue() {
-			return ret_function != null;
+			return returningFunc != null;
 		}
 
 		public Value invoke(Value... params) {
@@ -131,22 +131,22 @@ public class Library {
 
 			if (isParamCountCorrect(length)) {
 				if (returnsValue()) {
-					return new Value(ret_function.invoke(params));
+					return new Value(returningFunc.invoke(params));
 				} else {
 					function.invoke(params);
 					return Value.NULL;
 				}
 			} else {
 				String error = StringUtils.format(
-						"Incorrect number of parameters for function %1$s (expected %2$s, got %3$s", this.name,
-						this.param_count, params.length);
+								"Incorrect number of parameters for function %1$s (expected %2$s, got %3$s", this.name,
+								this.paramCount, params.length);
 				throw new IllegalStateException(error);
 			}
 
 		}
 
-		protected boolean isParamCountCorrect(int param_count) {
-			return this.param_count == param_count || this.param_count == -1;
+		protected boolean isParamCountCorrect(int paramCount) {
+			return this.paramCount == paramCount || this.paramCount == -1;
 		}
 	}
 }

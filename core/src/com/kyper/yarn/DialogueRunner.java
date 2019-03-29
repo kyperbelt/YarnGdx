@@ -23,25 +23,25 @@ public class DialogueRunner {
 		Running
 	}
 
-	protected static final String EXEC_COMPLETE = "execution_complete_command";
+	protected static final String EXEC_COMPLETE = "executionCompleteCommand";
 
-	private LineHandler line_handler;
-	private OptionsHandler option_handler;
-	private CommandHandler command_handler;
-	private NodeCompleteHandler node_complte_handler;
+	private LineHandler         lineHandler;
+	private OptionsHandler      optionsHandler;
+	private CommandHandler      commandHandler;
+	private NodeCompleteHandler nodeCompleteHandler;
 
 	private Dialogue dialogue;
 	private Program program;
 	private State state = new State();
 
-	private ExecutionState execution_state;
+	private ExecutionState executionState;
 
-	private Node current_node;
+	private Node currentNode;
 
 	protected DialogueRunner(Dialogue d, Program p) {
 		this.dialogue = d;
 		this.program = p;
-		execution_state = ExecutionState.Running;
+		executionState = ExecutionState.Running;
 	}
 
 	/**
@@ -51,24 +51,24 @@ public class DialogueRunner {
 	public boolean setNode(String name) {
 		if (!program.nodes.containsKey(name)) {
 			String error = "no node named " + name;
-			dialogue.error_logger.log(error);
+			dialogue.errorLogger.log(error);
 			setExecutionState(ExecutionState.Stopped);
 			return false;
 		}
 
-		dialogue.debug_logger.log("Running node " + name);
+		dialogue.debugLogger.log("Running node " + name);
 
 		// clear the special variables
 		dialogue.storage.setValue(SpecialVariables.ShuffleOptions, new Value(false));
 
-		current_node = program.nodes.get(name);
+		currentNode = program.nodes.get(name);
 		resetState();
-		state.current_node_name = name;
+		state.currentNodeName = name;
 		return true;
 	}
 
 	public String currentNodeName() {
-		return state.current_node_name;
+		return state.currentNodeName;
 	}
 
 	public void stop() {
@@ -76,7 +76,7 @@ public class DialogueRunner {
 	}
 
 	public boolean hasOptions() {
-		return state.current_options.size > 0;
+		return state.currentOptions.size > 0;
 	}
 
 	/**
@@ -84,34 +84,34 @@ public class DialogueRunner {
 	 */
 	protected void runNext() {
 
-		if (execution_state == ExecutionState.WaitingOnOptionSelection) {
-			dialogue.error_logger.log("Cannot continue running dialogue. Still waiting on option selection.");
-			//execution_state = ExecutionState.Stopped;
+		if (executionState == ExecutionState.WaitingOnOptionSelection) {
+			dialogue.errorLogger.log("Cannot continue running dialogue. Still waiting on option selection.");
+			//executionState = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
 
 			return;
 		}
 
-		if (execution_state == ExecutionState.Stopped)
+		if (executionState == ExecutionState.Stopped)
 			setExecutionState(ExecutionState.Running);
 
 
 
 
-		Instruction current_instruction = current_node.instructions.get(state.program_counter);
+		Instruction currentInstruction = currentNode.instructions.get(state.programCounter);
 
-		runInstruction(current_instruction);
+		runInstruction(currentInstruction);
 
 		//DEBUG instruction sets ---
-		//System.out.println(current_instruction.toString(program, dialogue.library));
+		//System.out.println(currentInstruction.toString(program, dialogue.library));
 
-		state.program_counter++;
+		state.programCounter++;
 
-		if (state.program_counter >= current_node.instructions.size) {
-			node_complte_handler.handle(new NodeCompleteResult(null));
-			//execution_state = ExecutionState.Stopped;
+		if (state.programCounter >= currentNode.instructions.size) {
+			nodeCompleteHandler.handle(new NodeCompleteResult(null));
+			//executionState = ExecutionState.Stopped;
 		    setExecutionState(ExecutionState.Stopped);
-			dialogue.debug_logger.log("Run complete");
+			dialogue.debugLogger.log("Run complete");
 			return;
 		}
 
@@ -125,9 +125,9 @@ public class DialogueRunner {
 	 * looks up the instruction number for a named label in the current node.
 	 */
 	protected int findInstructionForLabel(String label) {
-		if (!current_node.labels.containsKey(label))
-			throw new IndexOutOfBoundsException("Unknown label " + label + " in node " + state.current_node_name);
-		return current_node.labels.get(label);
+		if (!currentNode.labels.containsKey(label))
+			throw new IndexOutOfBoundsException("Unknown label " + label + " in node " + state.currentNodeName);
+		return currentNode.labels.get(label);
 	}
 
 	protected void runInstruction(Instruction instruction) {
@@ -137,21 +137,21 @@ public class DialogueRunner {
 			break;
 		case JumpTo:
 			// jumps to named label
-			state.program_counter = findInstructionForLabel((String) instruction.operandA());
+			state.programCounter = findInstructionForLabel((String) instruction.operandA());
 			break;
 		case RunLine:
 			// looks up a string from the string table
 			// and passes it to the client as a line
-			String line_text = program.getString((String) instruction.operandA());
-			if (line_text == null) {
-				dialogue.error_logger.log("no loaded string table includes line " + instruction.operandA());
+			String lineText = program.getString((String) instruction.operandA());
+			if (lineText == null) {
+				dialogue.errorLogger.log("no loaded string table includes line " + instruction.operandA());
 				break;
 			}
-			line_handler.handle(new LineResult(line_text));
+			lineHandler.handle(new LineResult(lineText));
 			break;
 		case RunCommand:
 			// passes a string to the client as a custom command
-			command_handler.handle(new CommandResult((String) instruction.operandA()));
+			commandHandler.handle(new CommandResult((String) instruction.operandA()));
 			break;
 		case PushString:
 			// pushes a string value onto the stack. the operand is an index into
@@ -174,13 +174,13 @@ public class DialogueRunner {
 			// jumps to a named label if the value of the top of the stack
 			// evaluates to the boolean value 'false'
 			if (!state.peekValue().asBool()) {
-				state.program_counter = findInstructionForLabel((String) instruction.operandA());
+				state.programCounter = findInstructionForLabel((String) instruction.operandA());
 			}
 			break;
 		case Jump:
 			// jumps to a label whose name is on the stack
-			String jump_dest = state.peekValue().asString();
-			state.program_counter = findInstructionForLabel(jump_dest);
+			String jumpDest = state.peekValue().asString();
+			state.programCounter = findInstructionForLabel(jumpDest);
 
 			break;
 		case Pop:
@@ -191,28 +191,28 @@ public class DialogueRunner {
 			// call a function, whose parameters are expected to
 			// be on the stack. pushes the functions return value,
 			// if it returns one
-			String function_name = (String) instruction.operandA();
+			String functionName = (String) instruction.operandA();
 
-			FunctionInfo function = dialogue.library.getFunction(function_name);
+			FunctionInfo function = dialogue.library.getFunction(functionName);
 
 			{
-				int param_count = function.getParamCount();
+				int paramCount = function.getParamCount();
 
 				// if this function takes -1 params, it is variadic.
 				// expect the compiler to have palced the number of params
 				// actually passed at the top of the stack.
-				if (param_count == -1) {
-					param_count = (int) state.popValue().asNumber();
+				if (paramCount == -1) {
+					paramCount = (int) state.popValue().asNumber();
 				}
 
 				Value result;
 
-				if (param_count == 0) {
+				if (paramCount == 0) {
 					result = function.invoke();
 				} else {
 					// get the parameters, which are pushed in reverse
-					Value[] params = new Value[param_count];
-					for (int i = param_count - 1; i >= 0; i--) {
+					Value[] params = new Value[paramCount];
+					for (int i = paramCount - 1; i >= 0; i--) {
 						params[i] = state.popValue();
 					}
 
@@ -229,8 +229,8 @@ public class DialogueRunner {
 			break;
 		case PushVariable:
 			// get contents of a variable and push it to the stack
-			String var_name = (String)instruction.operandA();
-			Value loaded = dialogue.storage.getValue(var_name);
+			String varName = (String)instruction.operandA();
+			Value loaded = dialogue.storage.getValue(varName);
 			state.pushValue(loaded);
 			break;
 		case StoreVariable:
@@ -241,26 +241,26 @@ public class DialogueRunner {
 			break;
 		case Stop:
 			// stop execution immidiately and report it
-			node_complte_handler.handle(new NodeCompleteResult(null));
-			command_handler.handle(new CommandResult(EXEC_COMPLETE));
+			nodeCompleteHandler.handle(new NodeCompleteResult(null));
+			commandHandler.handle(new CommandResult(EXEC_COMPLETE));
 
-			//execution_state = ExecutionState.Stopped;
+			//executionState = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
 			break;
 		case RunNode:
 			// run a node
-			String node_name;
+			String nodeName;
 
 			if (instruction.operandA() == null || ((String)instruction.operandA()).isEmpty()) {
 				// get a string from the stack, and jump to a node with that name
-				node_name = state.peekValue().asString();
+				nodeName = state.peekValue().asString();
 			} else {
 				// jump straight to the node
-				node_name = (String) instruction.operandA();
+				nodeName = (String) instruction.operandA();
 			}
 
-			node_complte_handler.handle(new NodeCompleteResult(node_name));
-			setNode(node_name);
+			nodeCompleteHandler.handle(new NodeCompleteResult(nodeName));
+			setNode(nodeName);
 
 			break;
 		case AddOption:
@@ -268,56 +268,56 @@ public class DialogueRunner {
 			Entry<String, String> option = new Entry<String, String>();
 			option.key = (String) instruction.operandA();
 			option.value = (String) instruction.operandB();
-			state.current_options.add(option);
+			state.currentOptions.add(option);
 			break;
 		case ShowOptions:
 			// if we have no options to show, immidiately stop
-			if (state.current_options.size == 0) {
-				node_complte_handler.handle(new NodeCompleteResult(null));
-				//execution_state = ExecutionState.Stopped;
+			if (state.currentOptions.size == 0) {
+				nodeCompleteHandler.handle(new NodeCompleteResult(null));
+				//executionState = ExecutionState.Stopped;
 				setExecutionState(ExecutionState.Stopped);
 				break;
 			}
 
 			// if we have a single option, and it has no label, select it and continue
 			// execution
-			if (state.current_options.size == 1 && state.current_options.get(0).key == null) {
-				String dest = state.current_options.first().value;
+			if (state.currentOptions.size == 1 && state.currentOptions.get(0).key == null) {
+				String dest = state.currentOptions.first().value;
 				state.pushValue(dest);
-				state.current_options.clear();
+				state.currentOptions.clear();
 				break;
 			}
 
 			if (dialogue.storage.getValue(SpecialVariables.ShuffleOptions).asBool()) {
 				// shuffle the dialogue options if needed
-				int n = state.current_options.size;
+				int n = state.currentOptions.size;
 				for (int opt1 = 0; opt1 < n; opt1++) {
 					int opt2 = opt1 + (int) (MathUtils.random() * (n - opt1));
-					state.current_options.swap(opt1, opt2);
+					state.currentOptions.swap(opt1, opt2);
 				}
 			}
 
 			// present options to user to choose
-			Array<String> option_strings = new Array<String>();
-			for (Entry<String, String> op : state.current_options) {
-				option_strings.add(program.getString(op.key));
+			Array<String> optionStrings = new Array<String>();
+			for (Entry<String, String> op : state.currentOptions) {
+				optionStrings.add(program.getString(op.key));
 			}
 
 			// cant continue until client chooses option
 			setExecutionState(ExecutionState.WaitingOnOptionSelection);
 
-			option_handler.handle(new OptionResult(option_strings, new OptionChooser() {
+			optionsHandler.handle(new OptionResult(optionStrings, new OptionChooser() {
 
 				@Override
-				public void choose(int selected_option_index) {
+				public void choose(int selectedOptionIndex) {
 					// we now know what number option was selected; push the corresponding node name
 					// to the stack
-					String dest_node = state.current_options.get(selected_option_index).value;
-					state.pushValue(dest_node);
+					String destNode = state.currentOptions.get(selectedOptionIndex).value;
+					state.pushValue(destNode);
 
 					// we no longer need the accum list of optionsl clear it so that ist
 					// ready for the next one
-					state.current_options.clear();
+					state.currentOptions.clear();
 
 					// we can now keep running
 					setExecutionState(ExecutionState.Running);
@@ -330,7 +330,7 @@ public class DialogueRunner {
 		default:
 			// no acepted bytecode, stop the program
 			// and throw exeption
-			//execution_state = ExecutionState.Stopped;
+			//executionState = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
 			throw new IllegalArgumentException(instruction.getOperation().name());
 
@@ -338,44 +338,44 @@ public class DialogueRunner {
 	}
 
 	public LineHandler getLineHandler() {
-		return line_handler;
+		return lineHandler;
 	}
 
-	public void setLineHandler(LineHandler line_handler) {
-		this.line_handler = line_handler;
+	public void setLineHandler(LineHandler lineHandler) {
+		this.lineHandler = lineHandler;
 	}
 
 	public OptionsHandler getOptionsHandler() {
-		return option_handler;
+		return optionsHandler;
 	}
 
-	public void setOptionsHandler(OptionsHandler options_handler) {
-		this.option_handler = options_handler;
+	public void setOptionsHandler(OptionsHandler optionsHandler) {
+		this.optionsHandler = optionsHandler;
 	}
 
 	public CommandHandler getCommandHandler() {
-		return command_handler;
+		return commandHandler;
 	}
 
-	public void setCommandHandler(CommandHandler command_handler) {
-		this.command_handler = command_handler;
+	public void setCommandHandler(CommandHandler commandHandler) {
+		this.commandHandler = commandHandler;
 	}
 
 	public NodeCompleteHandler getCompleteHandler() {
-		return node_complte_handler;
+		return nodeCompleteHandler;
 	}
 
-	public void setCompleteHandler(NodeCompleteHandler node_complete_handler) {
-		this.node_complte_handler = node_complete_handler;
+	public void setCompleteHandler(NodeCompleteHandler nodeCompleteHandler) {
+		this.nodeCompleteHandler = nodeCompleteHandler;
 	}
 
 	public ExecutionState getExecutionState() {
-		return execution_state;
+		return executionState;
 	}
 
-	private void setExecutionState(ExecutionState exec_state) {
-		this.execution_state = exec_state;
-		if (execution_state == ExecutionState.Stopped)
+	private void setExecutionState(ExecutionState executionState) {
+		this.executionState = executionState;
+		if (this.executionState == ExecutionState.Stopped)
 			resetState();
 	}
 
@@ -385,13 +385,13 @@ public class DialogueRunner {
 
 	protected class State {
 		// the name of the node that we are currently on
-		public String current_node_name;
+		public String currentNodeName;
 
 		// the instruction number in the current node
-		public int program_counter = 0;
+		public int programCounter = 0;
 
 		// list of options, where each option = <string id,destination node>
-		public Array<Entry<String, String>> current_options = new Array<Entry<String, String>>();
+		public Array<Entry<String, String>> currentOptions = new Array<Entry<String, String>>();
 
 		// the value stack
 		private Array<Value> stack = new Array<Value>();

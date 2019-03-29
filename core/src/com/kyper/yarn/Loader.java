@@ -47,23 +47,23 @@ public class Loader {
 	/**
 	 * print tokens
 	 */
-	public void printTokenList(TokenList token_list) {
+	public void printTokenList(TokenList tokenList) {
 		StringBuilder b = new StringBuilder();
 
-		for (Token token : token_list) {
-			b.appendLine(String.format("%1$s (%2$s line %3$s)", token.toString(), token.value, token.line_number));
+		for (Token token : tokenList) {
+			b.appendLine(String.format("%1$s (%2$s line %3$s)", token.toString(), token.value, token.lineNumber));
 		}
 
-		dialogue.debug_logger.log("Tokens:");
-		dialogue.debug_logger.log(b.toString());
+		dialogue.debugLogger.log("Tokens:");
+		dialogue.debugLogger.log(b.toString());
 	}
 
 	/**
 	 * print the prase tree of node
 	 */
 	public void printParseTree(Parser.ParseNode root) {
-		dialogue.debug_logger.log("Parse Tree:");
-		dialogue.debug_logger.log(root.printTree(0));
+		dialogue.debugLogger.log("Parse Tree:");
+		dialogue.debugLogger.log(root.printTree(0));
 	}
 
 	// the preprocessor that cleans up things to make it easier on ANTLR which we do not use yet lol
@@ -79,10 +79,10 @@ public class Loader {
 	//				this.emmited = emitted;
 	//			}
 	//	}
-	//	
-	//	private String preProcessor(String node_text) {
+	//
+	//	private String preProcessor(String nodeText) {
 	//		String processed = null;
-	//		
+	//
 	//		return processed;
 	//	}
 
@@ -90,14 +90,14 @@ public class Loader {
 	 * given a bunch of raw text load all nodes that were inside it. You can call
 	 * this multiple times to append to the collection of nodes, but note that new
 	 * nodes will replace older ones with the same name.
-	 * 
+	 *
 	 * @return the number of nodes that were loaded
 	 */
-	public Program load(String text, Library library, String file_name, Program include, boolean show_tokens,
-			boolean show_parse_tree, String onlyconsider_node, NodeFormat format) {
+	public Program load(String text, Library library, String fileName, Program include, boolean showTokens,
+			boolean showParseTree, String onlyconsiderNode, NodeFormat format) {
 
 		if (format == NodeFormat.Unkown) {
-			format = getFormatFromFileName(file_name);
+			format = getFormatFromFileName(fileName);
 		}
 
 		//final parsed nodes that were in file
@@ -106,13 +106,13 @@ public class Loader {
 		//load the raw data and get an array of node title-text pairs
 
 		NodeInfo[] infos = getNodesFromText(text, format);
-		
+
 		//for soem weird reason its not used wtf
 		@SuppressWarnings("unused")
-		int nodes_loaded = 0;
+		int nodesLoaded = 0;
 
 		for (NodeInfo info : infos) {
-			if (onlyconsider_node != null && !info.title.equals(onlyconsider_node))
+			if (onlyconsiderNode != null && !info.title.equals(onlyconsiderNode))
 				continue;
 
 			//attempt to parse every nodel log if we encounter any errors
@@ -125,17 +125,17 @@ public class Loader {
 				}
 
 				Lexer lexer = new Lexer();
-				
-				
-				TokenList tokens = lexer.tokenise(info.body);
-				
-				
 
-				if (show_tokens)
+
+				TokenList tokens = lexer.tokenise(info.body);
+
+
+
+				if (showTokens)
 					printTokenList(tokens);
-				
+
 				Node node = new Parser(tokens, library).parse();
-				
+
 
 				//if this node is tagged "rawText", then preserve its source
 				if (info.tags != null && !info.tags.isEmpty() && info.tags.contains("rawText")) {
@@ -146,25 +146,25 @@ public class Loader {
 
 				node.setNodeTags(info.tagsList());
 
-				if (show_parse_tree)
+				if (showParseTree)
 					printParseTree(node);
-				
+
 				nodes.put(node.getName(), node);
 
-				nodes_loaded++;
+				nodesLoaded++;
 
 			} catch (Exception e) {
 				if (e instanceof TokeniserException) {
-					String message = String.format("In file %s: Error reading %s:%s", file_name, info.title,
+					String message = String.format("In file %s: Error reading %s:%s", fileName, info.title,
 							e.getMessage());
 					throw new TokeniserException(message);
 
 				} else if (e instanceof ParseException) {
-					String message = String.format("In file %s: Error parsing node %s:%s", file_name, info.title,
+					String message = String.format("In file %s: Error parsing node %s:%s", fileName, info.title,
 							e.getMessage());
 					throw new ParseException(message);
 				} else if (e instanceof IllegalStateException) {
-					String message = String.format("in file %s: Error reading node %s:%s", file_name, info.title,
+					String message = String.format("in file %s: Error reading node %s:%s", fileName, info.title,
 							e.getMessage());
 					throw new IllegalStateException(message);
 				}else {
@@ -173,21 +173,21 @@ public class Loader {
 			}
 
 		}
-		
-		Compiler compiler = new Compiler(file_name);
+
+		Compiler compiler = new Compiler(fileName);
 		for (Entry<String, Parser.Node> n : nodes) {
 			compiler.compileNode(n.value);
 		}
-		
+
 		if(include!=null)
 			compiler.program.include(include);
 
 		return compiler.program;
 	}
 
-	private static NodeFormat getFormatFromFileName(String file_name) {
+	private static NodeFormat getFormatFromFileName(String fileName) {
 		NodeFormat format;
-		String fn = file_name.toLowerCase();
+		String fn = fileName.toLowerCase();
 		if (fn.endsWith(".json")) {
 			format = NodeFormat.Json;
 		} else if (fn.endsWith("yarn.txt")) {
@@ -195,7 +195,7 @@ public class Loader {
 		} else if (fn.endsWith(".node")) {
 			format = NodeFormat.SingleNodeText;
 		} else {
-			throw new IllegalArgumentException(String.format("Unknown file format for file '%s'", file_name));
+			throw new IllegalArgumentException(String.format("Unknown file format for file '%s'", fileName));
 		}
 		return format;
 	}
@@ -223,27 +223,27 @@ public class Loader {
 				nodes = json.fromJson(Array.class, Loader.NodeInfo.class, text);
 			} catch (Exception e) {
 				if(e instanceof SerializationException) {
-					dialogue.error_logger.log("Error parsing Yarn input: " + e.getMessage());
+					dialogue.errorLogger.log("Error parsing Yarn input: " + e.getMessage());
 				}else if(e instanceof ClassCastException) {
-					dialogue.error_logger.log("Unable to cast yarn");
+					dialogue.errorLogger.log("Unable to cast yarn");
 				}
 			}
 			break;
 		case Text:
 
-			//check for the existance of atleast one '---'+newline sentinel, which divides 
+			//check for the existance of atleast one '---'+newline sentinel, which divides
 			//the headers frmo the body
 
 			//we use a regex to match either \r\n or \n line endings
 			Matcher match = new Regex("---.?\n").match(text);
 			if (!match.find()) {
-				dialogue.error_logger.log("Error parsing input: text appears corrupt(no header)");
+				dialogue.errorLogger.log("Error parsing input: text appears corrupt(no header)");
 				break;
 			}
 
 			BufferedReader reader = new BufferedReader(new StringReader(text));
-			Regex header_regex = new Regex("(?<field>.*): *(?<value>.*)");
-			int line_number = 0;
+			Regex headerRegex = new Regex("(?<field>.*): *(?<value>.*)");
+			int lineNumber = 0;
 			String line;
 			try {
 				while ((line = reader.readLine()) != null) {
@@ -254,7 +254,7 @@ public class Loader {
 					//read header lines
 					do {
 
-						line_number++;
+						lineNumber++;
 
 						//skip empty lines
 						if (line.length() == 0) {
@@ -262,26 +262,26 @@ public class Loader {
 						}
 
 						//attempt ot parse header
-						Matcher header_match = header_regex.match(line);
+						Matcher headerMatch = headerRegex.match(line);
 
-						if (!header_match.find()) {
-							dialogue.error_logger
-									.log(String.format("Line %s: cant parse header '%s'", line_number, line));
+						if (!headerMatch.find()) {
+							dialogue.errorLogger
+									.log(String.format("Line %s: cant parse header '%s'", lineNumber, line));
 							continue;
 						}
 
-						String field = header_match.group("field");
-						String value = header_match.group("value");
+						String field = headerMatch.group("field");
+						String value = headerMatch.group("value");
 
-						Object convert_value;
+						Object convertValue;
 
 						try {
 							@SuppressWarnings("rawtypes")
 							Class type = info.typeOfField(field);
 							if (type == String.class) {
-								convert_value = value;
+								convertValue = value;
 							} else if (type == Integer.class) {
-								convert_value = Integer.parseInt(value);
+								convertValue = Integer.parseInt(value);
 							} else if (type == Position.class) {
 								String[] components = value.split(",");
 
@@ -294,34 +294,34 @@ public class Loader {
 								pos.setX(Integer.parseInt(components[0]));
 								pos.setY(Integer.parseInt(components[1]));
 
-								convert_value = pos;
+								convertValue = pos;
 							} else {
 								throw new IllegalStateException();
 							}
 
-							if (!info.setField(field, convert_value))
+							if (!info.setField(field, convertValue))
 								throw new IllegalStateException();
 
 						} catch (Exception e) {
 							if (e instanceof IllegalArgumentException) {
 
 							} else if (e instanceof IllegalStateException) {
-								dialogue.error_logger.log(String.format("%s:Error setting %s: invalid value '%s'",
-										line_number, field, value));
+								dialogue.errorLogger.log(String.format("%s:Error setting %s: invalid value '%s'",
+																											 lineNumber, field, value));
 							} else if (e instanceof NumberFormatException) {
-								dialogue.error_logger.log("could not convert " + field + ":" + e.getMessage());
+								dialogue.errorLogger.log("could not convert " + field + ":" + e.getMessage());
 							}
 						}
 
 					} while (!(line = reader.readLine()).equals("---"));
 
-					line_number++;
+					lineNumber++;
 
 					//were past the header
 					Array<String> lines = new Array<String>();
 
 					while ((line = reader.readLine()) != null && !line.equals("===")) {
-						line_number++;
+						lineNumber++;
 						lines.add(line);
 					}
 
