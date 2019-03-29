@@ -170,7 +170,18 @@ public class Dialogue {
     }
 
     if (errorLogger == null) throw new YarnRuntimeException("ErrorLogger must be set before loading");
+    NodeFormat format = getNodeFormat(text);
 
+    yarnProgram = loader.load(text, library, fileName, yarnProgram, logTokens, logTree, exclusiveNodeName, format);
+  }
+
+  /**
+   * Infers the format used in the node.
+   * (Essentially, find out whether the node is JSON or not.)
+   * @param text The dialogue node contents.
+   * @return The format used to define the dialogue node.
+   */
+  private NodeFormat getNodeFormat(String text){
     // try to infer type
     NodeFormat format;
     if (text.startsWith("[")) {
@@ -180,8 +191,7 @@ public class Dialogue {
     } else {
       format = NodeFormat.SingleNodeText;
     }
-
-    yarnProgram = loader.load(text, library, fileName, yarnProgram, logTokens, logTree, exclusiveNodeName, format);
+    return format;
   }
 
   /**
