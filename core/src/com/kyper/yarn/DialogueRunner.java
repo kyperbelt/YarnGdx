@@ -4,7 +4,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap.Entry;
 import com.kyper.yarn.Dialogue.*;
-import com.kyper.yarn.Library.FunctionInfo;
+import com.kyper.yarn.FunctionLibrary.FunctionInfo;
 import com.kyper.yarn.YarnProgram.Instruction;
 import com.kyper.yarn.YarnProgram.Node;
 
@@ -82,7 +82,7 @@ public class DialogueRunner {
     runInstruction(currentInstruction);
 
     //DEBUG instruction sets ---
-    //System.out.println(currentInstruction.toString(yarnProgram, dialogue.library));
+    //System.out.println(currentInstruction.toString(yarnProgram, dialogue.functionLibrary));
 
     state.programCounter++;
 
@@ -169,7 +169,7 @@ public class DialogueRunner {
         // if it returns one
         String functionName = (String) instruction.operandA();
 
-        FunctionInfo function = dialogue.library.getFunction(functionName);
+        FunctionInfo function = dialogue.functionLibrary.getFunction(functionName);
 
       {
         int paramCount = function.getParamCount();

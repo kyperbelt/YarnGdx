@@ -7,7 +7,7 @@ import com.badlogic.gdx.utils.ObjectMap.Entry;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenType;
-import com.kyper.yarn.Library.FunctionInfo;
+import com.kyper.yarn.FunctionLibrary.FunctionInfo;
 
 public class YarnProgram {
 
@@ -52,7 +52,7 @@ public class YarnProgram {
     return value;
   }
 
-  public String dumpCode(Library lib){
+  public String dumpCode(FunctionLibrary lib){
     StringBuilder sb = new StringBuilder();
 
     for (Entry<String, Node> entry : nodes) {
@@ -288,7 +288,7 @@ public class YarnProgram {
       this.operantB = operandB;
     }
 
-    public String toString(YarnProgram p, Library l){
+    public String toString(YarnProgram p, FunctionLibrary l){
       // Labels are easy: just dump out the name
       if (operation == ByteCode.Label) {
         return operandA + ":";

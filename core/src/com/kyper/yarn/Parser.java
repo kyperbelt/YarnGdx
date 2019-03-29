@@ -5,7 +5,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenType;
-import com.kyper.yarn.Library.FunctionInfo;
+import com.kyper.yarn.FunctionLibrary.FunctionInfo;
 import com.kyper.yarn.Parser.Operator.OperatorInfo;
 import com.kyper.yarn.YarnProgram.ParseException;
 
@@ -14,16 +14,16 @@ public class Parser {
   //we will be consuming tokens fast
   //TODO: i think becuase im not using a queue some issues might be caused by
   //TODO: lexer function that reverses the tokens array
-  protected Array<Token> tokens;
-  protected Library      library;
+  protected Array<Token>    tokens;
+  protected FunctionLibrary functionLibrary;
 
-  public Parser(Array<Token> tokens, Library library){
+  public Parser(Array<Token> tokens, FunctionLibrary functionLibrary){
     this.tokens = tokens;
     //TODO:================================
     //TODO: fix? this.tokens.reverse();
     //this.tokens.reverse();
     ///TODO: ===============================
-    this.library = library;
+    this.functionLibrary = functionLibrary;
   }
 
   //indents are 'input' String 'indentLevel' times;
@@ -418,7 +418,7 @@ public class Parser {
       //evaluate it as such
       if (commandTokens.size > 1 && commandTokens.get(0).type == TokenType.Identifier && commandTokens.get(1).type == TokenType.LeftParen) {
 
-        Parser     parser     = new Parser(commandTokens, p.library);
+        Parser     parser     = new Parser(commandTokens, p.functionLibrary);
         Expression expression = Expression.parse(this, parser);
         type = Type.Expression;
         this.expression = expression;
@@ -1137,7 +1137,7 @@ public class Parser {
           }
           params.reverse();
 
-          FunctionInfo operatorFunction = p.library.getFunction(next.type.name());
+          FunctionInfo operatorFunction = p.functionLibrary.getFunction(next.type.name());
 
           Expression exp = new Expression(parent, operatorFunction, params, p);
 
@@ -1150,8 +1150,8 @@ public class Parser {
 
           //if we are a lib, use it to check if the
           //number of parameters proveded is correct
-          if (p.library != null) {
-            info = p.library.getFunction(next.value);
+          if (p.functionLibrary != null) {
+            info = p.functionLibrary.getFunction(next.value);
 
             //ensure that this call has the right number of params;
             if (!info.isParamCountCorrect(next.parameterCount)) {

@@ -93,7 +93,7 @@ public class Loader {
    *
    * @return the number of nodes that were loaded
    */
-  public YarnProgram load(String text, Library library, String fileName, YarnProgram include, boolean showTokens,
+  public YarnProgram load(String text, FunctionLibrary functionLibrary, String fileName, YarnProgram include, boolean showTokens,
                           boolean showParseTree, String onlyconsiderNode, NodeFormat format){
 
     if (format == NodeFormat.Unkown) {
@@ -129,7 +129,7 @@ public class Loader {
 
         if (showTokens) printTokenList(tokens);
 
-        Node node = new Parser(tokens, library).parse();
+        Node node = new Parser(tokens, functionLibrary).parse();
 
 
         //if this node is tagged "rawText", then preserve its source

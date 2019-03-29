@@ -16,7 +16,7 @@ import com.kyper.yarn.Dialogue.LineResult;
 import com.kyper.yarn.Dialogue.NodeCompleteResult;
 import com.kyper.yarn.Dialogue.OptionResult;
 import com.kyper.yarn.DialogueStorage;
-import com.kyper.yarn.Library.Function;
+import com.kyper.yarn.FunctionLibrary.Function;
 import com.kyper.yarn.Value;
 
 public class YarnLibgdx extends ApplicationAdapter {
@@ -112,9 +112,9 @@ public class YarnLibgdx extends ApplicationAdapter {
     // it to use
     testDialogue = new Dialogue(dialogueStorage);
 
-    // we will register a custom function to the library that takes in
+    // we will register a custom function to the functionLibrary that takes in
     // one parameter - sally's action sprite
-    testDialogue.getLibrary().registerFunction("setSallyAction", 1, new Function() {
+    testDialogue.getFunctionLibrary().registerFunction("setSallyAction", 1, new Function() {
       @Override
       public void invoke(Value... params){
         // this function only has one parameter so check like so

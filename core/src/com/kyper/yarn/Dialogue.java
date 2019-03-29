@@ -7,7 +7,7 @@ import com.badlogic.gdx.utils.ObjectMap.Entry;
 import com.kyper.yarn.Analyser.Context;
 import com.kyper.yarn.DialogueRunner.*;
 import com.kyper.yarn.Lexer.TokenType;
-import com.kyper.yarn.Library.ReturningFunc;
+import com.kyper.yarn.FunctionLibrary.ReturningFunc;
 import com.kyper.yarn.Loader.NodeFormat;
 import com.kyper.yarn.YarnProgram.LineInfo;
 
@@ -38,8 +38,8 @@ public class Dialogue {
   protected            Loader                     loader;
   // the yarnProgram is the compiled yarn yarnProgram
   protected            YarnProgram                yarnProgram;
-  // the library contains all the functions and operators we know about
-  protected            Library                    library;
+  // the functionLibrary contains all the functions and operators we know about
+  protected            FunctionLibrary            functionLibrary;
   protected            boolean                    executionCompleted;
   ObjectMap<String, String> textForNodes;
   private   DialogueRunner runner;
@@ -50,10 +50,8 @@ public class Dialogue {
   protected ReturningFunc  yarnFunctionNodeVisitCount = new ReturningFunc() {
     @Override
     public Object invoke(Value... params){
-
       // determine the node were checking
       String nodeName;
-
       if (params.length == 0) {
         // no marams? check the current node
         nodeName = runner.currentNodeName();
@@ -100,22 +98,22 @@ public class Dialogue {
   public Dialogue(VariableStorage storage, YarnLogger debug, YarnLogger error){
     this.storage = storage;
     loader = new Loader(this);
-    library = new Library();
+    functionLibrary = new FunctionLibrary();
 
     this.debugLogger = debug;
     this.errorLogger = error;
     this.executionCompleted = false;
 
-    library.importLibrary(new StandardLibrary());
+    functionLibrary.importLibrary(new StandardFunctionLibrary());
 
     // register the "visited" function which returns true if we've visited
     // a node previously (nodes are marked as visited when we leave them)
-    library.registerFunction("visited", -1, yarnFunctionIsNodeVisited);
+    functionLibrary.registerFunction("visited", -1, yarnFunctionIsNodeVisited);
 
     // register the visitCount function which returns athe number of times
     // a node has been run(increments on node end)
     // no parameters = check the current node
-    library.registerFunction("visitCount", -1, yarnFunctionNodeVisitCount);
+    functionLibrary.registerFunction("visitCount", -1, yarnFunctionNodeVisitCount);
 
   }
 
@@ -128,8 +126,8 @@ public class Dialogue {
     this(storage, DEFAULT_DEBUG_LOGGER, DEFAULT_ERROR_LOGGER);
   }
 
-  public Library getLibrary(){
-    return library;
+  public FunctionLibrary getFunctionLibrary(){
+    return functionLibrary;
   }
 
   public boolean isRunning(){
@@ -175,7 +173,8 @@ public class Dialogue {
     if (errorLogger == null) throw new YarnRuntimeException("ErrorLogger must be set before loading");
     NodeFormat format = getNodeFormat(text);
 
-    yarnProgram = loader.load(text, library, fileName, yarnProgram, logTokens, logTree, exclusiveNodeName, format);
+    yarnProgram = loader.load(text,
+                              functionLibrary, fileName, yarnProgram, logTokens, logTree, exclusiveNodeName, format);
   }
 
   /**
@@ -539,7 +538,7 @@ public class Dialogue {
   }
 
   public String getByteCode(){
-    return yarnProgram.dumpCode(library);
+    return yarnProgram.dumpCode(functionLibrary);
   }
 
   public boolean nodeExists(String nodeName){
@@ -823,9 +822,9 @@ public class Dialogue {
   /**
    * the standrad built in lib of functions and operators
    */
-  private static class StandardLibrary extends Library {
+  private static class StandardFunctionLibrary extends FunctionLibrary {
 
-    public StandardLibrary(){
+    public StandardFunctionLibrary(){
       // operations
 
       registerFunction(TokenType.Add.name(), 2, new ReturningFunc() {

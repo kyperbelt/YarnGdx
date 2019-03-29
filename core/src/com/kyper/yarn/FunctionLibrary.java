@@ -7,9 +7,9 @@ import com.badlogic.gdx.utils.ObjectMap.Entry;
 /**
  * A collection of callable functions
  */
-public class Library {
+public class FunctionLibrary {
 
-  private ObjectMap<String, FunctionInfo> functions = new ObjectMap<String, Library.FunctionInfo>();
+  private ObjectMap<String, FunctionInfo> functions = new ObjectMap<String, FunctionLibrary.FunctionInfo>();
 
   /**
    * Returns a function - throws an exception if the function doesnt exist.Use FunctionExists to check for a functions
@@ -24,7 +24,7 @@ public class Library {
    * loads functions from another lib. if the other lib contains a function with the same name as ours, ours will be
    * replaced
    */
-  public void importLibrary(Library otherLib){
+  public void importLibrary(FunctionLibrary otherLib){
     for (Entry<String, FunctionInfo> entry : otherLib.functions) {
       functions.put(entry.key, entry.value);
     }
