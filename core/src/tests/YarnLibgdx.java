@@ -152,12 +152,12 @@ public class YarnLibgdx extends ApplicationAdapter {
 		// testDialogue = new Dialogue(dialogueStorage,YarnLoggerDebug,YarnLoggerError)
 
 		// load the ship dialogue from file
-		testDialogue.loadFile(shipFile, showTokens, showParseTree, onlyConsider);
+		testDialogue.loadString(Gdx.files.internal(shipFile).readString(), shipFile , showTokens, showParseTree, onlyConsider);
 
 		// load the sally dialogue from file -- notice that we load it to the same
 		// dialogue. This allows us to retain the same storage and use the same
 		// libraries -
-		testDialogue.loadFile(sallyFile, showTokens, showParseTree, null);
+		testDialogue.loadString(Gdx.files.internal(sallyFile).readString(), sallyFile, showTokens, showParseTree, null);
 
 		// in order to begin updating and receiving results from our dialogue we must
 		// start it
