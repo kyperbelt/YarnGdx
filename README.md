@@ -1,3 +1,9 @@
+This project is forked off kyperbelt's impressive work on YarnGDX, which provides a powerful way to embed branching dialogues into LibGDX based Games / Game engines.
+
+The goal of this fork is to provide more convenience in use of the exposed API and to blend well into the existing LibGDX ecosystem *(and to better serve my personal OCD.)*
+
+Readme taken from Upstream:
+
 ![alt text](https://github.com/kyperbelt/YarnGdx/blob/master/yarngdxlogo.png "Yarn GDX Logo")
 
 YarnGdx is a Libgdx library for creating interactive dialogue in games! YarnGdx is able to parse programs made with [Yarn][1]. Yarn's minimal syntax is very similar to that of [Twine][2], so Twine users should be able to transition easily. If you don't know Twine or Yarn yet dont worry - It is super easy to learn the basics and get started. The Yarn language is used in several well known games like [Night In The Woods][20].
