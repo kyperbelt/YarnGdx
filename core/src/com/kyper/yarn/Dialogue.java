@@ -14,26 +14,33 @@ import com.kyper.yarn.YarnProgram.LineInfo;
 public class Dialogue {
 
   // node we start from
-  public static final String                     DEFAULT_START    = "Start";
-  public              YarnLogger                 debugLogger;
-  public              YarnLogger                 errorLogger;
-  // collection of nodes that we've seen
-  public              ObjectMap<String, Integer> visitedNodeCount = new ObjectMap<String, Integer>();
-  protected           VariableStorage            storage;
-  // loader contains all the nodes we're going to run
-  protected           Loader                     loader;
-  // the yarnProgram is the compiled yarn yarnProgram
-  protected           YarnProgram                yarnProgram;
-  // the library contains all the functions and operators we know about
-  protected           Library                    library;
-  protected           boolean                    executionCompleted;
-  protected ReturningFunc  yarnFunctionIsNodeVisited  = new ReturningFunc() {
+  public static final  String                     DEFAULT_START             = "Start";
+  /** The default debug logger implementation. */
+  private static final YarnLogger                 DEFAULT_DEBUG_LOGGER      = new YarnLogger() {
     @Override
-    public Object invoke(Value... params){
-      boolean visited = (Integer) yarnFunctionNodeVisitCount.invoke(params) > 0;
-      return visited;
+    public void log(String message){
+      Gdx.app.log("YarnGdx:", message);
     }
   };
+  /** The default error logger implementaiton. */
+  private static final YarnLogger                 DEFAULT_ERROR_LOGGER      = new YarnLogger() {
+    @Override
+    public void log(String message){
+      Gdx.app.error("YarnGdx:", message);
+    }
+  };
+  public               YarnLogger                 debugLogger;
+  public               YarnLogger                 errorLogger;
+  // collection of nodes that we've seen
+  public               ObjectMap<String, Integer> visitedNodeCount          = new ObjectMap<String, Integer>();
+  protected            VariableStorage            storage;
+  // loader contains all the nodes we're going to run
+  protected            Loader                     loader;
+  // the yarnProgram is the compiled yarn yarnProgram
+  protected            YarnProgram                yarnProgram;
+  // the library contains all the functions and operators we know about
+  protected            Library                    library;
+  protected            boolean                    executionCompleted;
   ObjectMap<String, String> textForNodes;
   private   DialogueRunner runner;
   /**
@@ -68,6 +75,13 @@ public class Dialogue {
       int visitCount = 0;
       if (visitedNodeCount.containsKey(nodeName)) visitCount = visitedNodeCount.get(nodeName);
       return visitCount;
+    }
+  };
+  protected            ReturningFunc              yarnFunctionIsNodeVisited = new ReturningFunc() {
+    @Override
+    public Object invoke(Value... params){
+      boolean visited = (Integer) yarnFunctionNodeVisitCount.invoke(params) > 0;
+      return visited;
     }
   };
   private   RunnerResult   runnerResult;
@@ -111,18 +125,7 @@ public class Dialogue {
    * @param storage - will be used to store/get values
    */
   public Dialogue(VariableStorage storage){
-    this(storage, new YarnLogger() {
-
-      @Override
-      public void log(String message){
-        Gdx.app.log("YarnGdx:", message);
-      }
-    }, new YarnLogger() {
-      @Override
-      public void log(String message){
-        Gdx.app.error("YarnGdx:", message);
-      }
-    });
+    this(storage, DEFAULT_DEBUG_LOGGER, DEFAULT_ERROR_LOGGER);
   }
 
   public Library getLibrary(){
@@ -176,9 +179,10 @@ public class Dialogue {
   }
 
   /**
-   * Infers the format used in the node.
-   * (Essentially, find out whether the node is JSON or not.)
+   * Infers the format used in the node. (Essentially, find out whether the node is JSON or not.)
+   *
    * @param text The dialogue node contents.
+   *
    * @return The format used to define the dialogue node.
    */
   private NodeFormat getNodeFormat(String text){
