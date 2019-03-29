@@ -44,7 +44,7 @@ public class Dialogue {
     @Override
     public Object invoke(Value... params){
 
-      // determin ethe node were checking
+      // determine the node were checking
       String nodeName;
 
       if (params.length == 0) {
