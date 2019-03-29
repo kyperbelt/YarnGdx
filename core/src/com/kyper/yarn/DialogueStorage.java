@@ -10,121 +10,114 @@ import com.kyper.yarn.Value.Type;
  */
 public class DialogueStorage implements VariableStorage {
 
-	private static final String NAME = "$USERDATA_NAME";
+  private static final String NAME = "$USERDATA_NAME";
+  private static Json                     MYFRIEND;
+  private        ObjectMap<String, Value> variables;
+  private String name;
 
-	private ObjectMap<String, Value> variables;
-	private static Json MYFRIEND;
+  public DialogueStorage(String name){
+    this.name = name;
+    variables = new ObjectMap<String, Value>();
+  }
 
-	private String name;
+  public String getName(){
+    return name;
+  }
 
-	public DialogueStorage(String name) {
-		this.name = name;
-		variables = new ObjectMap<String, Value>();
-	}
+  public void setName(String name){
+    this.name = name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void put(String name, Object object){
+    setValue(name, new Value(object));
+  }
 
-	public String getName() {
-		return name;
-	}
+  public boolean contains(String name){
+    if (variables.containsKey(name)) return true;
+    return false;
+  }
 
-	public void put(String name, Object object) {
-		setValue(name, new Value(object));
-	}
+  public Value remove(String name){
+    if (contains(name)) {
+      return variables.remove(name);
+    } else return null;
+  }
 
-	public boolean contains(String name) {
-		if(variables.containsKey(name))
-			return true;
-		return false;
-	}
+  public String getString(String name){
+    if (variables.containsKey(name)) {
+      Value val = variables.get(name);
+      return val.getType() == Type.STRING ? val.getStringValue() : val.asString();
+    }
+    return Value.NULL.asString();
+  }
 
-	public Value remove(String name) {
-		if(contains(name)) {
-			return variables.remove(name);
-		}
-		else return null;
-	}
+  public float getFloat(String name){
+    if (variables.containsKey(name)) {
+      Value val = variables.get(name);
+      return val.getType() == Type.NUMBER ? val.getNumberValue() : val.asNumber();
+    }
+    return Value.NULL.asNumber();
+  }
 
-	public String getString(String name) {
-		if (variables.containsKey(name)) {
-			Value val = variables.get(name);
-			return val.getType() == Type.STRING?val.getStringValue():val.asString();
-		}
-		return Value.NULL.asString();
-	}
+  public int getInt(String name){
+    return (int) getFloat(name);
+  }
 
-	public float getFloat(String name) {
-		if(variables.containsKey(name)) {
-			Value val = variables.get(name);
-			return val.getType() == Type.NUMBER?val.getNumberValue():val.asNumber();
-		}
-		return Value.NULL.asNumber();
-	}
+  public boolean getBoolean(String name){
+    if (variables.containsKey(name)) {
+      Value val = variables.get(name);
+      return val.getType() == Type.BOOL ? val.getBoolValue() : val.asBool();
+    }
+    return Value.NULL.asBool();
+  }
 
-	public int getInt(String name) {
-		return (int) getFloat(name);
-	}
+  public void setFloat(String name, float value){
+    put(name, value);
+  }
 
-	public boolean getBoolean(String name) {
-		if (variables.containsKey(name)) {
-			Value val = variables.get(name);
-			return val.getType() == Type.BOOL?val.getBoolValue():val.asBool();
-		}
-		return Value.NULL.asBool();
-	}
+  public void setInt(String name, int value){
+    put(name, value);
+  }
 
-	public void setFloat(String name, float value) {
-		put(name, value);
-	}
+  public void setBoolean(String name, boolean value){
+    put(name, value);
+  }
 
-	public void setInt(String name, int value) {
-		put(name, value);
-	}
+  public void setString(String name, String value){
+    put(name, value);
+  }
 
-	public void setBoolean(String name, boolean value) {
-		put(name, value);
-	}
+  @SuppressWarnings("unchecked")
+  public boolean loadFromJson(String json){
+    if (MYFRIEND == null) MYFRIEND = new Json();
+    ObjectMap<String, Value> vv = MYFRIEND.fromJson(ObjectMap.class, json);
+    if (vv != null) setName(vv.remove(NAME).asString());
+    variables = vv != null ? vv : variables;
+    return vv != null;
 
-	public void setString(String name, String value) {
-		put(name, value);
-	}
+  }
 
-	@SuppressWarnings("unchecked")
-	public boolean loadFromJson(String json) {
-		if (MYFRIEND == null)
-			MYFRIEND = new Json();
-		ObjectMap<String, Value> vv = MYFRIEND.fromJson(ObjectMap.class, json);
-		if (vv != null)
-			setName(vv.remove(NAME).asString());
-		variables = vv != null ? vv : variables;
-		return vv != null;
+  public String toJson(){
+    put(NAME, getName());
+    if (MYFRIEND == null) MYFRIEND = new Json();
+    return MYFRIEND.toJson(variables);
+  }
 
-	}
+  public void clear(){
+    variables.clear();
+  }
 
-	public String toJson() {
-		put(NAME, getName());
-		if (MYFRIEND == null)
-			MYFRIEND = new Json();
-		return MYFRIEND.toJson(variables);
-	}
+  @Override
+  public void setValue(String name, Value value){
+    variables.put(name, value);
+  }
 
-	public void clear() {
-		variables.clear();
-	}
-
-	@Override
-	public void setValue(String name, Value value) {
-		variables.put(name, value);
-	}
-
-	@Override
-	public Value getValue(String name) {
-		Value value = Value.NULL;
-		if (variables.containsKey(name)) {
-		   value =  variables.get(name);
-		}
-		return value;
-	}
+  @Override
+  public Value getValue(String name){
+    Value value = Value.NULL;
+    if (variables.containsKey(name)) {
+      value = variables.get(name);
+    }
+    return value;
+  }
 }
