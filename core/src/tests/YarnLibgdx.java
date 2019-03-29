@@ -46,9 +46,9 @@ public class YarnLibgdx extends ApplicationAdapter {
   // file of sally containing all the sally dialogue
   String             sallyFile       = "sally.json";
   // print all the tokens that are spat out by the parser
-  boolean            showTokens      = false;
+  boolean            logTokens       = false;
   // print out tree created by the parser from list of tokens
-  boolean            showParseTree   = false;
+  boolean            logParseTree    = false;
   // will only load this node - loads entire file if this is null
   String             onlyConsider    = null;
   // Used to store values by dialogue (or your game, access is not limited) - can
@@ -139,17 +139,17 @@ public class YarnLibgdx extends ApplicationAdapter {
     // alternatively we could pass in custom loggers
     // testDialogue = new Dialogue(dialogueStorage,YarnLoggerDebug,YarnLoggerError)
 
+    // Set the debug levels of the dialogue.
+    testDialogue.setTreeLogging(logParseTree);
+    testDialogue.setTokenLogging(logTokens);
+
     // load the ship dialogue from file
-    testDialogue.loadString(Gdx.files.internal(shipFile).readString(),
-                            shipFile,
-                            showTokens,
-                            showParseTree,
-                            onlyConsider);
+    testDialogue.loadString(Gdx.files.internal(shipFile).readString(), shipFile, onlyConsider);
 
     // load the sally dialogue from file -- notice that we load it to the same
     // dialogue. This allows us to retain the same storage and use the same
     // libraries -
-    testDialogue.loadString(Gdx.files.internal(sallyFile).readString(), sallyFile, showTokens, showParseTree, null);
+    testDialogue.loadString(Gdx.files.internal(sallyFile).readString(), sallyFile, null);
 
     // in order to begin updating and receiving results from our dialogue we must
     // start it
