@@ -324,7 +324,7 @@ public class Lexer {
 					column_number = text_start_index;
 					
 
-					match.find(column_number);
+					match.find(0);
 
 					//TODO: ====
 					//THIS IS PROBABLY WRONG
