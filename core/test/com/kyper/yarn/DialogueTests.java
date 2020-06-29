@@ -1,6 +1,8 @@
 package com.kyper.yarn;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -12,10 +14,11 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DialogueTests extends TestBase {
-	@Test
-	public void testNodeExists() throws IOException {
+	@ParameterizedTest
+	@ValueSource(strings = { "Sally.yarn", "Sally.json" })
+	public void testNodeExists(String filename) throws IOException {
 		System.out.println("TestNodeExists --");
-		Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
+		Path path = getSpaceDemoScriptsPath().resolve(filename);
 
 		dialogue.loadFile(path, false, false, null);
 
@@ -124,9 +127,10 @@ public class DialogueTests extends TestBase {
     }
 
 
-    @Test
-    public void testGettingCurrentNodeName() throws IOException {
-		Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
+	@ParameterizedTest
+	@ValueSource(strings = { "Sally.yarn", "Sally.json" })
+    public void testGettingCurrentNodeName(String filename) throws IOException {
+		Path path = getSpaceDemoScriptsPath().resolve(filename);
 		dialogue.loadFile(path);
 
         // dialogue should not be running yet

@@ -1,0 +1,42 @@
+[
+	{
+		"title": "Sally",
+		"tags": "",
+		"body": "<<if visited(\"Sally\") is false>>\n    Player: Hey, Sally. #line:794945\n    Sally: Oh! Hi. #line:2dc39b\n    Sally: You snuck up on me. #line:34de2f\n    Sally: Don't do that. #line:dcc2bc\n<<else>>\n    Player: Hey. #line:a8e70c\n    Sally: Hi. #line:305cde\n<<endif>>\n\n<<if not visited(\"Sally.Watch\")>>\n    [[Anything exciting happen on your watch?|Sally.Watch]] #line:5d7a7c\n<<endif>>\n\n<<if $sally_warning and not visited(\"Sally.Sorry\")>>\n    [[Sorry about the console.|Sally.Sorry]] #line:0a7e39\n<<endif>>\n[[See you later.|Sally.Exit]] #line:0facf7\n",
+		"position": {
+			"x": 524,
+			"y": 111
+		},
+		"colorID": 0
+	},
+	{
+		"title": "Sally.Watch",
+		"tags": "",
+		"body": "Sally: Not really.  #line:8c3f98\nSally: Same old nebula, doing the same old thing. #line:24c418\nSally: Oh, Ship wanted to see you. Go say hi to it. #line:df4eaf\n<<set $should_see_ship to true>>\n<<if visited(\"Ship\") is true>>\n    Player: Already done! #line:1fea6c\n    Sally: Go say hi again. #line:5df323\n<<endif>>\n",
+		"position": {
+			"x": 512,
+			"y": 430
+		},
+		"colorID": 0
+	},
+	{
+		"title": "Sally.Exit",
+		"tags": "",
+		"body": "Sally: Bye. #line:60c282\n",
+		"position": {
+			"x": 211,
+			"y": 417
+		},
+		"colorID": 6
+	},
+	{
+		"title": "Sally.Sorry",
+		"tags": "",
+		"body": "Sally: Yeah. Don't do it again. #line:d7df49\n",
+		"position": {
+			"x": 827,
+			"y": 439
+		},
+		"colorID": 0
+	}
+]
