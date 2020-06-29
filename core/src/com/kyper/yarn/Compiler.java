@@ -425,8 +425,9 @@ public class Compiler {
 			break;
 		case NULL:
 			emit(node, ByteCode.PushNull);
+			break;
 		default:
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("Unrecognized ValueNode Type:" + value.getValue().getType());
 		}
 	}
 

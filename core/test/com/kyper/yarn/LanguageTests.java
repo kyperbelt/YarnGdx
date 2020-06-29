@@ -1,13 +1,17 @@
 package com.kyper.yarn;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.Console;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.Arrays;
+import java.util.stream.Stream;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LanguageTests extends TestBase {
@@ -84,12 +88,11 @@ public class LanguageTests extends TestBase {
         // Technically the original test here was directly on the compiler but it's not easy to access.
         assertThrows(Program.ParseException.class, () -> dialogue.loadFile(path));
     }
-//
-//        @Test
-//    public void TestFormatFunctionParsing()
-//    {
+
+    @Test @Disabled("Dialogue currently has no method parseFormatFunctions")
+    public void testFormatFunctionParsing()
+    {
 //        var input = @"prefix [plural ""5"" one=""one"" two=""two"" few=""few"" many=""many""] suffix";
-//
 //
 //        var expectedLineWithReplacements = @"prefix {0} suffix";
 //        var expectedFunctionName = "plural";
@@ -108,12 +111,10 @@ public class LanguageTests extends TestBase {
 //        Assert.Equal(expectedFunctionName, parsedFunctions[0].functionName);
 //        Assert.Equal(expectedValue, parsedFunctions[0].value);
 //        Assert.Equal(expectedParameters, parsedFunctions[0].data);
-//
-//    }
-//
-//        @Test
-//    public void TestNumberPlurals() {
-//
+    }
+
+    @Test @Disabled("Pluralization/Localization not yet implemented")
+    public void testNumberPlurals() {
 //        (string, double , PluralCase )[] cardinalTests = new[] {
 //
 //            // English
@@ -190,72 +191,54 @@ public class LanguageTests extends TestBase {
 //        foreach (var test in ordinalTests) {
 //            Assert.Equal(test.Item3, CLDRPlurals.NumberPlurals.GetOrdinalPluralCase(test.Item1, test.Item2));
 //        }
-//
-//
-//    }
-//
-//    // Test every file in Tests/TestCases
-//        [Theory]
-//            [MemberData(nameof(FileSources), "TestCases")]
-//            [MemberData(nameof(FileSources), "Issues")]
-//    public void TestSources(string file) {
-//
-//        Console.ForegroundColor = ConsoleColor.Blue;
-//        Console.WriteLine ($"INFO: Loading file {file}");
-//
-//        storage.Clear();
-//        bool runTest = true;
-//
-//        var scriptFilePath = Path.Combine(TestDataPath, file);
-//        var testPlanFilePath = Path.ChangeExtension(scriptFilePath, ".testplan");
-//
-//        // skipping the indentation test when using the ANTLR parser
-//        // it can never pass
-//        if (file == "TestCases/Indentation.yarn")
-//        {
-//            runTest = false;
-//        }
-//
-//        if (runTest)
-//        {
-//            loadTestPlan(testPlanFilePath);
-//
-//            Compiler.CompileFile(scriptFilePath, out var program, out stringTable);
-//            dialogue.SetProgram(program);
-//
-//            // If this file contains a Start node, run the test case
-//            // (otherwise, we're just testing its parsability, which
-//            // we did in the last line)
-//            if (dialogue.NodeExists("Start"))
-//                runStandardTestcase();
-//        }
-//    }
-//
-//    // Returns the list of .node and.yarn files in the
-//    // Tests/<directory> directory.
-//    public static IEnumerable<object[]> FileSources(string directory) {
-//
-//        var allowedExtensions = new[] { ".node", ".yarn" };
-//
-//        var path = Path.Combine(TestDataPath, directory);
-//
-//        var files = GetFilesInDirectory(path);
-//
-//        return files.Where(p => allowedExtensions.Contains(Path.GetExtension(p)))
-//                        .Select(p => new[] {Path.Combine(directory, Path.GetFileName(p))});
-//    }
-//
-//    // Returns the list of files in a directory. If that directory doesn't
-//    // exist, returns an empty list.
-//    static IEnumerable<string> GetFilesInDirectory(string path)
-//    {
-//        try
-//        {
-//            return Directory.EnumerateFiles(path);
-//        }
-//        catch (DirectoryNotFoundException)
-//        {
-//            return new string[] { };
-//        }
-//    }
+    }
+
+    // Test every file in Tests/TestCases
+    @ParameterizedTest
+    @MethodSource("fileSources")
+    public void testSources(Path scriptFilePath) throws IOException {
+        System.out.println("INFO: Loading file "+scriptFilePath+"");
+
+        storage.clear();
+        boolean runTest = true;
+
+        Path testPlanFilePath = scriptFilePath.resolveSibling(
+            scriptFilePath.getFileName().toString()
+                    .replace(".yarn", ".testplan")
+                    .replace(".node", ".testplan")
+        );
+//        Path testPlanFilePath = Paths.get(scriptFilePath.toString().replaceFirst("\\.*+$", ".testplan"));
+
+        // skipping the indentation test when using the ANTLR parser
+        // it can never pass
+        if (scriptFilePath.toString().contains("TestCases/Indentation.yarn")) {
+            runTest = false;
+        }
+
+        if (runTest)
+        {
+            loadTestPlan(testPlanFilePath);
+
+            dialogue.loadFile(scriptFilePath);
+
+            // If this file contains a Start node, run the test case
+            // (otherwise, we're just testing its parsability, which
+            // we did in the last line)
+            if (dialogue.nodeExists("Start")) {
+                runStandardTestcase(null);
+            }
+        }
+    }
+
+    // Returns the list of .node and.yarn files in the
+    // Tests/<directory> directory.
+    public static Stream<Path> fileSources() throws IOException {
+//        String[] folders = new String[]{"TestCases", "Issues"}; // Issues doesn't seem to be used currently
+        String[] allowedExtensions = new String[] { ".node", ".yarn" };
+
+        Path path = getTestDataPath().resolve("TestCases");
+        PathMatcher matcher = FileSystems.getDefault().getPathMatcher(
+                "regex:/.*(" + String.join("|", allowedExtensions) + ")");
+        return Files.walk(path).filter(matcher::matches);
+    }
 }

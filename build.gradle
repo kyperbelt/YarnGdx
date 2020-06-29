@@ -45,6 +45,7 @@ project(":core") {
 
     dependencies {
         testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
+        testImplementation 'org.junit.jupiter:junit-jupiter-params:5.6.2'
         testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
         testImplementation 'org.awaitility:awaitility:4.0.3'
     	implementation 'com.github.EsotericSoftware:jsonbeans:0.9'
@@ -77,7 +78,7 @@ project(":desktop") {
         compile project(":core")
         compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-	
+
     }
 }
 */
