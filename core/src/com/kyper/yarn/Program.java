@@ -1,20 +1,20 @@
 package com.kyper.yarn;
 
 
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ObjectMap;
-import com.badlogic.gdx.utils.ObjectMap.Entry;
-import com.badlogic.gdx.utils.StringBuilder;
 import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.FunctionInfo;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 public class Program {
 
-	protected ObjectMap<String, String> strings = new ObjectMap<String, String>();
-	protected ObjectMap<String, LineInfo> line_info = new ObjectMap<String, Program.LineInfo>();
+	protected HashMap<String, String> strings = new HashMap<String, String>();
+	protected HashMap<String, LineInfo> line_info = new HashMap<String, Program.LineInfo>();
 
-	protected ObjectMap<String, Node> nodes = new ObjectMap<String, Node>();
+	protected HashMap<String, Node> nodes = new HashMap<String, Node>();
 
 	private int string_count = 0;
 
@@ -23,9 +23,9 @@ public class Program {
 	 * The string table is merged with any existing strings, with the new table
 	 * taking precedence over the old.
 	 */
-	public void loadStrings(ObjectMap<String, String> new_strings) {
-		for (Entry<String, String> line : new_strings) {
-			strings.put(line.key, line.value);
+	public void loadStrings(Map<String, String> new_strings) {
+		for (Map.Entry<String, String> line : new_strings.entrySet()) {
+			strings.put(line.getKey(), line.getValue());
 		}
 	}
 
@@ -59,12 +59,12 @@ public class Program {
 	public String dumpCode(Library lib) {
 		StringBuilder sb = new StringBuilder();
 
-		for (Entry<String, Node> entry : nodes) {
-			sb.appendLine("Node " + entry.key + ":");
+		for (Map.Entry<String, Node> entry : nodes.entrySet()) {
+			sb.append("Node \n" + entry.getKey() + ":");
 			int instruction_count = 0;
 
-			Array<Instruction> instructions = entry.value.instructions;
-			for (int i = 0; i < instructions.size; i++) {
+			ArrayList<Instruction> instructions = entry.getValue().instructions;
+			for (int i = 0; i < instructions.size(); i++) {
 				Instruction instruction = instructions.get(i);
 				String instruction_text = null;
 
@@ -75,23 +75,23 @@ public class Program {
 				}
 
 				String preface;
-				if (instruction_count % 5 == 0 || instruction_count == entry.value.instructions.size - 1) {
+				if (instruction_count % 5 == 0 || instruction_count == entry.getValue().instructions.size() - 1) {
 					preface = String.format("%1$6s", instruction_count + "");
 				} else {
 					preface = String.format("%1$6s    ", " ");
 				}
 
-				sb.appendLine(preface + instruction_text);
+				sb.append(preface + instruction_text + "\n");
 				instruction_count++;
 			}
-			sb.appendLine("");
+			sb.append("\n\n");
 		}
 
-		for (Entry<String, String> entry : strings) {
-			LineInfo line_info = this.line_info.get(entry.key);
+		for (Map.Entry<String, String> entry : strings.entrySet()) {
+			LineInfo line_info = this.line_info.get(entry.getKey());
 			if(line_info == null)
 				continue;
-			sb.appendLine(String.format("%1$s: %2$s  (%3$s:%4$s)", entry.key, entry.value, line_info.getNodeName(),
+			sb.append(String.format("%1$s: %2$s  (%3$s:%4$s)\n", entry.getKey(), entry.getValue(), line_info.getNodeName(),
 					line_info.getLineNumber()));
 		}
 
@@ -104,22 +104,22 @@ public class Program {
 	}
 
 	public void include(Program other_program) {
-		for (Entry<String, Node> other : other_program.nodes) {
-			if (nodes.containsKey(other.key)) {
+		for (Map.Entry<String, Node> other : other_program.nodes.entrySet()) {
+			if (nodes.containsKey(other.getKey())) {
 				throw new IllegalStateException(
-						String.format("This program already contains a node named %s", other.key));
+						String.format("This program already contains a node named %s", other.getKey()));
 			}
 
-			nodes.put(other.key, other.value);
+			nodes.put(other.getKey(), other.getValue());
 		}
 
-		for (Entry<String, String> other : other_program.strings) {
+		for (Map.Entry<String, String> other : other_program.strings.entrySet()) {
 			//TODO: this seems fishy -- maybe check strings map instead?
-			if (nodes.containsKey(other.key)) {
+			if (nodes.containsKey(other.getKey())) {
 				throw new IllegalStateException(
-						String.format("This program already contains a string with key %s", other.key));
+						String.format("This program already contains a string with key %s", other.getKey()));
 			}
-			strings.put(other.key, other.value);
+			strings.put(other.getKey(), other.getValue());
 		}
 	}
 
@@ -130,13 +130,13 @@ public class Program {
 
 	// We do this by NOT including the main strings list, and providing a property
 	// that gets serialised as "strings" in the output, which includes all untagged strings.
-	protected ObjectMap<String, String> untaggedStrings() {
-		ObjectMap<String, String> result = new ObjectMap<String, String>();
+	protected HashMap<String, String> untaggedStrings() {
+		HashMap<String, String> result = new HashMap<String, String>();
 
-		for (Entry<String, String> line : strings) {
-			if (line.key.startsWith("line:"))//TODO ============maybe change to Line since thats what the parser spits out
+		for (Map.Entry<String, String> line : strings.entrySet()) {
+			if (line.getKey().startsWith("line:"))//TODO ============maybe change to Line since thats what the parser spits out
 				continue;
-			result.put(line.key, line.value);
+			result.put(line.getKey(), line.getValue());
 		}
 		return result;
 	}
@@ -153,7 +153,7 @@ public class Program {
 		protected static ParseException make(Token found_token, TokenType... expected_types) {
 			int line_number = found_token.line_number + 1;
 
-			Array<String> expected_type_names = new Array<String>();
+			ArrayList<String> expected_type_names = new ArrayList<String>();
 			for (TokenType type : expected_types) {
 				expected_type_names.add(type.name());
 			}
@@ -194,16 +194,16 @@ public class Program {
 
 	protected static class Node {
 
-		public Array<Instruction> instructions = new Array<Program.Instruction>();
+		public ArrayList<Instruction> instructions = new ArrayList<Program.Instruction>();
 		public String name;
 
 		//the entry in the programs string table that contains
 		//the original text of this node. null if not available
 		public String source_string_id = null;
 
-		public ObjectMap<String, Integer> labels = new ObjectMap<String, Integer>();
+		public HashMap<String, Integer> labels = new HashMap<String, Integer>();
 
-		public Array<String> tags;
+		public ArrayList<String> tags;
 
 	}
 

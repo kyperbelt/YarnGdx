@@ -1,15 +1,14 @@
 package com.kyper.yarn;
 
-
-import com.badlogic.gdx.utils.ObjectMap;
-import com.badlogic.gdx.utils.ObjectMap.Entry;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A collection of callable functions
  */
 public class Library {
 
-	private ObjectMap<String, FunctionInfo> functions = new ObjectMap<String, Library.FunctionInfo>();
+	private HashMap<String, FunctionInfo> functions = new HashMap<String, Library.FunctionInfo>();
 
 	/**
 	 * Returns a function - throws an exception if the function doesnt exist.Use
@@ -26,29 +25,29 @@ public class Library {
 	 * the same name as ours, ours will be replaced
 	 */
 	public void importLibrary(Library other_lib) {
-		for (Entry<String, FunctionInfo> entry : other_lib.functions) {
-			functions.put(entry.key, entry.value);
+		for (Map.Entry<String, FunctionInfo> entry : other_lib.functions.entrySet()) {
+			functions.put(entry.getKey(), entry.getValue());
 		}
 	}
-	
+
 	public void registerFunction(FunctionInfo function) {
 		functions.put(function.name, function);
 	}
-	
+
 	public void registerFunction(String name,int param_count,ReturningFunc implementation) {
 		FunctionInfo info = new FunctionInfo(name, param_count, implementation);
 		registerFunction(info);
 	}
-	
+
 	public void registerFunction(String name,int param_count,Function implementation) {
 		FunctionInfo info = new FunctionInfo(name, param_count, implementation);
 		registerFunction(info);
 	}
-	
+
 	public boolean functionExists(String name) {
 		return functions.containsKey(name);
 	}
-	
+
 	public void deregisterFunction(String name) {
 		if(functions.containsKey(name))
 			functions.remove(name);
@@ -91,7 +90,7 @@ public class Library {
 			this.ret_function = implementation;
 			this.function = null;
 		}
-		
+
 		protected FunctionInfo(String name, int param_count) {
 			this.name = name;
 			this.param_count = param_count;

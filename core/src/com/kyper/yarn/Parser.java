@@ -1,27 +1,27 @@
 package com.kyper.yarn;
 
 
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.StringBuilder;
 import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.FunctionInfo;
 import com.kyper.yarn.Parser.Operator.OperatorInfo;
 import com.kyper.yarn.Program.ParseException;
 
+import java.util.*;
+
 public class Parser {
 
 	//we will be consuming tokens fast
-	//TODO: i think becuase im not using a queue some issues might be caused by 
+	//TODO: i think becuase im not using a queue some issues might be caused by
 	//TODO: lexer function that reverses the tokens array
-	protected Array<Token> tokens;
+	protected ArrayDeque<Token> tokens;
 	protected Library library;
 
-	public Parser(Array<Token> tokens, Library library) {
-		this.tokens = tokens;
+	public Parser(List<Token> tokens, Library library) {
+		this.tokens = new ArrayDeque<>(tokens);
 		//TODO:================================
 		//TODO: fix? this.tokens.reverse();
-		//this.tokens.reverse(); 
+		//this.tokens.reverse();
 		///TODO: ===============================
 		this.library = library;
 	}
@@ -33,12 +33,12 @@ public class Parser {
 
 	/**
 	 * return true if the next symbol is part of the valid types;
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean nextSymbolIs(TokenType... valid_types) {
-		
-		TokenType t = this.tokens.first().type;
+
+		TokenType t = this.tokens.peekFirst().type;
 		for (TokenType valid_type : valid_types) {
 			if (t == valid_type)
 				return true;
@@ -49,15 +49,15 @@ public class Parser {
 	/**
 	 * used to look ahead - return true if the symbols are of the valid_types. good
 	 * for when looking for '<<' 'else' ect.
-	 * 
+	 *
 	 * @param valid_types
 	 * @return
 	 */
 	public boolean nextSymbolsAre(TokenType... valid_types) {
-		Array<Token> temp = new Array<Lexer.Token>(tokens);
+		ArrayList<Token> temp = new ArrayList<Lexer.Token>(tokens);
 		//temp.reverse();
 		for (TokenType type : valid_types) {
-			if (temp.removeIndex(0).type != type)
+			if (temp.remove(0).type != type)
 				return false;
 		}
 		return true;
@@ -65,12 +65,12 @@ public class Parser {
 
 	/**
 	 * return the next token,which must be of the 'type' or throw an exception
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */
 	public Token expectSymbol(TokenType type) {
-		Token t = this.tokens.removeIndex(0);
+		Token t = this.tokens.remove();
 		if (t.type != type) {
 			throw ParseException.make(t, type);
 		}
@@ -79,11 +79,11 @@ public class Parser {
 
 	/**
 	 * return the next token which an only be of any type except endOfInput
-	 * 
+	 *
 	 * @return
 	 */
 	public Token expectSymbol() {
-		Token t = this.tokens.removeIndex(0);
+		Token t = this.tokens.remove();
 		if (t.type == TokenType.EndOfInput) {
 			throw ParseException.make(t, "unexpected end of input.");
 		}
@@ -93,12 +93,12 @@ public class Parser {
 	/**
 	 * return the next token, which must be one of th e valid_types. or throws an
 	 * exception
-	 * 
+	 *
 	 * @param valid_types
 	 * @return
 	 */
 	public Token expectSymbol(TokenType... valid_types) {
-		Token t = this.tokens.removeIndex(0);
+		Token t = this.tokens.remove();
 		for (TokenType valid_type : valid_types) {
 			if (t.type == valid_type)
 				return t;
@@ -129,29 +129,29 @@ public class Parser {
 		//the line that this prase node begins on.
 		protected int line_number;
 
-		protected Array<String> tags;
+		protected ArrayList<String> tags;
 
 		//ParseNodes do their parsing by consuming tokens from the Parser.
 		//You parse tokens into ParseNode by using its constructor
 		protected ParseNode(ParseNode parent, Parser p) {
 			this.parent = parent;
-			if (p.tokens.size > 0)
-				this.line_number = p.tokens.first().line_number;
+			if (p.tokens.size() > 0)
+				this.line_number = p.tokens.peekFirst().line_number;
 			else
 				this.line_number = -1;
-			tags = new Array<String>();
+			tags = new ArrayList<String>();
 		}
 
 		/**
 		 * recursively prints the ParseNode and all of its child ParseNodes
-		 * 
+		 *
 		 * @param indent_level
 		 * @return
 		 */
 		public abstract String printTree(int indent_level);
 
 		public String tagsToString(int indent_level) {
-			if (tags.size > 0) {
+			if (tags.size() > 0) {
 				StringBuilder s = new StringBuilder();
 
 				s.append(tab(indent_level + 1, "Tags:"));
@@ -191,15 +191,15 @@ public class Parser {
 		private String source;
 
 		//defined in the yarn editor
-		private Array<String> node_tags;
+		private List<String> node_tags;
 
-		private Array<Statement> statements = new Array<Statement>();
+		private ArrayList<Statement> statements = new ArrayList<Statement>();
 
 		protected Node(String name, ParseNode parent, Parser p) {
 			super(parent, p);
 			this.name = name;
 			//consume statements until we run out of input or hit a dedent
-			while (p.tokens.size > 0 && !p.nextSymbolIs(TokenType.Dedent, TokenType.EndOfInput)) {
+			while (p.tokens.size() > 0 && !p.nextSymbolIs(TokenType.Dedent, TokenType.EndOfInput)) {
 				statements.add(new Statement(this, p));
 			}
 		}
@@ -216,15 +216,15 @@ public class Parser {
 		}
 
 		/** read_only private accesor for statements */
-		public Array<Statement> getStatements() {
+		public List<Statement> getStatements() {
 			return statements;
 		}
 
-		public Array<String> getNodeTags() {
+		public List<String> getNodeTags() {
 			return node_tags;
 		}
 
-		public void setNodeTags(Array<String> node_tags) {
+		public void setNodeTags(List<String> node_tags) {
 			this.node_tags = node_tags;
 		}
 
@@ -273,7 +273,7 @@ public class Parser {
 
 		protected Statement(ParseNode parent, Parser p) {
 			super(parent, p);
-			
+
 			if (Block.canParse(p)) {
                 type = Type.Block;
                 block = new Block(this, p);
@@ -296,18 +296,18 @@ public class Parser {
                 line = p.expectSymbol(TokenType.Text).value;
                 type = Type.Line;
             } else {
-				throw ParseException.make(p.tokens.first(), "Expected a statement here but got " + p.tokens.first().toString() +" instead (was there an unbalanced if statement earlier?)");
+				throw ParseException.make(p.tokens.peekFirst(), "Expected a statement here but got " + p.tokens.peekFirst().toString() +" instead (was there an unbalanced if statement earlier?)");
             }
 			//parse the optional tags that follow this statement
-			Array<String> tags = new Array<String>();
-			
+			ArrayList<String> tags = new ArrayList<String>();
+
 			while(p.nextSymbolIs(TokenType.TagMarker)) {
 				p.expectSymbol(TokenType.TagMarker);
 				String tag = p.expectSymbol(TokenType.Identifier).value;
 				tags.add(tag);
 			}
-			
-			if(tags.size>0)
+
+			if(tags.size()>0)
 				this.tags = tags;
 		}
 
@@ -397,9 +397,9 @@ public class Parser {
 			super(parent, p);
 			p.expectSymbol(TokenType.BeginCommand);
 
-			//custom commands can have any token in them, Read them all until we hit the 
+			//custom commands can have any token in them, Read them all until we hit the
 			//end of command token
-			Array<Token> command_tokens = new Array<Lexer.Token>();
+			ArrayList<Token> command_tokens = new ArrayList<Lexer.Token>();
 			do {
 				command_tokens.add(p.expectSymbol());
 			} while (!p.nextSymbolIs(TokenType.EndCommand));
@@ -408,9 +408,9 @@ public class Parser {
 			//if the first token is an identifier and the second is
 			//a left paren, it may be a function call expression;
 			//evaluate it as such
-			if (command_tokens.size > 1 && command_tokens.get(0).type == TokenType.Identifier
+			if (command_tokens.size() > 1 && command_tokens.get(0).type == TokenType.Identifier
 					&& command_tokens.get(1).type == TokenType.LeftParen) {
-				
+
 				Parser parser = new Parser(command_tokens, p.library);
 				Expression expression = Expression.parse(this, parser);
 				type = Type.Expression;
@@ -455,12 +455,12 @@ public class Parser {
 	// ShortcutOptionGroup = ShortcutOption+ Node
 
 	protected static class ShortcutOptionGroup extends ParseNode {
-		private Array<ShortcutOption> options = new Array<Parser.ShortcutOption>();
+		private ArrayList<ShortcutOption> options = new ArrayList<Parser.ShortcutOption>();
 
 		protected ShortcutOptionGroup(ParseNode parent, Parser p) {
 			super(parent, p);
 
-			//keep parsing options until we cant, but expect at least one (otherwise its 
+			//keep parsing options until we cant, but expect at least one (otherwise its
 			//not actually a list of options)
 			int shortcut_index = 1;//give each option a number so it can name itself
 			do {
@@ -468,7 +468,7 @@ public class Parser {
 			} while (p.nextSymbolIs(TokenType.ShortcutOption));
 		}
 
-		protected Array<ShortcutOption> getOptions() {
+		protected ArrayList<ShortcutOption> getOptions() {
 			return options;
 		}
 
@@ -505,7 +505,7 @@ public class Parser {
 
 			//parse the conditional ("<< if $foo >>) if its there
 
-			Array<String> tags = new Array<String>();
+			ArrayList<String> tags = new ArrayList<String>();
 			while (p.nextSymbolsAre(TokenType.BeginCommand, TokenType.If) || p.nextSymbolIs(TokenType.TagMarker)) {
 
 				if (p.nextSymbolsAre(TokenType.BeginCommand, TokenType.If)) {
@@ -572,7 +572,7 @@ public class Parser {
 	protected static class Block extends ParseNode {
 
 		//readonly
-		private Array<Statement> statements = new Array<Parser.Statement>();
+		private ArrayList<Statement> statements = new ArrayList<Parser.Statement>();
 
 		protected Block(ParseNode parent, Parser p) {
 			super(parent, p);
@@ -591,7 +591,7 @@ public class Parser {
 			p.expectSymbol(TokenType.Dedent);
 		}
 
-		public Array<Statement> getStatements() {
+		public List<Statement> getStatements() {
 			return statements;
 		}
 
@@ -624,7 +624,7 @@ public class Parser {
 			super(parent, p);
 
 			//the meaning of the string(s) we have changes
-			//depending on whether we have one or two, so 
+			//depending on whether we have one or two, so
 			//keep them both and decide their meaning once
 			//we know more
 
@@ -685,7 +685,7 @@ public class Parser {
 	// TODO: elseif
 	protected static class IfStatement extends ParseNode {
 
-		protected Array<Clause> clauses = new Array<Parser.IfStatement.Clause>();
+		protected ArrayList<Clause> clauses = new ArrayList<Parser.IfStatement.Clause>();
 
 		protected IfStatement(ParseNode parent, Parser p) {
 			super(parent, p);
@@ -700,7 +700,7 @@ public class Parser {
 
 			//read the statements for this clause until we hit an <<endif or <<else
 			//(which could be an "<<else>>" or an <<else if)
-			Array<Statement> statements = new Array<Parser.Statement>();
+			ArrayList<Statement> statements = new ArrayList<Parser.Statement>();
 			while (!p.nextSymbolsAre(TokenType.BeginCommand, TokenType.EndIf)
 					&& !p.nextSymbolsAre(TokenType.BeginCommand, TokenType.Else)
 					&& !p.nextSymbolsAre(TokenType.BeginCommand, TokenType.ElseIf)) {
@@ -727,7 +727,7 @@ public class Parser {
 				p.expectSymbol(TokenType.EndCommand);
 
 				//read statements until we hit an <<endif, <<else or another <<elseif
-				Array<Statement> clause_statements = new Array<Parser.Statement>();
+				ArrayList<Statement> clause_statements = new ArrayList<Parser.Statement>();
 				while (!p.nextSymbolsAre(TokenType.BeginCommand, TokenType.EndIf)
 						&& !p.nextSymbolsAre(TokenType.BeginCommand, TokenType.Else)
 						&& !p.nextSymbolsAre(TokenType.BeginCommand, TokenType.ElseIf)) {
@@ -753,7 +753,7 @@ public class Parser {
 
 				//and parse statements until we hit <<endif
 				Clause else_clause = new Clause();
-				Array<Statement> clause_statements = new Array<Parser.Statement>();
+				ArrayList<Statement> clause_statements = new ArrayList<Parser.Statement>();
 
 				while (!p.nextSymbolsAre(TokenType.BeginCommand, TokenType.EndIf)) {
 					clause_statements.add(new Statement(this, p));
@@ -803,14 +803,14 @@ public class Parser {
 		// an if statement, and not used by the Else statement.
 		protected static class Clause {
 			private Expression expression;
-			private Array<Statement> statements;
+			private List<Statement> statements;
 
 			protected Clause() {
 				expression = null;
 				statements = null;
 			}
 
-			protected Clause(Expression expression, Array<Statement> statements) {
+			protected Clause(Expression expression, List<Statement> statements) {
 				this.expression = expression;
 				this.statements = statements;
 			}
@@ -819,7 +819,7 @@ public class Parser {
 				this.expression = expression;
 			}
 
-			protected void setStatements(Array<Statement> statements) {
+			protected void setStatements(List<Statement> statements) {
 				this.statements = statements;
 			}
 
@@ -827,7 +827,7 @@ public class Parser {
 				return expression;
 			}
 
-			protected Array<Statement> getStatements() {
+			protected List<Statement> getStatements() {
 				return statements;
 			}
 
@@ -929,7 +929,7 @@ public class Parser {
 		protected ValueNode value;
 
 		protected FunctionInfo function;
-		protected Array<Expression> params;
+		protected ArrayList<Expression> params;
 
 		protected Expression(ParseNode parent, ValueNode value, Parser p) {
 			super(parent, p);
@@ -937,7 +937,7 @@ public class Parser {
 			this.value = value;
 		}
 
-		protected Expression(ParseNode parent, FunctionInfo function, Array<Expression> params, Parser p) {
+		protected Expression(ParseNode parent, FunctionInfo function, ArrayList<Expression> params, Parser p) {
 			super(parent, p);
 			this.type = Type.FunctionCall;
 			this.function = function;
@@ -952,11 +952,11 @@ public class Parser {
 				return value.printTree(indent_level);
 			case FunctionCall:
 
-				if (params.size == 0) {
+				if (params.size() == 0) {
 					sb.append(tab(indent_level, "Function call to " + function.getName() + " (no parameters)"));
 				} else {
 					sb.append(tab(indent_level,
-							"Function call to " + function.getName() + " (" + params.size + " parameters) {"));
+							"Function call to " + function.getName() + " (" + params.size() + " parameters) {"));
 					for (Expression param : params) {
 						sb.append(param.printTree(indent_level + 1));
 					}
@@ -976,13 +976,13 @@ public class Parser {
 			// build a tree of expressions from the result
 			// https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 
-			Array<Token> expression_RPN = new Array<Lexer.Token>();
-			Array<Token> operator_stack = new Array<Lexer.Token>();
+			ArrayDeque<Token> expression_RPN = new ArrayDeque<Lexer.Token>();
+			ArrayDeque<Token> operator_stack = new ArrayDeque<Token>();
 
 			//used for keeping count of parameters for each function
-			Array<Token> function_stack = new Array<Lexer.Token>();
-			
-			Array<TokenType> valid_token_types = new Array<Lexer.TokenType>(Operator.operatorTypes());
+			ArrayDeque<Token> function_stack = new ArrayDeque<Lexer.Token>();
+
+			ArrayList<TokenType> valid_token_types = new ArrayList<>(Arrays.asList(Operator.operatorTypes()));
 			valid_token_types.add(TokenType.Number);
 			valid_token_types.add(TokenType.Variable);
 			valid_token_types.add(TokenType.Str);
@@ -997,28 +997,29 @@ public class Parser {
 			Token last_token = null;
 
 			//read all the contents of the expression
-			while (p.tokens.size > 0 && p.nextSymbolIs(valid_token_types.toArray())) {
-				Token next_token = p.expectSymbol(valid_token_types.toArray());
+			TokenType[] valid_token_types_arr = valid_token_types.toArray(new TokenType[valid_token_types.size()]);
+			while (p.tokens.size() > 0 && p.nextSymbolIs(valid_token_types_arr)) {
+				Token next_token = p.expectSymbol(valid_token_types_arr);
 
-				if (next_token.type == TokenType.Number 
+				if (next_token.type == TokenType.Number
 						|| next_token.type == TokenType.Variable
-						|| next_token.type == TokenType.Str 
+						|| next_token.type == TokenType.Str
 						|| next_token.type == TokenType.True
-						|| next_token.type == TokenType.False 
+						|| next_token.type == TokenType.False
 						|| next_token.type == TokenType.Null) {
 
 					//primitive values go straight to output
 					expression_RPN.add(next_token);
 				} else if (next_token.type == TokenType.Identifier) {
-					operator_stack.add(next_token);//push 
+					operator_stack.add(next_token);//push
 					function_stack.add(next_token);//push
 
 					//next token must be a left paren, so process that immediately
 					next_token = p.expectSymbol(TokenType.LeftParen);
-					
+
 					//enter that sub expression
 					operator_stack.add(next_token); //push
-					
+
 				} else if (next_token.type == TokenType.Comma) {
 
 					//Resolve this sub expression before moving on
@@ -1043,7 +1044,7 @@ public class Parser {
 					//the next token is not allowed to be a right paren or comma
 					//(that is, you cant say "foo(2,,)")
 					if (p.nextSymbolIs(TokenType.RightParen, TokenType.Comma)) {
-						throw ParseException.make(p.tokens.first(), "Expected expression");
+						throw ParseException.make(p.tokens.peekFirst(), "Expected expression");
 					}
 
 					//find the closest function on the stack
@@ -1062,7 +1063,7 @@ public class Parser {
 					//is only unary when the last token was a left paren,
 					//an operator, or its the first token.
 					if (next_token.type == TokenType.Minus) {
-						
+
 						if (last_token == null ||
 								last_token.type == TokenType.LeftParen
 								|| Operator.isOperator(last_token.type)) {
@@ -1138,37 +1139,37 @@ public class Parser {
 			}
 
 			//no more tokens; pop all operators onto the output queue
-			while (operator_stack.size > 0) {
+			while (operator_stack.size() > 0) {
 				expression_RPN.add(operator_stack.pop());
 			}
 
 			//if the output queue is empty, then this is not an expression
-			if (expression_RPN.size == 0) {
+			if (expression_RPN.size() == 0) {
 				throw new ParseException("Error parsing expression: no expression found!");
 			}
 
 			//we now have this in more easly parsed RPN form;
 			//time to build the expression tree
-			Token first_token = expression_RPN.first();
-			Array<Expression> evaluation_stack = new Array<Parser.Expression>();
-			while (expression_RPN.size > 0) {
+			Token first_token = expression_RPN.peekFirst();
+			ArrayDeque<Expression> evaluation_stack = new ArrayDeque<Parser.Expression>();
+			while (expression_RPN.size() > 0) {
 
-				Token next = expression_RPN.removeIndex(0);
+				Token next = expression_RPN.remove();
 				if (Operator.isOperator(next.type)) {
 
 					//this is an operation
 
 					OperatorInfo info = Operator.infoForOperator(next.type);
-					if (evaluation_stack.size < info.arguments) {
+					if (evaluation_stack.size() < info.arguments) {
 						throw ParseException.make(next,
 								"Error parsing expression: not enough " + "arguments for operator " + next.type.name());
 					}
 
-					Array<Expression> params = new Array<Parser.Expression>();
+					ArrayList<Expression> params = new ArrayList<Parser.Expression>();
 					for (int i = 0; i < info.arguments; i++) {
 						params.add(evaluation_stack.pop());
 					}
-					params.reverse();
+					Collections.reverse(params);
 
 					FunctionInfo operator_function = p.library.getFunction(next.type.name());
 
@@ -1202,12 +1203,12 @@ public class Parser {
 						info = new FunctionInfo(next.value, next.parameter_count);
 					}
 
-					Array<Expression> param_list = new Array<Parser.Expression>();
+					ArrayList<Expression> param_list = new ArrayList<Parser.Expression>();
 					for (int i = 0; i < next.parameter_count; i++) {
 						param_list.add(evaluation_stack.pop());
 					}
 
-					param_list.reverse();
+					Collections.reverse(param_list);
 
 					Expression exp = new Expression(parent, info, param_list, p);
 
@@ -1221,10 +1222,10 @@ public class Parser {
 				}
 
 			}
-			
+
 			//we should now have a single expression in this stack, which is the root
 			//of the expressions tree. if we have more than one, then we have a problem
-			if (evaluation_stack.size != 1) {
+			if (evaluation_stack.size() != 1) {
 				throw ParseException.make(first_token, "Error parsing expression (stack did not reduce correctly)");
 			}
 
@@ -1237,8 +1238,8 @@ public class Parser {
 		 * used to determine weather shunting-yard algorithm should pop operators from
 		 * the operator stack
 		 */
-		private static boolean shouldApplyPrecedence(TokenType o1, Array<Token> operator_stack) {
-			if (operator_stack.size == 0)
+		private static boolean shouldApplyPrecedence(TokenType o1, ArrayDeque<Token> operator_stack) {
+			if (operator_stack.size() == 0)
 				return false;
 
 			if (!Operator.isOperator(o1))
@@ -1389,18 +1390,18 @@ public class Parser {
 		}
 
 		protected static TokenType[] operatorTypes() {
-			TokenType[] t = new TokenType[] { 
+			TokenType[] t = new TokenType[] {
 					TokenType.Not,
 					TokenType.UnaryMinus,
 
-					TokenType.Add, 
-					TokenType.Minus, 
+					TokenType.Add,
+					TokenType.Minus,
 					TokenType.Divide,
-					TokenType.Multiply, 
+					TokenType.Multiply,
 					TokenType.Modulo,
 
 					TokenType.EqualToOrAssign,
-					TokenType.EqualTo, 
+					TokenType.EqualTo,
 					TokenType.GreaterThan,
 					TokenType.GreaterThanOrEqualTo,
 					TokenType.LessThan,
