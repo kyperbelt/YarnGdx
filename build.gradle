@@ -43,6 +43,25 @@ project(":core") {
     }
 
     dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = ['src']
+            }
+        }
+        test {
+            java {
+                srcDirs = ['test']
+            }
+        }
     }
 }
 
