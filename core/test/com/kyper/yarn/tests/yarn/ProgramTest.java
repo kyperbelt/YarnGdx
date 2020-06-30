@@ -15,31 +15,7 @@ class ProgramTest {
     }
 
     @org.junit.jupiter.api.Test
-    void loadStrings() {
+    void fakeTest() {
         assertTrue(true, "Making sure JUnit Works!");
-    }
-
-    @org.junit.jupiter.api.Test
-    void registerString() {
-    }
-
-    @org.junit.jupiter.api.Test
-    void getString() {
-    }
-
-    @org.junit.jupiter.api.Test
-    void dumpCode() {
-    }
-
-    @org.junit.jupiter.api.Test
-    void getTextForNode() {
-    }
-
-    @org.junit.jupiter.api.Test
-    void include() {
-    }
-
-    @org.junit.jupiter.api.Test
-    void untaggedStrings() {
     }
 }

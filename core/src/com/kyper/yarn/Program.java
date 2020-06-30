@@ -18,6 +18,10 @@ public class Program {
 
 	private int string_count = 0;
 
+	public Map<String, Node> getNodes() {
+		return nodes;
+	}
+
 	/// Loads a new string table into the program.
 	/**
 	 * The string table is merged with any existing strings, with the new table
@@ -150,6 +154,10 @@ public class Program {
 			super(message);
 		}
 
+		public ParseException(String message, Exception cause) {
+			super(message, cause);
+		}
+
 		protected static ParseException make(Token found_token, TokenType... expected_types) {
 			int line_number = found_token.line_number + 1;
 
@@ -192,7 +200,7 @@ public class Program {
 		}
 	}
 
-	protected static class Node {
+	public static class Node {
 
 		public ArrayList<Instruction> instructions = new ArrayList<Program.Instruction>();
 		public String name;

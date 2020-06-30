@@ -34,12 +34,16 @@ public class Dialogue {
 	protected Loader loader;
 
 	// the program is the compiled yarn program
-	protected Program program;
+	public Program program;
 
 	// the library contains all the functions and operators we know about
 	protected Library library;
 
-	public VirtualMachine vm;
+	private VirtualMachine vm;
+	private LineHandler line_handler;
+	private OptionsHandler option_handler;
+	private CommandHandler command_handler;
+	private NodeCompleteHandler node_complte_handler;
 
 	// collection of nodes that we've seen
 	public HashMap<String, Integer> visited_node_count = new HashMap<String, Integer>();
@@ -224,6 +228,46 @@ public class Dialogue {
 
 	private RunnerResult next_result;
 
+	public LineHandler getLineHandler() {
+		return line_handler;
+	}
+
+	public void setLineHandler(LineHandler line_handler) {
+		this.line_handler = line_handler;
+	}
+
+	public OptionsHandler getOptionsHandler() {
+		return option_handler;
+	}
+
+	public void setOptionsHandler(OptionsHandler options_handler) {
+		this.option_handler = options_handler;
+	}
+
+	public CommandHandler getCommandHandler() {
+		return command_handler;
+	}
+
+	public void setCommandHandler(CommandHandler command_handler) {
+		this.command_handler = command_handler;
+	}
+
+	public NodeCompleteHandler getCompleteHandler() {
+		return node_complte_handler;
+	}
+
+	public void setCompleteHandler(NodeCompleteHandler node_complete_handler) {
+		this.node_complte_handler = node_complete_handler;
+	}
+
+	public boolean setNode(String name) {
+	    if (vm != null) {
+	    	return vm.setNode(name);
+		} else {
+	    	return false;
+		}
+    }
+
 	public boolean start(String start) {
 		next_result = null;
 		execution_complete = false;
@@ -243,46 +287,38 @@ public class Dialogue {
 
 		vm = new VirtualMachine(this, program);
 
-		vm.setLineHandler(new LineHandler() {
-			@Override
-			public void handle(LineResult line) {
-				next_result = line;
-			}
+		vm.setLineHandler(line -> {
+			next_result = line;
+			if(line_handler != null) line_handler.handle(line);
 		});
 
-		vm.setCommandHandler(new CommandHandler() {
-			@Override
-			public void handle(CommandResult command) {
-				// if stop
-				if (command.command.getCommand().equals("stop")) {
-					vm.stop();
-				} else if (command.getCommand().equals(VirtualMachine.EXEC_COMPLETE)) {
-					execution_complete = true;
-				} else {
-					next_result = command;
-				}
+		vm.setCommandHandler(command -> {
+			// if stop
+			if (command.command.getCommand().equals("stop")) {
+				vm.stop();
+			} else if (command.getCommand().equals(VirtualMachine.EXEC_COMPLETE)) {
+				execution_complete = true;
+			} else {
+				next_result = command;
 			}
+			if(command_handler != null) command_handler.handle(command);
 		});
 
-		vm.setCompleteHandler(new NodeCompleteHandler() {
-			@Override
-			public void handle(NodeCompleteResult complete) {
-				if (vm.currentNodeName() != null) {
-					int count = 0;
-					if (visited_node_count.containsKey(vm.currentNodeName()))
-						count = visited_node_count.get(vm.currentNodeName());
+		vm.setCompleteHandler(complete -> {
+			if (vm.currentNodeName() != null) {
+				int count = 0;
+				if (visited_node_count.containsKey(vm.currentNodeName()))
+					count = visited_node_count.get(vm.currentNodeName());
 
-					visited_node_count.put(vm.currentNodeName(), count + 1);
-				}
-				next_result = complete;
+				visited_node_count.put(vm.currentNodeName(), count + 1);
 			}
+			next_result = complete;
+			if(node_complte_handler != null) node_complte_handler.handle(complete);
 		});
 
-		vm.setOptionsHandler(new OptionsHandler() {
-			@Override
-			public void handle(OptionResult options) {
-				next_result = options;
-			}
+		vm.setOptionsHandler(options -> {
+			next_result = options;
+			if(option_handler != null) option_handler.handle(options);
 		});
 
 		if (!vm.setNode(start)) {

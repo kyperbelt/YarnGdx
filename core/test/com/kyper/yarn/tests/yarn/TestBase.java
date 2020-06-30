@@ -79,6 +79,7 @@ public class TestBase {
 
     public TestBase() {
         dialogue = new Dialogue(storage);
+        registerListeners();
     }
 
     void registerListeners() {
@@ -98,7 +99,7 @@ public class TestBase {
 //        };
 
         // TODO VM used to be private so may need to add another layer of callbacks on Dialogue so we don't clobber them
-        dialogue.vm.setLineHandler((LineResult line) -> {
+        dialogue.setLineHandler((LineResult line) -> {
 //            var id = line.ID;
 //            assertTrue(stringTable.containsKey(id));
 
@@ -119,7 +120,7 @@ public class TestBase {
 //            return Dialogue.HandlerExecutionType.ContinueExecution;
         });
 
-        dialogue.vm.setOptionsHandler((OptionResult optionSet) -> {
+        dialogue.setOptionsHandler((OptionResult optionSet) -> {
             int optionCount = optionSet.getOptions().size();
 
             System.out.println("Options:");
@@ -156,7 +157,7 @@ public class TestBase {
             }
         });
 
-        dialogue.vm.setCommandHandler((CommandResult command) -> {
+        dialogue.setCommandHandler((CommandResult command) -> {
             System.out.println("Command: " + command.getCommand());
 
             if (testPlan != null) {
@@ -187,7 +188,7 @@ public class TestBase {
 
 
         // When a node is complete, just indicate that we want to continue execution
-        dialogue.vm.setCompleteHandler((NodeCompleteResult result) -> {
+        dialogue.setCompleteHandler((NodeCompleteResult result) -> {
             System.out.println("NodeCompleteHandler " + result);
             //return Dialogue.HandlerExecutionType.ContinueExecution;
 

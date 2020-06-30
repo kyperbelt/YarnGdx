@@ -1132,7 +1132,6 @@ public class Parser {
 						}
 					} catch (NullPointerException npe) {
 						npe.printStackTrace();
-						throw npe;
 					}
 
 				}

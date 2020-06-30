@@ -159,7 +159,7 @@ public class Loader {
 				} else if (e instanceof ParseException) {
 					String message = String.format("In file %s: Error parsing node %s:%s", file_name, info.title,
 							e.getMessage());
-					throw new ParseException(message);
+					throw new ParseException(message, e);
 				} else if (e instanceof IllegalStateException) {
 					String message = String.format("in file %s: Error reading node %s:%s", file_name, info.title,
 							e.getMessage());
