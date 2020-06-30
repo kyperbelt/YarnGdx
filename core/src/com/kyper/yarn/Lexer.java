@@ -202,7 +202,7 @@ public class Lexer {
 		current_state = default_state;
 
 		//parse each line
-		List<String> lines = Arrays.asList(text.split(LINE_SEPARATOR));
+		ArrayList<String> lines = new ArrayList<>(Arrays.asList(text.split(LINE_SEPARATOR)));
 		//blank line to ensure 0 indentation end
 		lines.add("");
 
@@ -383,7 +383,7 @@ public class Lexer {
 			}
 		}
 
-		TokenList list_to_return = new TokenList((List<Token>)line_tokens_stack);
+		TokenList list_to_return = new TokenList(new ArrayList<>(line_tokens_stack));
 		//list_to_return.reverse();
 
 		return list_to_return;

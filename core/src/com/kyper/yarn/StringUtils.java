@@ -19,12 +19,12 @@ public class StringUtils {
 		int found_start = 0;
 		int found_end = 0;
 		int last_param_used = 1;
-		int paramd1 = 0;	
+		int paramd1 = 0;
 		int offset = 0;
 
 		for (int i = 0; i < format_string.length(); i++) {
 			char c = format_string.charAt(i);
-			
+
 			if (c == '%') {
 				if(i > 0) {
 					char p = format_string.charAt(i-1);
@@ -35,7 +35,7 @@ public class StringUtils {
 				found_start = i;
 				i++;
 				while (i < format_string.length() && c != 's' && c != 'd') {
-					
+
 					c = format_string.charAt(i);
 					if (isDigit(c)) {
 						paramd1 = getNumericValue(c);
@@ -65,7 +65,7 @@ public class StringUtils {
 
 		return builder.toString();
 	}
-	
+
 	public static boolean isDigit(char c) {
 		switch(c) {
 		case '0':
@@ -82,7 +82,7 @@ public class StringUtils {
 		}
 		return false;
 	}
-	
+
 	public static int getNumericValue(char c) {
 		switch(c) {
 		case '0': return 0;
@@ -99,4 +99,13 @@ public class StringUtils {
 		return -1;
 	}
 
+	public static String trimEnd(String value) {
+		// Use replaceFirst to remove trailing spaces.
+		return value.replaceFirst("\\s+$", "");
+	}
+
+	public static String trimStart(String value) {
+		// Remove leading spaces.
+		return value.replaceFirst("^\\s+", "");
+	}
 }

@@ -165,7 +165,8 @@ public class Loader {
 							e.getMessage());
 					throw new IllegalStateException(message);
 				}else {
-					throw new IllegalStateException("Something went wrong in Yarn:"+e.getMessage());
+				    e.printStackTrace();
+					throw new IllegalStateException("Something went wrong in Yarn:"+e);
 				}
 			}
 

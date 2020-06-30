@@ -1114,20 +1114,25 @@ public class Parser {
 						throw ParseException.make(next_token, "Error parsing expression: unbalanced parentheses");
 					}
 
-					if (operator_stack.peek().type == TokenType.Identifier) {
-						//this whole paren-delimited subexpression is actually
-						//a function call
+					try {
+						if (operator_stack.peek().type == TokenType.Identifier) {
+							//this whole paren-delimited subexpression is actually
+							//a function call
 
-						//if the last token was a left paren, then this
-						//was a function with no params; otherwise, we
-						//have an additional parameter (on top of the ones we counter
-						//while encountering commas)
-						if (last_token.type != TokenType.LeftParen) {
-							function_stack.peek().parameter_count++;
+							//if the last token was a left paren, then this
+							//was a function with no params; otherwise, we
+							//have an additional parameter (on top of the ones we counter
+							//while encountering commas)
+							if (last_token.type != TokenType.LeftParen) {
+								function_stack.peek().parameter_count++;
+							}
+
+							expression_RPN.add(operator_stack.pop());
+							function_stack.pop();
 						}
-
-						expression_RPN.add(operator_stack.pop());
-						function_stack.pop();
+					} catch (NullPointerException npe) {
+						npe.printStackTrace();
+						throw npe;
 					}
 
 				}

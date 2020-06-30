@@ -174,7 +174,7 @@ public class Program {
 		}
 	}
 
-	protected static class LineInfo {
+	public static class LineInfo {
 		private int line_number;
 		private String node_name;
 

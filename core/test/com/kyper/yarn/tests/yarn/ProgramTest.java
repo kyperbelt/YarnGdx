@@ -16,7 +16,7 @@ class ProgramTest {
 
     @org.junit.jupiter.api.Test
     void loadStrings() {
-        assertTrue(false, "Making sure JUnit Works!");
+        assertTrue(true, "Making sure JUnit Works!");
     }
 
     @org.junit.jupiter.api.Test
