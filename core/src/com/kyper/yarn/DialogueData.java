@@ -1,10 +1,11 @@
 package com.kyper.yarn;
 
+import java.util.HashMap;
+
+import com.esotericsoftware.jsonbeans.Json;
 import com.kyper.yarn.Dialogue.VariableStorage;
 import com.kyper.yarn.Value.Type;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.HashMap;
 
 /**
  * A data table that stores Values
@@ -15,7 +16,7 @@ public class DialogueData implements VariableStorage {
 	private static final String NAME = "$USERDATA_NAME";
 
 	private HashMap<String, Value> variables;
-//	private static Json MYFRIEND;
+	private static Json MYFRIEND;
 
 	private String name;
 
@@ -95,23 +96,21 @@ public class DialogueData implements VariableStorage {
 
 	@SuppressWarnings("unchecked")
 	public boolean loadFromJson(String json) {
-//		if (MYFRIEND == null)
-//			MYFRIEND = new Json();
-//		HashMap<String, Value> vv = MYFRIEND.fromJson(HashMap.class, json);
-//		if (vv != null)
-//			setName(vv.remove(NAME).asString());
-//		variables = vv != null ? vv : variables;
-//		return vv != null;
-        throw new NotImplementedException();
+		if (MYFRIEND == null)
+			MYFRIEND = new Json();
+		HashMap<String, Value> vv = MYFRIEND.fromJson(HashMap.class, json);
+		if (vv != null)
+			setName(vv.remove(NAME).asString());
+		variables = vv != null ? vv : variables;
+		return vv != null;
 
 	}
 
 	public String toJson() {
-//		put(NAME, getName());
-//		if (MYFRIEND == null)
-//			MYFRIEND = new Json();
-//		return MYFRIEND.toJson(variables);
-		throw new NotImplementedException();
+		put(NAME, getName());
+		if (MYFRIEND == null)
+			MYFRIEND = new Json();
+		return MYFRIEND.toJson(variables);
 	}
 
 	public void clear() {

@@ -1,5 +1,13 @@
 package com.kyper.yarn;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.kyper.yarn.Analyser.Context;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.ReturningFunc;
@@ -10,9 +18,6 @@ import com.kyper.yarn.VirtualMachine.ExecutionState;
 import com.kyper.yarn.VirtualMachine.LineHandler;
 import com.kyper.yarn.VirtualMachine.NodeCompleteHandler;
 import com.kyper.yarn.VirtualMachine.OptionsHandler;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-import java.util.*;
 
 public class Dialogue {
 
@@ -185,10 +190,15 @@ public class Dialogue {
 	 *            loading;all else will be ignored.
 	 */
 	public void loadFile(String file, boolean show_tokens, boolean show_tree, String only_consider) {
-	    throw new NotImplementedException();
-//		String input = Gdx.files.internal(file).readString();
-//
-//		loadString(input, file, show_tokens, show_tree, only_consider);
+		String input=null;
+		try {
+			input = new String(Files.readAllBytes(Paths.get(file)));
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		loadString(input, file, show_tokens, show_tree, only_consider);
 	}
 
 	/**
