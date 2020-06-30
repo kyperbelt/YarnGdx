@@ -1,12 +1,9 @@
 package com.kyper.yarn;
 
 
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ObjectMap;
-import com.badlogic.gdx.utils.ObjectMap.Entry;
 
 public class Lexer {
 
@@ -16,7 +13,7 @@ public class Lexer {
 
 	public static final String LINE_SEPARATOR = "\n";
 
-	//states consts 
+	//states consts
 	private static final String BASE = "base";
 	private static final String DASH = "-";
 	private static final String COMMAND = "command";
@@ -31,12 +28,12 @@ public class Lexer {
 
 	private static final Regex WHITESPACE = new Regex("\\s*");
 
-	protected ObjectMap<String, LexerState> states;
+	protected HashMap<String, LexerState> states;
 
 	protected LexerState default_state;
 	protected LexerState current_state;
 
-	protected Array<IntBoolPair> indentation_stack;
+	protected ArrayDeque<IntBoolPair> indentation_stack;
 	protected boolean should_track_next_indent;
 
 	public Lexer() {
@@ -44,7 +41,7 @@ public class Lexer {
 	}
 
 	private void createStates() {
-		ObjectMap<TokenType, String> patterns = new ObjectMap<Lexer.TokenType, String>();
+		HashMap<TokenType, String> patterns = new HashMap<Lexer.TokenType, String>();
 
 		patterns.put(TokenType.Text, ".*");
 
@@ -102,7 +99,8 @@ public class Lexer {
 		String command_or_expression = COMMAND + DASH + OR + DASH + EXPRESSION;
 		String link_destination = LINK + DASH + DESTINATION;
 
-		states = new ObjectMap<String, Lexer.LexerState>();
+		states = new HashMap<String, Lexer.LexerState>();
+		states.entrySet();
 
 		states.put(BASE, new LexerState(patterns));
 		states.get(BASE).addTransition(TokenType.BeginCommand, COMMAND, true);
@@ -186,8 +184,8 @@ public class Lexer {
 
 		default_state = states.get(BASE);
 
-		for (Entry<String, LexerState> entry : states) {
-			entry.value.name = entry.key;
+		for (Map.Entry<String, LexerState> entry : states.entrySet()) {
+			entry.getValue().name = entry.getKey();
 		}
 
 	}
@@ -195,7 +193,7 @@ public class Lexer {
 	public TokenList tokenise(String text) {
 
 		//setup
-		indentation_stack = new Array<Lexer.IntBoolPair>();
+		indentation_stack = new ArrayDeque<IntBoolPair>();
 		indentation_stack.add(new IntBoolPair(0, false));
 		should_track_next_indent = false;
 
@@ -204,32 +202,32 @@ public class Lexer {
 		current_state = default_state;
 
 		//parse each line
-		Array<String> lines = new Array<String>(text.split(LINE_SEPARATOR));
+		List<String> lines = Arrays.asList(text.split(LINE_SEPARATOR));
 		//blank line to ensure 0 indentation end
 		lines.add("");
 
 		int line_number = 1;
-		
+
 		for (String line : lines) {
 			tokens.addAll(tokeniseLine(line, line_number));
 			line_number++;
 		}
-		
+
 		Token end_of_input = new Token(TokenType.EndOfInput, current_state,line_number,0);
 		//tokens.insert(0,end_of_input);
 		tokens.add(end_of_input);
 		//=====================================
 		//TODO: TO REVERSE INPUT PLEAS EUSE THIS
 		//tokens.reverse();
-		//TODO: REVERSE TOKENS 
+		//TODO: REVERSE TOKENS
 		//====================================
-		
+
 
 		return tokens;
 	}
 
 	public TokenList tokeniseLine(String line, int line_number) {
-		Array<Token> line_tokens_stack = new Array<Token>();
+		ArrayDeque<Token> line_tokens_stack = new ArrayDeque<Token>();
 
 		//replace tabs with four spaces
 		line = line.replaceAll("\t", "    ");
@@ -240,7 +238,7 @@ public class Lexer {
 		//record the indentation level if previous state wants us to
 		int this_indentation = lineIndentation(line);
 		IntBoolPair previous_indentation = indentation_stack.peek();
-		
+
 		if (should_track_next_indent && this_indentation > previous_indentation.key) {
 			//if we are more indented than before, emit an
 			//indent token and record this indent level
@@ -248,21 +246,21 @@ public class Lexer {
 
 			Token indent = new Token(TokenType.Indent, current_state, line_number, previous_indentation.key);
 			indent.value = padLeft("", this_indentation - previous_indentation.key);
-			
+
 
 			should_track_next_indent = false;
 
 			line_tokens_stack.add(indent);
-			
+
 		} else if (this_indentation < previous_indentation.key) {
 
-			//if we are less indented, emit a dedent for every 
+			//if we are less indented, emit a dedent for every
 			//indentation level that we passed on the way back to 0 that also
 			//emitted an indentation token.
 			//at the same time, remove those indent levels from the stack
 
 			while (this_indentation < indentation_stack.peek().key) {
-				
+
 				IntBoolPair top_level = indentation_stack.pop();
 
 				if (top_level.value) {
@@ -274,9 +272,9 @@ public class Lexer {
 
 		//now we start finding tokens
 		int column_number = this_indentation;
-		
+
 		Regex whitespace = WHITESPACE;
-		
+
 		while (column_number < line.length()) {
 
 			//if we are about to hit a line comment, abort processing line
@@ -290,7 +288,7 @@ public class Lexer {
 
 				Matcher myMatch = rule.altRegex.match(line,column_number);
 				Matcher match = rule.regex.match(line);
-				
+
 				if (!myMatch.find(0))
 					continue;
 				String token_text;
@@ -308,7 +306,7 @@ public class Lexer {
 
 					int text_start_index = this_indentation;
 
-					if (line_tokens_stack.size > 0) {
+					if (line_tokens_stack.size() > 0) {
 						while (line_tokens_stack.peek().type == TokenType.Identifier) {
 							line_tokens_stack.pop();
 						}
@@ -322,7 +320,7 @@ public class Lexer {
 					}
 
 					column_number = text_start_index;
-					
+
 
 					match.find(0);
 
@@ -333,61 +331,61 @@ public class Lexer {
 
 				}else {
 					token_text = myMatch.group();
-					
+
 				}
-				
+
 				column_number+=token_text.length();
-				
-				
-				
+
+
+
 				//if this was a string, lop off the quotes at the start and end
 				//and un-escape the quotes and slashes
 				if(rule.type == TokenType.Str) {
-					
+
 					token_text = token_text.substring(1, token_text.length()-1);
 					token_text = token_text.replaceAll("\\\\", "\\");
 					token_text = token_text.replaceAll("\\\"", "\"");
 				}
-				
+
 				//System.out.println("line:"+line_number+" col:"+column_number+" text:"+token_text);
-				
+
 				Token token = new Token(rule.type, current_state,line_number,column_number,token_text);
 				token.delimits_text = rule.delimits_text;
-				
+
 				line_tokens_stack.add(token);
-				
+
 				if(rule.enter_state!=null) {
 					if(!states.containsKey(rule.enter_state))
 						throw new TokeniserException(line_number, column_number, "Unkown tokeniser state "+rule.enter_state);
-					
-					
+
+
 					enterState(states.get(rule.enter_state));
-					
+
 					if(should_track_next_indent == true) {
 						if(indentation_stack.peek().key < this_indentation) {
 							indentation_stack.add(new IntBoolPair(this_indentation, false));
 						}
 					}
 				}
-				
+
 				matched = true;
 				break;
 			}
-			
-			
+
+
 			if(!matched) {
 				throw TokeniserException.expectedTokens(line_number, column_number, current_state);
 			}
-			
+
 			Matcher last_white_space = whitespace.match(line);
 			if(last_white_space.find(column_number)) {
 				column_number=last_white_space.end();
 			}
 		}
-		
-		TokenList list_to_return = new TokenList(line_tokens_stack);
+
+		TokenList list_to_return = new TokenList((List<Token>)line_tokens_stack);
 		//list_to_return.reverse();
-		
+
 		return list_to_return;
 	}
 
@@ -397,7 +395,7 @@ public class Lexer {
 		if (initial_indent_regex == null)
 			initial_indent_regex = new Regex("^(\\s*)");
 		Matcher match = initial_indent_regex.match(line);
-		
+
 		if (!match.find() || match.group(0) == null)
 			return 0;
 		return match.group(0).length();
@@ -424,44 +422,44 @@ public class Lexer {
 			this.line_number = line_number;
 			this.column_number = column_number;
 		}
-		
+
 		public static TokeniserException expectedTokens(int line_number,int column_number,LexerState state) {
-			Array<String> names = new Array<String>();
+			ArrayDeque<String> names = new ArrayDeque<String>();
 			for (TokenRule rule : state.token_rules) {
 				names.add(rule.type.name());
 			}
-			
+
 			String name_list;
-			
-			if(names.size > 1) {
+
+			if(names.size() > 1) {
 				String last_item = names.pop();
 				name_list = String.join(", ", names);
 				name_list+= ", or "+last_item;
 			}else {
-				name_list = names.first();
+				name_list = names.peekFirst();
 			}
-			
+
 			String message = String.format("Expected %s", name_list);
-			
+
 			return new TokeniserException(line_number,column_number,message);
 		}
 
 	}
 
 	/**
-	 *  
+	 *
 	 */
-	public class TokenList extends Array<Token> {
+	public class TokenList extends ArrayList<Token> {
 
 		public TokenList() {
 			super();
 		}
 
 		public TokenList(Token[] tokens) {
-			super(tokens);
+			super(Arrays.asList(tokens));
 		}
 
-		public TokenList(Array<Token> tokens) {
+		public TokenList(List<Token> tokens) {
 			super(tokens);
 		}
 	}
@@ -601,14 +599,14 @@ public class Lexer {
 	protected class LexerState {
 
 		public String name;
-		private ObjectMap<TokenType, String> patterns;
-		public Array<TokenRule> token_rules;
+		private HashMap<TokenType, String> patterns;
+		public ArrayList<TokenRule> token_rules;
 		public boolean track_next_indentation;
 
-		public LexerState(ObjectMap<TokenType, String> patterns) {
+		public LexerState(HashMap<TokenType, String> patterns) {
 
 			this.patterns = patterns;
-			token_rules = new Array<Lexer.TokenRule>();
+			token_rules = new ArrayList<Lexer.TokenRule>();
 			track_next_indentation = false;
 
 		}
@@ -632,14 +630,14 @@ public class Lexer {
 		/**
 		 * a text rule matches everything that it possibly can, up to Any of the rules
 		 * that already exist.
-		 * 
+		 *
 		 * @return {@link TokenRule} - text rule
 		 */
 		public TokenRule addTextRule(TokenType type, String enter_state) {
 			if (containsTextRule()) {
 				throw new IllegalStateException("State already contains a text rule");
 			}
-			Array<String> delimiter_rules = new Array<String>();
+			ArrayList<String> delimiter_rules = new ArrayList<String>();
 
 			for (TokenRule other_rule : token_rules) {
 				if (other_rule.delimits_text)
@@ -676,7 +674,7 @@ public class Lexer {
 	protected class TokenRule {
 		public Regex regex = null;
 		public Regex altRegex = null;
-		
+
 		//set to null if should stay in same state
 		public String enter_state;
 		public TokenType type;
@@ -745,7 +743,9 @@ public class Lexer {
 		}
 	}
 
-	public class IntBoolPair extends Entry<Integer, Boolean> {
+	public class IntBoolPair {
+	    int key;
+	    boolean value;
 		public IntBoolPair(int key, boolean value) {
 			this.key = key;
 			this.value = value;

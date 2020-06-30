@@ -1,9 +1,5 @@
 package com.kyper.yarn;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ObjectMap;
-import com.badlogic.gdx.utils.ObjectMap.Entry;
 import com.kyper.yarn.Analyser.Context;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.ReturningFunc;
@@ -14,6 +10,9 @@ import com.kyper.yarn.VirtualMachine.ExecutionState;
 import com.kyper.yarn.VirtualMachine.LineHandler;
 import com.kyper.yarn.VirtualMachine.NodeCompleteHandler;
 import com.kyper.yarn.VirtualMachine.OptionsHandler;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.*;
 
 public class Dialogue {
 
@@ -37,13 +36,13 @@ public class Dialogue {
 	private VirtualMachine vm;
 
 	// collection of nodes that we've seen
-	public ObjectMap<String, Integer> visited_node_count = new ObjectMap<String, Integer>();
+	public HashMap<String, Integer> visited_node_count = new HashMap<String, Integer>();
 
 	protected boolean execution_complete;
 
 	/**
 	 * creates a yarn dialogue
-	 * 
+	 *
 	 * @param continuity
 	 *            - will be used to store/get values
 	 * @param debug
@@ -87,7 +86,7 @@ public class Dialogue {
 
 	/**
 	 * creates a dialogue with a default debug and error implementation
-	 * 
+	 *
 	 * @param continuity
 	 *            - will be used to store/get values
 	 */
@@ -96,12 +95,12 @@ public class Dialogue {
 
 			@Override
 			public void log(String message) {
-				Gdx.app.log("YarnGdx:", message);
+				System.out.println("YarnGdx:" + message);
 			}
 		}, new YarnLogger() {
 			@Override
 			public void log(String message) {
-				Gdx.app.error("YarnGdx:", message);
+				System.out.println("YarnGdx:" + message);
 			}
 		});
 	}
@@ -109,7 +108,7 @@ public class Dialogue {
 	/**
 	 * load all nodes contained in the text to the dialogue unless otherwise
 	 * specified
-	 * 
+	 *
 	 * @param text
 	 *            - the text containing node info
 	 * @param file_name
@@ -147,7 +146,7 @@ public class Dialogue {
 	/**
 	 * load all nodes contained in the text to the dialogue unless otherwise
 	 * specified
-	 * 
+	 *
 	 * @param text
 	 *            - the text containing node info
 	 * @param name
@@ -163,7 +162,7 @@ public class Dialogue {
 	/**
 	 * load all nodes contained in the text to the dialogue unless otherwise
 	 * specified
-	 * 
+	 *
 	 * @param text
 	 *            - the text containing node info
 	 * @param name
@@ -174,7 +173,7 @@ public class Dialogue {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param file
 	 *            - path to the file to load
 	 * @param show_tokens
@@ -186,13 +185,14 @@ public class Dialogue {
 	 *            loading;all else will be ignored.
 	 */
 	public void loadFile(String file, boolean show_tokens, boolean show_tree, String only_consider) {
-		String input = Gdx.files.internal(file).readString();
-
-		loadString(input, file, show_tokens, show_tree, only_consider);
+	    throw new NotImplementedException();
+//		String input = Gdx.files.internal(file).readString();
+//
+//		loadString(input, file, show_tokens, show_tree, only_consider);
 	}
 
 	/**
-	 * 
+	 *
 	 * @param file
 	 *            - path to the file to load
 	 * @param only_consider
@@ -206,7 +206,7 @@ public class Dialogue {
 	/**
 	 * @param file
 	 *            - path to the file to load
-	 * 
+	 *
 	 */
 	public void loadFile(String file) {
 		loadFile(file, null);
@@ -215,7 +215,7 @@ public class Dialogue {
 	// /**
 	// * Start a thread that spits out results waits for results to be consumed
 	// */
-	// private Array<RunnerResult> results = new Array<Dialogue.RunnerResult>();
+	// private ArrayList<RunnerResult> results = new ArrayList<Dialogue.RunnerResult>();
 
 	private RunnerResult next_result;
 
@@ -293,7 +293,7 @@ public class Dialogue {
 
 	/**
 	 * update the virtual machine counter.
-	 * 
+	 *
 	 */
 	protected boolean update() {
 		if (vm != null && !execution_complete && vm.getExecutionState() != ExecutionState.WaitingOnOptionSelection) {
@@ -305,7 +305,7 @@ public class Dialogue {
 
 	/**
 	 * get the next result - if it is null it will attempt to populate it
-	 * 
+	 *
 	 * @return
 	 */
 	public RunnerResult getNext() {
@@ -320,7 +320,7 @@ public class Dialogue {
 
 	/**
 	 * get the next result - will return null if there is no result
-	 * 
+	 *
 	 * @return
 	 */
 	public RunnerResult nextRaw() {
@@ -329,7 +329,7 @@ public class Dialogue {
 
 	/**
 	 * checks the next result - if it is null it will attempt to populate it
-	 * 
+	 *
 	 * @return
 	 */
 	public RunnerResult checkNext() {
@@ -340,7 +340,7 @@ public class Dialogue {
 
 	/**
 	 * check if the next result is an options result
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isNextOptions() {
@@ -349,7 +349,7 @@ public class Dialogue {
 
 	/**
 	 * check if the next result is a line result
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isNextLine() {
@@ -358,7 +358,7 @@ public class Dialogue {
 
 	/**
 	 * check if the next result is a custom command result
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isNextCommand() {
@@ -367,7 +367,7 @@ public class Dialogue {
 
 	/**
 	 * check if the next result is a node complete result
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isNextComplete() {
@@ -377,7 +377,7 @@ public class Dialogue {
 	/**
 	 * get the next result as a line if the next result is not a line it will return
 	 * null
-	 * 
+	 *
 	 * @return
 	 */
 	public LineResult getNextAsLine() {
@@ -387,7 +387,7 @@ public class Dialogue {
 	/**
 	 * get the next result as an options result if the next result is not an options
 	 * result then this will return null
-	 * 
+	 *
 	 * @return
 	 */
 	public OptionResult getNextAsOptions() {
@@ -397,7 +397,7 @@ public class Dialogue {
 	/**
 	 * get the next result as a command result (must be parsed by the programmer) if
 	 * the next result is not a commandreslt then this will return null
-	 * 
+	 *
 	 * @return
 	 */
 	public CommandResult getNextAsCommand() {
@@ -407,7 +407,7 @@ public class Dialogue {
 	/**
 	 * get the next result as a node complete result if the next result is not a
 	 * node compelte result then this will return null
-	 * 
+	 *
 	 * @return
 	 */
 	public NodeCompleteResult getNextAsComplete() {
@@ -497,27 +497,27 @@ public class Dialogue {
 			vm.stop();
 	}
 
-	public Array<String> allNodes() {
-		return program.nodes.keys().toArray();
+	public Set<String> allNodes() {
+		return program.nodes.keySet();
 	}
 
 	public String currentNode() {
 		return vm == null ? null : vm.currentNodeName();
 	}
 
-	ObjectMap<String, String> _tx4n;
+	HashMap<String, String> _tx4n;
 
-	public ObjectMap<String, String> getTextForAllNodes() {
+	public HashMap<String, String> getTextForAllNodes() {
 		if (_tx4n == null)
-			_tx4n = new ObjectMap<String, String>();
+			_tx4n = new HashMap<String, String>();
 		_tx4n.clear();
-		for (Entry<String, Program.Node> entry : program.nodes) {
-			String text = program.getTextForNode(entry.key);
+		for (Map.Entry<String, Program.Node> entry : program.nodes.entrySet()) {
+			String text = program.getTextForNode(entry.getKey());
 
 			if (text == null)
 				continue;
 
-			_tx4n.put(entry.key, text);
+			_tx4n.put(entry.getKey(), text);
 		}
 
 		return _tx4n;
@@ -525,12 +525,12 @@ public class Dialogue {
 
 	/**
 	 * get the source code for the node
-	 * 
+	 *
 	 * @param node
 	 * @return
 	 */
 	public String getTextForNode(String node) {
-		if (program.nodes.size == 0) {
+		if (program.nodes.size() == 0) {
 			error_logger.log("no nodes are loaded!");
 			return null;
 		} else if (program.nodes.containsKey(node)) {
@@ -541,21 +541,21 @@ public class Dialogue {
 		}
 	}
 
-	public void addStringTable(ObjectMap<String, String> string_table) {
+	public void addStringTable(HashMap<String, String> string_table) {
 		program.loadStrings(string_table);
 	}
 
-	public ObjectMap<String, String> getStringTable() {
+	public HashMap<String, String> getStringTable() {
 		return program.strings;
 	}
 
-	protected ObjectMap<String, LineInfo> getStringInfoTable() {
+	protected HashMap<String, LineInfo> getStringInfoTable() {
 		return program.line_info;
 	}
 
 	/**
 	 * unload all nodes
-	 * 
+	 *
 	 * @param clear_visisted_nodes
 	 */
 	public void unloadAll(boolean clear_visisted_nodes) {
@@ -573,7 +573,7 @@ public class Dialogue {
 			error_logger.log("no nodes compiled");
 			return false;
 		}
-		if (program.nodes.size == 0) {
+		if (program.nodes.size() == 0) {
 			error_logger.log("no nodes in program");
 			return false;
 		}
@@ -592,11 +592,11 @@ public class Dialogue {
 		context.addProgramToAnalysis(program);
 	}
 
-	public Array<String> getvisitedNodes() {
-		return visited_node_count.keys().toArray();
+	public Set<String> getvisitedNodes() {
+		return visited_node_count.keySet();
 	}
 
-	public void setVisitedNodes(Array<String> visited) {
+	public void setVisitedNodes(ArrayList<String> visited) {
 		visited_node_count.clear();
 		for (String string : visited) {
 			visited_node_count.put(string, 1);
@@ -706,12 +706,12 @@ public class Dialogue {
 		protected Options options;
 		protected OptionChooser chooser;
 
-		public OptionResult(Array<String> options, OptionChooser chooser) {
+		public OptionResult(ArrayList<String> options, OptionChooser chooser) {
 			this.chooser = chooser;
 			this.options = new Options(options);
 		}
 
-		public Array<String> getOptions() {
+		public ArrayList<String> getOptions() {
 			return options.getOptions();
 		}
 
@@ -767,8 +767,8 @@ public class Dialogue {
 	}
 
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * information that the client should handle
 	 */
 	public static class Line {
@@ -788,17 +788,17 @@ public class Dialogue {
 	}
 
 	public static class Options {
-		private Array<String> options;
+		private ArrayList<String> options;
 
-		public Options(Array<String> options) {
+		public Options(ArrayList<String> options) {
 			this.options = options;
 		}
 
-		public Array<String> getOptions() {
+		public ArrayList<String> getOptions() {
 			return options;
 		}
 
-		public void setOptions(Array<String> options) {
+		public void setOptions(ArrayList<String> options) {
 			this.options = options;
 		}
 	}
@@ -836,7 +836,7 @@ public class Dialogue {
 
 	public static class MemoryVariableStorage extends BaseVariableStorage {
 
-		ObjectMap<String, Value> variables = new ObjectMap<String, Value>();
+		HashMap<String, Value> variables = new HashMap<String, Value>();
 
 		@Override
 		public void setValue(String name, Value value) {

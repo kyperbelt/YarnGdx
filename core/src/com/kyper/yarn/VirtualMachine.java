@@ -1,8 +1,5 @@
 package com.kyper.yarn;
 
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ObjectMap.Entry;
 import com.kyper.yarn.Dialogue.CommandResult;
 import com.kyper.yarn.Dialogue.LineResult;
 import com.kyper.yarn.Dialogue.NodeCompleteResult;
@@ -11,6 +8,11 @@ import com.kyper.yarn.Dialogue.OptionResult;
 import com.kyper.yarn.Library.FunctionInfo;
 import com.kyper.yarn.Program.Instruction;
 import com.kyper.yarn.Program.Node;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 
 public class VirtualMachine {
 
@@ -22,7 +24,17 @@ public class VirtualMachine {
 		/** Running */
 		Running
 	}
-	
+
+	class Option {
+		public String key;
+		public String value;
+
+		public Option(String key, String value) {
+			this.key = key;
+			this.value = value;
+		}
+	}
+
 	protected static final String EXEC_COMPLETE = "execution_complete_command";
 
 	private LineHandler line_handler;
@@ -76,7 +88,7 @@ public class VirtualMachine {
 	}
 
 	public boolean hasOptions() {
-		return state.current_options.size > 0;
+		return state.current_options.size() > 0;
 	}
 
 	/**
@@ -88,26 +100,26 @@ public class VirtualMachine {
 			dialogue.error_logger.log("Cannot continue running dialogue. Still waiting on option selection.");
 			//execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
-			
+
 			return;
 		}
 
 		if (execution_state == ExecutionState.Stopped)
 			setExecutionState(ExecutionState.Running);
-		
-		
-		
-		
+
+
+
+
 		Instruction current_instruction = current_node.instructions.get(state.program_counter);
 
 		runInstruction(current_instruction);
-		
+
 		//DEBUG instruction sets ---
 		//System.out.println(current_instruction.toString(program, dialogue.library));
 
 		state.program_counter++;
-		
-		if (state.program_counter >= current_node.instructions.size) {
+
+		if (state.program_counter >= current_node.instructions.size()) {
 			node_complte_handler.handle(new NodeCompleteResult(null));
 			//execution_state = ExecutionState.Stopped;
 		    setExecutionState(ExecutionState.Stopped);
@@ -116,9 +128,9 @@ public class VirtualMachine {
 		}
 
 
-		
 
-		
+
+
 	}
 
 	/**
@@ -197,16 +209,16 @@ public class VirtualMachine {
 
 			{
 				int param_count = function.getParamCount();
-		
+
 				// if this function takes -1 params, it is variadic.
 				// expect the compiler to have palced the number of params
 				// actually passed at the top of the stack.
 				if (param_count == -1) {
 					param_count = (int) state.popValue().asNumber();
 				}
-		
+
 				Value result;
-		
+
 				if (param_count == 0) {
 					result = function.invoke();
 				} else {
@@ -215,16 +227,16 @@ public class VirtualMachine {
 					for (int i = param_count - 1; i >= 0; i--) {
 						params[i] = state.popValue();
 					}
-		
+
 					// invoke the function
 					result = function.invokeWithArray(params);
 				}
-		
+
 				// if the function returns a value push it
 				if (function.returnsValue()) {
 					state.pushValue(result);
 				}
-		
+
 			}
 			break;
 		case PushVariable:
@@ -243,7 +255,7 @@ public class VirtualMachine {
 			// stop execution immidiately and report it
 			node_complte_handler.handle(new NodeCompleteResult(null));
 			command_handler.handle(new CommandResult(EXEC_COMPLETE));
-			
+
 			//execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
 			break;
@@ -265,14 +277,11 @@ public class VirtualMachine {
 			break;
 		case AddOption:
 			// add an option to the current state
-			Entry<String, String> option = new Entry<String, String>();
-			option.key = (String) instruction.operandA();
-			option.value = (String) instruction.operandB();
-			state.current_options.add(option);
+			state.current_options.add(new Option((String)instruction.operandA(), (String)instruction.operandB()));
 			break;
 		case ShowOptions:
 			// if we have no options to show, immidiately stop
-			if (state.current_options.size == 0) {
+			if (state.current_options.size() == 0) {
 				node_complte_handler.handle(new NodeCompleteResult(null));
 				//execution_state = ExecutionState.Stopped;
 				setExecutionState(ExecutionState.Stopped);
@@ -281,8 +290,8 @@ public class VirtualMachine {
 
 			// if we have a single option, and it has no label, select it and continue
 			// execution
-			if (state.current_options.size == 1 && state.current_options.get(0).key == null) {
-				String dest = state.current_options.first().value;
+			if (state.current_options.size() == 1 && state.current_options.get(0).key == null) {
+				String dest = state.current_options.get(0).value;
 				state.pushValue(dest);
 				state.current_options.clear();
 				break;
@@ -290,16 +299,17 @@ public class VirtualMachine {
 
 			if (dialogue.continuity.getValue(SpecialVariables.ShuffleOptions).asBool()) {
 				// shuffle the dialogue options if needed
-				int n = state.current_options.size;
-				for (int opt1 = 0; opt1 < n; opt1++) {
-					int opt2 = opt1 + (int) (MathUtils.random() * (n - opt1));
-					state.current_options.swap(opt1, opt2);
-				}
+				Collections.shuffle(state.current_options);
+//				int n = state.current_options.size();
+//				for (int opt1 = 0; opt1 < n; opt1++) {
+//					int opt2 = opt1 + (int) (Math.random() * (n - opt1));
+//					state.current_options.swap(opt1, opt2);
+//				}
 			}
 
 			// present options to user to choose
-			Array<String> option_strings = new Array<String>();
-			for (Entry<String, String> op : state.current_options) {
+			ArrayList<String> option_strings = new ArrayList<String>();
+			for (Option op : state.current_options) {
 				option_strings.add(program.getString(op.key));
 			}
 
@@ -391,10 +401,10 @@ public class VirtualMachine {
 		public int program_counter = 0;
 
 		// list of options, where each option = <string id,destination node>
-		public Array<Entry<String, String>> current_options = new Array<Entry<String, String>>();
+		public ArrayList<Option> current_options = new ArrayList<>();
 
 		// the value stack
-		private Array<Value> stack = new Array<Value>();
+		private ArrayDeque<Value> stack = new ArrayDeque<Value>();
 
 		/**
 		 * push a value on to the value stack
@@ -408,7 +418,7 @@ public class VirtualMachine {
 
 		/**
 		 * pop a value from the value stack
-		 * 
+		 *
 		 * @return
 		 */
 		public Value popValue() {
@@ -417,7 +427,7 @@ public class VirtualMachine {
 
 		/**
 		 * peek at a value from the stack
-		 * 
+		 *
 		 * @return
 		 */
 		public Value peekValue() {

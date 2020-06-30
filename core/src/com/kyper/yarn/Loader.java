@@ -4,14 +4,10 @@ package com.kyper.yarn;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.*;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Json;
-import com.badlogic.gdx.utils.ObjectMap;
-import com.badlogic.gdx.utils.ObjectMap.Entry;
-import com.badlogic.gdx.utils.SerializationException;
-import com.badlogic.gdx.utils.StringBuilder;
 import com.kyper.yarn.Lexer.Regex;
 import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenList;
@@ -19,6 +15,7 @@ import com.kyper.yarn.Lexer.TokeniserException;
 import com.kyper.yarn.Loader.NodeInfo.Position;
 import com.kyper.yarn.Parser.Node;
 import com.kyper.yarn.Program.ParseException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Loader {
 	public enum NodeFormat {
@@ -51,7 +48,7 @@ public class Loader {
 		StringBuilder b = new StringBuilder();
 
 		for (Token token : token_list) {
-			b.appendLine(String.format("%1$s (%2$s line %3$s)", token.toString(), token.value, token.line_number));
+			b.append(String.format("%1$s (%2$s line %3$s)\n", token.toString(), token.value, token.line_number));
 		}
 
 		dialogue.debug_logger.log("Tokens:");
@@ -79,10 +76,10 @@ public class Loader {
 	//				this.emmited = emitted;
 	//			}
 	//	}
-	//	
+	//
 	//	private String preProcessor(String node_text) {
 	//		String processed = null;
-	//		
+	//
 	//		return processed;
 	//	}
 
@@ -90,7 +87,7 @@ public class Loader {
 	 * given a bunch of raw text load all nodes that were inside it. You can call
 	 * this multiple times to append to the collection of nodes, but note that new
 	 * nodes will replace older ones with the same name.
-	 * 
+	 *
 	 * @return the number of nodes that were loaded
 	 */
 	public Program load(String text, Library library, String file_name, Program include, boolean show_tokens,
@@ -101,12 +98,12 @@ public class Loader {
 		}
 
 		//final parsed nodes that were in file
-		ObjectMap<String, Parser.Node> nodes = new ObjectMap<String, Parser.Node>();
+		HashMap<String, Node> nodes = new HashMap<String, Parser.Node>();
 
 		//load the raw data and get an array of node title-text pairs
 
-		NodeInfo[] infos = getNodesFromText(text, format);
-		
+		List<NodeInfo> infos = getNodesFromText(text, format);
+
 		//for soem weird reason its not used wtf
 		@SuppressWarnings("unused")
 		int nodes_loaded = 0;
@@ -125,17 +122,17 @@ public class Loader {
 				}
 
 				Lexer lexer = new Lexer();
-				
-				
+
+
 				TokenList tokens = lexer.tokenise(info.body);
-				
-				
+
+
 
 				if (show_tokens)
 					printTokenList(tokens);
-				
+
 				Node node = new Parser(tokens, library).parse();
-				
+
 
 				//if this node is tagged "rawText", then preserve its source
 				if (info.tags != null && !info.tags.isEmpty() && info.tags.contains("rawText")) {
@@ -148,7 +145,7 @@ public class Loader {
 
 				if (show_parse_tree)
 					printParseTree(node);
-				
+
 				nodes.put(node.getName(), node);
 
 				nodes_loaded++;
@@ -173,12 +170,12 @@ public class Loader {
 			}
 
 		}
-		
+
 		Compiler compiler = new Compiler(file_name);
-		for (Entry<String, Parser.Node> n : nodes) {
-			compiler.compileNode(n.value);
+		for (Map.Entry<String, Parser.Node> n : nodes.entrySet()) {
+			compiler.compileNode(n.getValue());
 		}
-		
+
 		if(include!=null)
 			compiler.program.include(include);
 
@@ -205,8 +202,8 @@ public class Loader {
 	 * the nodes in text file
 	 */
 	@SuppressWarnings("unchecked")
-	protected NodeInfo[] getNodesFromText(String text, NodeFormat format) {
-		Array<NodeInfo> nodes = new Array<Loader.NodeInfo>();
+	protected List<NodeInfo> getNodesFromText(String text, NodeFormat format) {
+		ArrayList<NodeInfo> nodes = new ArrayList<Loader.NodeInfo>();
 
 		switch (format) {
 		case SingleNodeText:
@@ -218,20 +215,21 @@ public class Loader {
 			break;
 		case Json:
 			//parse it as json
-			Json json = new Json();
-			try {
-				nodes = json.fromJson(Array.class, Loader.NodeInfo.class, text);
-			} catch (Exception e) {
-				if(e instanceof SerializationException) {
-					dialogue.error_logger.log("Error parsing Yarn input: " + e.getMessage());
-				}else if(e instanceof ClassCastException) {
-					dialogue.error_logger.log("Unable to cast yarn");
-				}
-			}
-			break;
+//			Json json = new Json();
+//			try {
+//				nodes = json.fromJson(ArrayList.class, Loader.NodeInfo.class, text);
+//			} catch (Exception e) {
+//				if(e instanceof SerializationException) {
+//					dialogue.error_logger.log("Error parsing Yarn input: " + e.getMessage());
+//				}else if(e instanceof ClassCastException) {
+//					dialogue.error_logger.log("Unable to cast yarn");
+//				}
+//			}
+            throw new NotImplementedException();
+//			break;
 		case Text:
 
-			//check for the existance of atleast one '---'+newline sentinel, which divides 
+			//check for the existance of atleast one '---'+newline sentinel, which divides
 			//the headers frmo the body
 
 			//we use a regex to match either \r\n or \n line endings
@@ -318,7 +316,7 @@ public class Loader {
 					line_number++;
 
 					//were past the header
-					Array<String> lines = new Array<String>();
+					ArrayList<String> lines = new ArrayList<String>();
 
 					while ((line = reader.readLine()) != null && !line.equals("===")) {
 						line_number++;
@@ -345,7 +343,7 @@ public class Loader {
 			throw new IllegalStateException("Unkown format " + format.name());
 		}
 
-		return nodes.toArray( NodeInfo.class);
+		return nodes;
 	}
 
 	public static class NodeInfo {
@@ -400,12 +398,12 @@ public class Loader {
 			this.position = position;
 		}
 
-		public Array<String> tagsList() {
+		public List<String> tagsList() {
 			//no tags return empty
 			if (tags == null || tags.length() == 0) {
-				return new Array<String>();
+				return new ArrayList<String>();
 			}
-			return new Array<String>(tags.trim().split(" "));
+			return java.util.Arrays.asList(tags.trim().split(" "));
 		}
 
 		public static class Position {

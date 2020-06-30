@@ -1,5 +1,5 @@
 buildscript {
-    
+
 
     repositories {
         mavenLocal()
@@ -8,7 +8,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        
+
 
     }
 }
@@ -37,11 +37,12 @@ allprojects {
 
 project(":core") {
     apply plugin: "java"
-
+    compileJava {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
 
     dependencies {
-        compile "com.badlogicgames.gdx:gdx:$gdxVersion"
-        
     }
 }
 
@@ -53,7 +54,7 @@ project(":desktop") {
         compile project(":core")
         compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-        
+
     }
 }
 

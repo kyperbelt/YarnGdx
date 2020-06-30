@@ -1,10 +1,9 @@
 package com.kyper.yarn;
 
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ObjectMap.Entry;
-import com.badlogic.gdx.utils.ObjectSet;
 import com.kyper.yarn.Analyser.Diagnosis.Severity;
 import com.kyper.yarn.Program.Instruction;
+
+import java.util.*;
 
 public class Analyser {
 
@@ -85,34 +84,34 @@ public class Analyser {
 	}
 
 	public static class Context {
-		
-		private Array<CompiledProgramAnalyser> analysers;
+
+		private List<CompiledProgramAnalyser> analysers;
 		public Context() {
-			analysers = new Array<Analyser.CompiledProgramAnalyser>();
+			analysers = new ArrayList<Analyser.CompiledProgramAnalyser>();
 			analysers.add(new VariableLister());
 			analysers.add(new UnusedVariableChecker());
 		}
-		
+
 		public Context(CompiledProgramAnalyser...analysers) {
-			this.analysers = new Array<Analyser.CompiledProgramAnalyser>(analysers);
+			this.analysers = Arrays.asList(analysers);
 		}
-		
-		
+
+
 		protected void addProgramToAnalysis(Program program) {
 			for (CompiledProgramAnalyser a : analysers) {
 				a.diagnose(program);
 			}
 		}
-		
+
 		public Iterable<Diagnosis> finalAnalysis(){
-			Array<Diagnosis> diagnoses = new Array<Analyser.Diagnosis>();
+			ArrayList<Diagnosis> diagnoses = new ArrayList<Analyser.Diagnosis>();
 			for (CompiledProgramAnalyser a : analysers) {
 				diagnoses.addAll(a.gatherDiagnoses());
 			}
 			return diagnoses;
 		}
-		
-		
+
+
 
 	}
 
@@ -123,19 +122,19 @@ public class Analyser {
 	protected static abstract class CompiledProgramAnalyser {
 		public abstract void diagnose(Program program);
 
-		public abstract Array<Diagnosis> gatherDiagnoses();
+		public abstract List<Diagnosis> gatherDiagnoses();
 	}
 
 	protected static class VariableLister extends CompiledProgramAnalyser {
 
-		protected ObjectSet<String> variables = new ObjectSet<String>();
+		protected HashSet<String> variables = new HashSet<String>();
 
 		@Override
 		public void diagnose(Program program) {
 			//each node, find all reads and writes to variables
-			for (Entry<String, Program.Node> nodeinfo : program.nodes) {
+			for (Map.Entry<String, Program.Node> nodeinfo : program.nodes.entrySet()) {
 
-				Program.Node the_node = nodeinfo.value;
+				Program.Node the_node = nodeinfo.getValue();
 
 				for (Program.Instruction instruction : the_node.instructions) {
 					switch (instruction.getOperation()) {
@@ -150,8 +149,8 @@ public class Analyser {
 		}
 
 		@Override
-		public Array<Diagnosis> gatherDiagnoses() {
-			Array<Diagnosis> diagnoses = new Array<Analyser.Diagnosis>();
+		public List<Diagnosis> gatherDiagnoses() {
+			ArrayList<Diagnosis> diagnoses = new ArrayList<Analyser.Diagnosis>();
 
 			for (String var : variables) {
 				Diagnosis d = new Diagnosis("Script uses variable " + var, Severity.Note);
@@ -163,18 +162,18 @@ public class Analyser {
 	}
 
 	protected static class UnusedVariableChecker extends CompiledProgramAnalyser {
-		private ObjectSet<String> read_vars = new ObjectSet<String>();
-		private ObjectSet<String> written_vars = new ObjectSet<String>();
+		private HashSet<String> read_vars = new HashSet<String>();
+		private HashSet<String> written_vars = new HashSet<String>();
 
 		@Override
 		public void diagnose(Program program) {
 			//in each node, find all reads and writes to variables
-			for (Entry<String, Program.Node> nodeinfo : program.nodes) {
-				
-				
-				Program.Node node = nodeinfo.value;
-				Array<Instruction> instructions = node.instructions;
-				for (int i = 0; i < instructions.size; i++) {
+			for (Map.Entry<String, Program.Node> nodeinfo : program.nodes.entrySet()) {
+
+
+				Program.Node node = nodeinfo.getValue();
+				ArrayList<Instruction> instructions = node.instructions;
+				for (int i = 0; i < instructions.size(); i++) {
 					Instruction instruction = instructions.get(i);
 
 					switch (instruction.getOperation()) {
@@ -192,31 +191,31 @@ public class Analyser {
 		}
 
 		@Override
-		public Array<Diagnosis> gatherDiagnoses() {
-			
+		public List<Diagnosis> gatherDiagnoses() {
+
 			//exclude read variables that are also written
-			Array<String> read_only = new Array<String>();
-			read_only.addAll(read_vars.iterator().toArray());
-			read_only.removeAll(written_vars.iterator().toArray(), false);
-			
+			ArrayList<String> read_only = new ArrayList<String>();
+			read_only.addAll(read_vars);
+			read_only.removeAll(written_vars);
+
 			//exclude write vars that are read
-			Array<String> write_only = new Array<String>();
-			write_only.addAll(written_vars.iterator().toArray());
-			write_only.removeAll(read_vars.iterator().toArray(), false);
-			
+			ArrayList<String> write_only = new ArrayList<String>();
+			write_only.addAll(written_vars);
+			write_only.removeAll(read_vars);
+
 			//generate diagnoses
-			Array<Diagnosis> diagnoses = new Array<Analyser.Diagnosis>();
-			
+			ArrayList<Diagnosis> diagnoses = new ArrayList<Analyser.Diagnosis>();
+
 			for (String ro : read_only) {
 				String message = StringUtils.format("Variable %s is read from, but nevver assigned", ro);
 				diagnoses.add(new Diagnosis(message, Severity.Warning));
 			}
-			
+
 			for (String wo : write_only) {
 				String message = StringUtils.format("Variable %s is assigned, but never read from", wo);
 				diagnoses.add(new Diagnosis(message, Severity.Warning));
 			}
-			
+
 			return diagnoses;
 		}
 

@@ -1,6 +1,5 @@
 package com.kyper.yarn;
 
-import com.badlogic.gdx.utils.Array;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Parser.AssignmentStatement;
 import com.kyper.yarn.Parser.CustomCommand;
@@ -14,6 +13,9 @@ import com.kyper.yarn.Parser.Statement;
 import com.kyper.yarn.Parser.ValueNode;
 import com.kyper.yarn.Program.ByteCode;
 import com.kyper.yarn.Program.Instruction;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Compiler {
 
@@ -46,7 +48,7 @@ public class Compiler {
 		Program.Node compiled_node = new Program.Node();
 
 		compiled_node.name = node.getName();
-		compiled_node.tags = node.getNodeTags();
+		compiled_node.tags = new ArrayList<>(node.getNodeTags()); // TODO maybe just keep this as an ArrayList the whole time
 
 		//register the entire text of this node if we hav eit
 		if (node.getSource() != null) {
@@ -73,9 +75,9 @@ public class Compiler {
 			// AddOptions and then Jump up back into the code to run them.
 			// TODO: A better solution would be for the parser to flag
 			// whether a node has Options at the end.
-			
+
 			boolean has_remaining_options = false;
-			
+
 			for (Instruction instruction : compiled_node.instructions) {
 				if(instruction.getOperation() == ByteCode.AddOption) {
 					has_remaining_options = true;
@@ -83,28 +85,28 @@ public class Compiler {
 				if(instruction.getOperation() == ByteCode.ShowOptions)
 					has_remaining_options = false;
 			}
-			
+
 			//if this compiled node has no lingering options to show at the end of the node, then we stop at the end
 			if(!has_remaining_options) {
 				emit(compiled_node,ByteCode.Stop);
 			}else {
-				
+
 				//otherwise show the accumulated nodes and then jump to the selected node
-				
+
 				emit(compiled_node, ByteCode.ShowOptions);
-				
+
 				if(flags.DisableShuffleOptionsAfterNextSet) {
 					emit(compiled_node, ByteCode.PushBool,false);
 					emit(compiled_node, ByteCode.StoreVariable,VirtualMachine.SpecialVariables.ShuffleOptions);
 					emit(compiled_node, ByteCode.Pop);
 					flags.DisableShuffleOptionsAfterNextSet = false;
 				}
-				
+
 				emit(compiled_node, ByteCode.RunNode);
 			}
 
 		}
-		
+
 		program.nodes.put(compiled_node.name, compiled_node);
 	}
 
@@ -118,7 +120,7 @@ public class Compiler {
 
 		if (code == ByteCode.Label) {
 			//add this label to the label table
-			node.labels.put((String) instruction.operandA(), node.instructions.size - 1);
+			node.labels.put((String) instruction.operandA(), node.instructions.size() - 1);
 		}
 	}
 
@@ -138,7 +140,7 @@ public class Compiler {
 		return null;
 	}
 
-	//statements 
+	//statements
 	protected void generateCode(Program.Node node, Statement statement) {
 		switch (statement.getType()) {
 		case CustomCommand:
@@ -210,7 +212,7 @@ public class Compiler {
 	protected void generateCode(Program.Node node, ShortcutOptionGroup statement) {
 		String endof_group = registerLabel("group_end");
 
-		Array<String> labels = new Array<String>();
+		ArrayList<String> labels = new ArrayList<String>();
 
 		int option_count = 0;
 
@@ -263,16 +265,16 @@ public class Compiler {
 			option_count++;
 
 		}
-		
+
 		//reached the end of option group
 		emit(node,ByteCode.Label,endof_group);
-		
+
 		//clean up after jump
 		emit(node, ByteCode.Pop);
 
 	}
 
-	protected void generateCode(Program.Node node, Array<Statement> statements) {
+	protected void generateCode(Program.Node node, List<Statement> statements) {
 		if (statements == null)
 			return;
 		for (Statement statement : statements) {
@@ -383,7 +385,7 @@ public class Compiler {
 			generateCode(node, expression.value);
 			break;
 		case FunctionCall:
-			//evaluate all parameter expressions 
+			//evaluate all parameter expressions
 			//which will push them to the stack
 			for (Expression param : expression.params) {
 				generateCode(node, param);
@@ -392,7 +394,7 @@ public class Compiler {
 			//if this function has a variable number of params,
 			//put the number of params that we passed t the stack
 			if (expression.function.getParamCount() == -1) {
-				emit(node, ByteCode.PushNumber, expression.params.size);
+				emit(node, ByteCode.PushNumber, expression.params.size());
 			}
 
 			//and then call the function

@@ -1,9 +1,10 @@
 package com.kyper.yarn;
 
-import com.badlogic.gdx.utils.Json;
-import com.badlogic.gdx.utils.ObjectMap;
 import com.kyper.yarn.Dialogue.VariableStorage;
 import com.kyper.yarn.Value.Type;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.HashMap;
 
 /**
  * A data table that stores Values
@@ -13,14 +14,14 @@ public class DialogueData implements VariableStorage {
 
 	private static final String NAME = "$USERDATA_NAME";
 
-	private ObjectMap<String, Value> variables;
-	private static Json MYFRIEND;
+	private HashMap<String, Value> variables;
+//	private static Json MYFRIEND;
 
 	private String name;
 
 	public DialogueData(String name) {
 		this.name = name;
-		variables = new ObjectMap<String, Value>();
+		variables = new HashMap<String, Value>();
 	}
 
 	public void setName(String name) {
@@ -34,13 +35,13 @@ public class DialogueData implements VariableStorage {
 	public void put(String name, Object object) {
 		setValue(name, new Value(object));
 	}
-	
+
 	public boolean contains(String name) {
 		if(variables.containsKey(name))
 			return true;
 		return false;
 	}
-	
+
 	public Value remove(String name) {
 		if(contains(name)) {
 			return variables.remove(name);
@@ -94,21 +95,23 @@ public class DialogueData implements VariableStorage {
 
 	@SuppressWarnings("unchecked")
 	public boolean loadFromJson(String json) {
-		if (MYFRIEND == null)
-			MYFRIEND = new Json();
-		ObjectMap<String, Value> vv = MYFRIEND.fromJson(ObjectMap.class, json);
-		if (vv != null)
-			setName(vv.remove(NAME).asString());
-		variables = vv != null ? vv : variables;
-		return vv != null;
+//		if (MYFRIEND == null)
+//			MYFRIEND = new Json();
+//		HashMap<String, Value> vv = MYFRIEND.fromJson(HashMap.class, json);
+//		if (vv != null)
+//			setName(vv.remove(NAME).asString());
+//		variables = vv != null ? vv : variables;
+//		return vv != null;
+        throw new NotImplementedException();
 
 	}
 
 	public String toJson() {
-		put(NAME, getName());
-		if (MYFRIEND == null)
-			MYFRIEND = new Json();
-		return MYFRIEND.toJson(variables);
+//		put(NAME, getName());
+//		if (MYFRIEND == null)
+//			MYFRIEND = new Json();
+//		return MYFRIEND.toJson(variables);
+		throw new NotImplementedException();
 	}
 
 	public void clear() {
