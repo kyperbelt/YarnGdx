@@ -1,6 +1,5 @@
 package com.kyper.yarn.tests.yarn;
 
-
 import com.kyper.yarn.Dialogue;
 import com.kyper.yarn.Program;
 
@@ -13,47 +12,48 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DialogueTests extends TestBase {
-    @org.junit.jupiter.api.Test
-    public void TestNodeExists() throws IOException {
-    	System.out.println("TestNodeExists --");
-        Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
+	@org.junit.jupiter.api.Test
+	public void TestNodeExists() throws IOException {
+		System.out.println("TestNodeExists --");
+		Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
 
 //        Compiler compiler = new Compiler(data);
-        dialogue.loadFile(path, false, false, null);
+		dialogue.loadFile(path, false, false, null);
 //        dialogue.SetProgram(program);
-        
-        assertTrue(dialogue.nodeExists("Sally"));
-        // Test clearing everything
-        dialogue.unloadAll();
 
-        assertFalse(dialogue.nodeExists("Sally"));
+		assertTrue(dialogue.nodeExists("Sally"));
+		// Test clearing everything
+		dialogue.unloadAll();
 
-    }
+		assertFalse(dialogue.nodeExists("Sally"));
 
+	}
 
-    @org.junit.jupiter.api.Test
-    public void TestOptionDestinations() throws IOException {
-    	System.out.println("TestOptionDestinations --");
-        Path path = getTestDataPath().resolve("Options.yarn");
-        dialogue.loadFile(path, true, true, null);
+	@org.junit.jupiter.api.Test
+	public void TestOptionDestinations() throws IOException {
+		System.out.println("TestOptionDestinations --");
+		Path path = getTestDataPath().resolve("Options.yarn");
+		dialogue.loadFile(path, true, true, null);
 
-        dialogue.start();
+		
 
-        AtomicBoolean callbackCalled = new AtomicBoolean(false);
-        dialogue.setOptionsHandler((Dialogue.OptionResult optionSet) -> {
-            assertEquals(2, optionSet.getOptions().size());
-            // TODO original tests referenced DestinationNode but this has been erased from runtime types
-            assertEquals("B", optionSet.getOptions().get(0));
-            assertEquals("C", optionSet.getOptions().get(1));
-            callbackCalled.set(true);
-        });
+		AtomicBoolean callbackCalled = new AtomicBoolean(false);
+		dialogue.setOptionsHandler((Dialogue.OptionResult optionSet) -> {
+			assertEquals(2, optionSet.getOptions().size());
+			// TODO original tests referenced DestinationNode but this has been erased from
+			// runtime types
+			assertEquals("Go to B", optionSet.getOptions().get(0));
+			assertEquals("Go to C", optionSet.getOptions().get(1));
+			System.out.println("hello?");
+			
+		});
+		dialogue.start("A");
+		dialogue.checkNext();
+		
+		await().until(() -> callbackCalled.get());
 
-        dialogue.setNode("A");
+	}
 
-        dialogue.update();
-
-        await().until(() -> callbackCalled.get());
-    }
 //
 //
 //    @org.junit.jupiter.api.Test
@@ -168,20 +168,20 @@ public class DialogueTests extends TestBase {
 //        Assert.Equal("A: HAHAHA\n", source);
 //    }
 //
-    @org.junit.jupiter.api.Test
-    public void TestGettingTags() throws IOException {
-    	System.out.println("TestGettingTags --");
-        Path path = getTestDataPath().resolve("sally.json");
-        dialogue.loadFile(path);
+	@org.junit.jupiter.api.Test
+	public void TestGettingTags() throws IOException {
+		System.out.println("TestGettingTags --");
+		Path path = getTestDataPath().resolve("Example.yarn");
+		dialogue.loadFile(path, true, true, null);
 
-        Program.Node node = dialogue.program.getNodes().get("LearnMore");
-        List<String> source = node.tags;
+		Program.Node node = dialogue.program.getNodes().get("LearnMore");
+		List<String> source = node.tags;
 
-        assertNotNull(source);
+		assertNotNull(source);
 
-        assertFalse(source.isEmpty());
+		assertFalse(source.isEmpty());
 
-        assertEquals("rawText", source.get(0));
+		assertEquals("rawText", source.get(0));
 
 //        var path = Path.Combine(TestDataPath, "Example.yarn");
 //        Compiler.CompileFile(path, out var program, out stringTable);
@@ -194,7 +194,6 @@ public class DialogueTests extends TestBase {
 //        Assert.NotEmpty(source);
 //
 //        Assert.Equal("rawText", source.First());
-    }
+	}
 
 }
-

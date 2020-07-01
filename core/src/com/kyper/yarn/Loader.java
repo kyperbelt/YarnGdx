@@ -48,7 +48,7 @@ public class Loader {
 	 */
 	public void printTokenList(TokenList token_list) {
 		StringBuilder b = new StringBuilder();
-
+		b.append("\n");
 		for (Token token : token_list) {
 			b.append(String.format("%1$s (%2$s line %3$s)\n", token.toString(), token.value, token.line_number));
 		}
@@ -105,9 +105,9 @@ public class Loader {
 		//load the raw data and get an array of node title-text pairs
 
 		List<NodeInfo> infos = getNodesFromText(text, format);
-
+		
 		//for soem weird reason its not used wtf
-		@SuppressWarnings("unused")
+		
 		int nodes_loaded = 0;
 
 		for (NodeInfo info : infos) {
@@ -127,7 +127,6 @@ public class Loader {
 
 
 				TokenList tokens = lexer.tokenise(info.body);
-
 
 
 				if (show_tokens)
@@ -235,7 +234,7 @@ public class Loader {
 			//the headers frmo the body
 
 			//we use a regex to match either \r\n or \n line endings
-			Matcher match = new Regex(".?\n---").match(text);
+			Matcher match = new Regex("---(\r\n|\r|\n)").match(text);
 			if (!match.find(0)) {
 				dialogue.error_logger.log("Error parsing input: text appears corrupt(no header)");
 				break;

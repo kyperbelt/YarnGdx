@@ -113,7 +113,7 @@ public class VirtualMachine {
 		Instruction current_instruction = current_node.instructions.get(state.program_counter);
 
 		runInstruction(current_instruction);
-
+		
 		//DEBUG instruction sets ---
 		//System.out.println(current_instruction.toString(program, dialogue.library));
 
@@ -330,6 +330,7 @@ public class VirtualMachine {
 					state.current_options.clear();
 
 					// we can now keep running
+					
 					setExecutionState(ExecutionState.Running);
 
 				}

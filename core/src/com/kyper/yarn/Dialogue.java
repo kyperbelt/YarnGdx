@@ -340,6 +340,7 @@ public class Dialogue {
 
 		vm.setOptionsHandler(options -> {
 			next_result = options;
+			
 			if(option_handler != null) option_handler.handle(options);
 		});
 
@@ -361,7 +362,11 @@ public class Dialogue {
 	 public boolean update() {
 		if (vm != null && !execution_complete && vm.getExecutionState() != ExecutionState.WaitingOnOptionSelection) {
 			vm.runNext();
+
 			return true;
+		}else if(vm.getExecutionState() == ExecutionState.WaitingOnOptionSelection) {
+
+			 System.out.println("hey");
 		}
 		return false;
 	}

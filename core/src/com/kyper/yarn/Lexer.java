@@ -194,7 +194,7 @@ public class Lexer {
 
 		//setup
 		indentation_stack = new ArrayDeque<IntBoolPair>();
-		indentation_stack.add(new IntBoolPair(0, false));
+		indentation_stack.push(new IntBoolPair(0, false));
 		should_track_next_indent = false;
 
 		TokenList tokens = new TokenList();
@@ -242,7 +242,7 @@ public class Lexer {
 		if (should_track_next_indent && this_indentation > previous_indentation.key) {
 			//if we are more indented than before, emit an
 			//indent token and record this indent level
-			indentation_stack.add(new IntBoolPair(this_indentation, true));
+			indentation_stack.push(new IntBoolPair(this_indentation, true));
 
 			Token indent = new Token(TokenType.Indent, current_state, line_number, previous_indentation.key);
 			indent.value = padLeft("", this_indentation - previous_indentation.key);
@@ -363,7 +363,7 @@ public class Lexer {
 
 					if(should_track_next_indent == true) {
 						if(indentation_stack.peek().key < this_indentation) {
-							indentation_stack.add(new IntBoolPair(this_indentation, false));
+							indentation_stack.push(new IntBoolPair(this_indentation, false));
 						}
 					}
 				}
