@@ -12,11 +12,33 @@ public class Value implements Comparable<Value> {
 	private String variable_name;
 	private String string_value;
 	private boolean bool_value;
-	
+
 	private static final String NULL_STRING = "null";
 	private static final String FALSE_STRING = "false";
 	private static final String TRUE_STRING = "true";
 	private static final String NAN = "NaN";
+
+	public static Value defaultValue(Type type) {
+	   switch(type) {
+		   case BOOL:
+			   return new Value(false);
+		   case NULL:
+			   return new Value();
+		   case NUMBER:
+			   return new Value(0);
+		   case STRING:
+			   return new Value("");
+		   case VARNAME: {
+			   Value value = new Value();
+			   value.setType(Type.VARNAME);
+			   value.setVarName(null);
+			   return value;
+		   }
+		   default:
+		   	System.err.println("Value.defaultValue: Unrecognized type: " + type);
+		   	return null;
+	   }
+	}
 
 	public Value() {
 		this(null);
@@ -73,11 +95,11 @@ public class Value implements Comparable<Value> {
 				+ "Values can only be numbers, strings, bools or null.", value.getClass().getSimpleName());
 		throw new YarnRuntimeException(error);
 	}
-	
+
 	public Type getType() {
 		return type;
 	}
-	
+
 	protected void setType(Type type) {
 		this.type = type;
 	}
@@ -251,7 +273,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * add this value and the parameter
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -285,7 +307,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * subtract paramert to this value
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -301,7 +323,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * multiply parameter with this value
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -317,7 +339,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * divide parameter with this value
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -333,7 +355,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * modulo
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -348,7 +370,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * get negative of this value
-	 * 
+	 *
 	 * @return
 	 */
 	public Value negative() {
@@ -367,7 +389,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * check if this is greater than parameter
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -378,7 +400,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * check if this is less than parameter
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -389,7 +411,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * check if this is greater than or = to param
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */
@@ -400,7 +422,7 @@ public class Value implements Comparable<Value> {
 
 	/**
 	 * check if this is less than or equal to param
-	 * 
+	 *
 	 * @param o
 	 * @return
 	 */

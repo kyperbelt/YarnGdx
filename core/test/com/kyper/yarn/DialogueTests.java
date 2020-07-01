@@ -1,10 +1,10 @@
 package com.kyper.yarn;
 
+import org.junit.jupiter.api.*;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -12,14 +12,12 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DialogueTests extends TestBase {
-	@org.junit.jupiter.api.Test
+	@Test
 	public void testNodeExists() throws IOException {
 		System.out.println("TestNodeExists --");
 		Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
 
-//        Compiler compiler = new Compiler(data);
 		dialogue.loadFile(path, false, false, null);
-//        dialogue.SetProgram(program);
 
 		assertTrue(dialogue.nodeExists("Sally"));
 		// Test clearing everything
@@ -29,7 +27,7 @@ public class DialogueTests extends TestBase {
 
 	}
 
-	@org.junit.jupiter.api.Test
+	@Test
 	public void testOptionDestinations() throws IOException {
 		System.out.println("TestOptionDestinations --");
 		Path path = getTestDataPath().resolve("Options.yarn");
@@ -54,34 +52,37 @@ public class DialogueTests extends TestBase {
 
 	}
 
-   	@org.junit.jupiter.api.Test
-    public void TestAnalysis() throws IOException {
+   	@Test
+    public void testAnalysis() throws IOException {
 		List<Analyser.Diagnosis> diagnoses;
-        Analyser.Context context;
+		Analyser.Context context;
 
-        // this script has the following variables:
-        // $foo is read from and written to
-        // $bar is written to but never read
-        // $bas is read from but never written to
-        // this means that there should be two diagnosis results
-        context = new Analyser.Context(new Analyser.UnusedVariableChecker());
+		// this script has the following variables:
+		// $foo is read from and written to
+		// $bar is written to but never read
+		// $bas is read from but never written to
+		// this means that there should be two diagnosis results
+		context = new Analyser.Context(new Analyser.UnusedVariableChecker());
 
 		Path path = getTestDataPath().resolve("AnalysisTest.yarn");
 		dialogue.loadFile(path);
-        dialogue.analyse(context);
-        diagnoses = context.finalAnalysis();
+		dialogue.analyse(context);
+		diagnoses = context.finalAnalysis();
 
-        assertEquals(2, diagnoses.size());
+		assertEquals(2, diagnoses.size());
 
-        dialogue.unloadAll();
+		dialogue.unloadAll();
+	}
 
-        // TODO I don't think the lower tests are possible given current API
+	@Test @Disabled("I don't think this is possible yet")
+	public void testCombinedProgramAnalysis() {
+		// TODO I don't think the lower tests are possible given current API
 //        context = new Analyser.Context(new Analyser.UnusedVariableChecker());
 //
 //		Path path = getSpaceDemoScriptsPath().resolve("Ship.yarn");
 //
 //		Path sallyPath = getSpaceDemoScriptsPath().resolve("Sally.yarn");
-//        java.lang.Compiler.CompileFile(sallyPath, out var sallyProgram, out var sallyStringTable);
+//        Compiler.CompileFile(sallyPath, out var sallyProgram, out var sallyStringTable);
 //
 //        stringTable = shipStringTable.Union(sallyStringTable).ToDictionary(k = > k.Key, v =>v.Value);
 //
@@ -97,7 +98,7 @@ public class DialogueTests extends TestBase {
     }
 
 
-    @org.junit.jupiter.api.Test
+    @Test
     public void testDumpingCode() throws IOException {
 		Path path = getTestDataPath().resolve("Example.yarn");
 
@@ -109,7 +110,7 @@ public class DialogueTests extends TestBase {
     }
 
 
-    @org.junit.jupiter.api.Test
+    @Test
     public void testMissingNode() throws IOException {
 		Path path = getTestDataPath().resolve(Paths.get("TestCases", "Smileys.yarn"));
 
@@ -123,7 +124,7 @@ public class DialogueTests extends TestBase {
     }
 
 
-    @org.junit.jupiter.api.Test
+    @Test
     public void testGettingCurrentNodeName() throws IOException {
 		Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
 		dialogue.loadFile(path);
@@ -143,9 +144,8 @@ public class DialogueTests extends TestBase {
 	}
 
 
-//    @org.junit.jupiter.api.Test
-//    public void TestGettingRawSource() {
-//
+    @Test @Disabled("Not sure if this is possible yet")
+    public void testGettingRawSource() {
 //        var path = Path.Combine(TestDataPath, "Example.yarn");
 //
 //        Compiler.CompileFile(path, out var program, out stringTable);
@@ -157,9 +157,9 @@ public class DialogueTests extends TestBase {
 //        Assert.NotNull(source);
 //
 //        Assert.Equal("A: HAHAHA\n", source);
-//    }
+    }
 
-	@org.junit.jupiter.api.Test
+	@Test
 	public void testGettingTags() throws IOException {
 		System.out.println("TestGettingTags --");
 		Path path = getTestDataPath().resolve("Example.yarn");
@@ -173,18 +173,6 @@ public class DialogueTests extends TestBase {
 		assertFalse(source.isEmpty());
 
 		assertEquals("rawText", source.get(0));
-
-//        var path = Path.Combine(TestDataPath, "Example.yarn");
-//        Compiler.CompileFile(path, out var program, out stringTable);
-//        dialogue.SetProgram(program);
-//
-//        var source = dialogue.GetTagsForNode("LearnMore");
-//
-//        Assert.NotNull(source);
-//
-//        Assert.NotEmpty(source);
-//
-//        Assert.Equal("rawText", source.First());
 	}
 
 }

@@ -574,6 +574,10 @@ public class Dialogue {
 
 	HashMap<String, String> _tx4n;
 
+	protected Map<String, Program.Node> getAllNodes() {
+		return program.nodes;
+	}
+
 	public HashMap<String, String> getTextForAllNodes() {
 		if (_tx4n == null)
 			_tx4n = new HashMap<String, String>();

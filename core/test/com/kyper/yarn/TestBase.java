@@ -109,7 +109,7 @@ public class TestBase {
             if (testPlan != null) {
                 testPlan.Next();
 
-                if (testPlan.nextExpectedType == TestPlan.Type.Line) {
+                if (testPlan.nextExpectedType == TestPlan.Type.line) {
                     assertEquals(testPlan.nextExpectedValue, text);
                 } else {
                     fail("Received line "+text+", but was expecting a "+testPlan.nextExpectedType.toString());
@@ -133,7 +133,7 @@ public class TestBase {
             if (testPlan != null) {
                 testPlan.Next();
 
-                if (testPlan.nextExpectedType != TestPlan.Type.Select) {
+                if (testPlan.nextExpectedType != TestPlan.Type.select) {
                     fail("Received "+optionCount+" options, but wasn't expecting them (was expecting "+testPlan.nextExpectedType.toString()+")");
                 }
 
@@ -161,7 +161,7 @@ public class TestBase {
 
             if (testPlan != null) {
                 testPlan.Next();
-                if (testPlan.nextExpectedType != TestPlan.Type.Command)
+                if (testPlan.nextExpectedType != TestPlan.Type.command)
                 {
                     fail("Received command "+command.getCommand()+", but wasn't expecting to select one (was expecting "+testPlan.nextExpectedType.toString()+")");
                 }
@@ -196,7 +196,7 @@ public class TestBase {
                 if (testPlan != null) {
                     testPlan.Next();
 
-                    if (testPlan.nextExpectedType != TestPlan.Type.Stop) {
+                    if (testPlan.nextExpectedType != TestPlan.Type.stop) {
                         fail("Stopped dialogue, but wasn't expecting to select it (was expecting "+testPlan.nextExpectedType.toString()+")");
                     }
                 }
@@ -208,7 +208,7 @@ public class TestBase {
 
     // Executes the named node, and checks any assertions made during
     // execution. Fails the test if an assertion made in Yarn fails.
-    protected void RunStandardTestcase(String nodeName) {
+    protected void runStandardTestcase(String nodeName) {
         if (nodeName == null) nodeName = "Start";
 
         assertNotNull(testPlan, "Cannot run test: no test plan provided.");
@@ -227,7 +227,7 @@ public class TestBase {
 
     }
 
-    public void LoadTestPlan(Path path) throws IOException {
+    public void loadTestPlan(Path path) throws IOException {
         this.testPlan = new TestPlan(path);
     }
 

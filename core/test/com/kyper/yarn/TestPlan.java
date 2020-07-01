@@ -2,6 +2,7 @@ package com.kyper.yarn;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -14,22 +15,22 @@ public class TestPlan
     public enum Type
     {
         // expecting to see this specific line
-        Line,
+        line,
 
         // expecting to see this specific option (if '*' is given,
         // means 'see an option, don't care about text')
-        Option,
+        option,
 
         // expecting options to have been presented; value = the
         // index to select
-        Select,
+        select,
 
         // expecting to see this specific command
-        Command,
+        command,
 
         // expecting to stop the test here (this is optional - a
         // 'stop' at the end of a test plan is assumed)
-        Stop
+        stop
     }
 
     public class Step
@@ -40,6 +41,7 @@ public class TestPlan
         public int intValue;
 
         public Step(String s) {
+            System.out.println(s);
             intValue = -1;
             stringValue = null;
 
@@ -56,9 +58,9 @@ public class TestPlan
                 switch (type) {
                     // for lines, options and commands: we expect to
                     // see the rest of this line
-                    case Line:
-                    case Option:
-                    case Command:
+                    case line:
+                    case option:
+                    case command:
                         stringValue = reader.readToEnd().trim();
                         if (stringValue == "*") {
                             // '*' represents "we want to see an option
@@ -68,7 +70,7 @@ public class TestPlan
                         }
                         break;
 
-                    case Select:
+                    case select:
                         intValue = reader.ReadNext(Integer::parseInt);
 
                         if (intValue < 1) {
@@ -79,7 +81,7 @@ public class TestPlan
                 }
             } catch (Exception e) {
                 // there was a syntax or semantic error
-                throw new IllegalArgumentException("Failed to parse step line: '"+s+"' (reason: "+e.getMessage()+")");
+                throw new IllegalArgumentException("Failed to parse step line: '"+s+"' (reason: "+e.getMessage()+")", e);
             }
 
 
@@ -136,11 +138,12 @@ public class TestPlan
 
             public String readToEnd() throws IOException {
                 StringBuilder result = new StringBuilder();
-                char next = 0;
-                while (next != -1) {
-                    next = (char)read();
-                    result.append(next);
-                }
+                int next = 0;
+                while (true) {
+                    next = read();
+                    if (next == -1) break;
+                    result.append((char)next);
+                };
                 return result.toString();
             }
         }
@@ -162,7 +165,8 @@ public class TestPlan
 //                .Where(line => line.Trim() != "") // skip empty or blank lines
 //                .Select(line => new Step(line)) // convert remaining lines to steps
 //                .ToList();
-        steps = Files.lines(path)
+
+        steps = Files.lines(path, Charset.forName("UTF-8"))
                 .filter(line -> StringUtils.trimStart(line).startsWith("#") == false)
                 .filter(line -> line.trim() != "")
                 .map(Step::new)
@@ -175,7 +179,7 @@ public class TestPlan
         // to see if we got a Line, Select, Command or Assert step
         // type.
 
-        if (nextExpectedType == Type.Select) {
+        if (nextExpectedType == Type.select) {
             // our previously-notified task was to select an option.
             // we've now moved past that, so clear the list of expected
             // options.
@@ -190,18 +194,18 @@ public class TestPlan
             currentTestPlanStep += 1;
 
             switch (currentStep.type) {
-                case Line:
-                case Command:
+                case line:
+                case command:
 
-                case Stop:
+                case stop:
                     nextExpectedType = currentStep.type;
                     nextExpectedValue = currentStep.stringValue;
                     return;
-                case Select:
+                case select:
                     nextExpectedType = currentStep.type;
                     nextOptionToSelect = currentStep.intValue;
                     return;
-                case Option:
+                case option:
                     nextExpectedOptions.add(currentStep.stringValue);
                     continue;
             }
@@ -209,7 +213,7 @@ public class TestPlan
 
         // We've fallen off the end of the test plan step list. We
         // expect a stop here.
-        nextExpectedType = Type.Stop;
+        nextExpectedType = Type.stop;
 
         return;
     }
