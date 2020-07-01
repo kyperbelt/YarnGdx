@@ -190,7 +190,7 @@ public class Loader {
 		String fn = file_name.toLowerCase();
 		if (fn.endsWith(".json")) {
 			format = NodeFormat.Json;
-		} else if (fn.endsWith("yarn.txt")) {
+		} else if (fn.endsWith(".yarn")) {
 			format = NodeFormat.Text;
 		} else if (fn.endsWith(".node")) {
 			format = NodeFormat.SingleNodeText;
@@ -235,7 +235,7 @@ public class Loader {
 			//the headers frmo the body
 
 			//we use a regex to match either \r\n or \n line endings
-			Matcher match = new Regex("---.?\n").match(text);
+			Matcher match = new Regex(".?\n---").match(text);
 			if (!match.find(0)) {
 				dialogue.error_logger.log("Error parsing input: text appears corrupt(no header)");
 				break;
