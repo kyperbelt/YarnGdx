@@ -20,6 +20,7 @@ public class TestBase {
     protected VariableStorage storage = new MemoryVariableStorage();
     protected Dialogue dialogue;
     protected Map<String, Program.LineInfo> stringTable;
+    protected ArrayList<String> errorLogs = new ArrayList<>();
 
     public String locale = "en";
 
@@ -77,27 +78,29 @@ public class TestBase {
 //        return Dialogue.ExpandFormatFunctions(baseText, locale);
     }
 
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        errorLogs.clear();
+    }
+
     public TestBase() {
-        dialogue = new Dialogue(storage);
+        YarnLogger errorLogger = (String message) -> {
+            errorLogs.add(message);
+            System.err.println("ERROR: " + message);
+            if (errorsCauseFailures == true) {
+                assertNotNull(message);
+            }
+        };
+
+        dialogue = new Dialogue(storage, System.out::println, errorLogger);
         registerListeners();
     }
 
     void registerListeners() {
-//        dialogue.LogDebugMessage = delegate(String message) {
-//            Console.ResetColor();
-//            Console.WriteLine (message);
-//        };
-//
-//        dialogue.LogErrorMessage = delegate(String message) {
-//            Console.ForegroundColor = ConsoleColor.Red;
-//            Console.WriteLine ("ERROR: " + message);
-//            Console.ResetColor ();
-//
-//            if (errorsCauseFailures == true) {
-//                Assert.NotNull(message);
-//            }
-//        };
-
         // TODO VM used to be private so may need to add another layer of callbacks on Dialogue so we don't clobber them
         dialogue.setLineHandler((LineResult line) -> {
 //            var id = line.ID;
@@ -230,6 +233,10 @@ public class TestBase {
 
     public void LoadTestPlan(Path path) throws IOException {
         this.testPlan = new TestPlan(path);
+    }
+
+    String getLastError() {
+        return errorLogs.size() > 0 ? errorLogs.get(errorLogs.size() - 1) : null;
     }
 }
 

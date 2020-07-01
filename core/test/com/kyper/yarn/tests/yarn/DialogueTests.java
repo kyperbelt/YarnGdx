@@ -5,6 +5,7 @@ import com.kyper.yarn.Program;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -13,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class DialogueTests extends TestBase {
 	@org.junit.jupiter.api.Test
-	public void TestNodeExists() throws IOException {
+	public void testNodeExists() throws IOException {
 		System.out.println("TestNodeExists --");
 		Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
 
@@ -30,12 +31,12 @@ public class DialogueTests extends TestBase {
 	}
 
 	@org.junit.jupiter.api.Test
-	public void TestOptionDestinations() throws IOException {
+	public void testOptionDestinations() throws IOException {
 		System.out.println("TestOptionDestinations --");
 		Path path = getTestDataPath().resolve("Options.yarn");
 		dialogue.loadFile(path, true, true, null);
 
-		
+
 
 		AtomicBoolean callbackCalled = new AtomicBoolean(false);
 		dialogue.setOptionsHandler((Dialogue.OptionResult optionSet) -> {
@@ -45,11 +46,11 @@ public class DialogueTests extends TestBase {
 			assertEquals("Go to B", optionSet.getOptions().get(0));
 			assertEquals("Go to C", optionSet.getOptions().get(1));
 			callbackCalled.set(true);
-			
+
 		});
 		dialogue.start("A");
 		dialogue.checkNext();
-		
+
 		await().until(() -> callbackCalled.get());
 
 	}
@@ -101,57 +102,54 @@ public class DialogueTests extends TestBase {
 //        // This script should contain no unused variables
 //        Assert.Empty(diagnoses);
 //    }
-//
-//
-//    @org.junit.jupiter.api.Test
-//    public void TestDumpingCode() {
-//
-//        var path = Path.Combine(TestDataPath, "Example.yarn");
-//
-//        Compiler.CompileFile(path, out var program, out stringTable);
-//
-//        dialogue.SetProgram(program);
-//
-//        var byteCode = dialogue.GetByteCode();
-//        Assert.NotNull(byteCode);
-//
-//    }
-//
-//
-//    @org.junit.jupiter.api.Test
-//    public void TestMissingNode() {
-//        var path = Path.Combine(TestDataPath, "TestCases", "Smileys.yarn");
-//
-//        Compiler.CompileFile(path, out var program, out stringTable);
-//
-//        dialogue.SetProgram(program);
-//
-//        errorsCauseFailures = false;
-//
-//        Assert.Throws<DialogueException> (() = > dialogue.SetNode("THIS NODE DOES NOT EXIST"));
-//    }
-//
-//
-//    @org.junit.jupiter.api.Test
-//    public void TestGettingCurrentNodeName() {
-//
-//        string path = Path.Combine(SpaceDemoScriptsPath, "Sally.yarn");
-//        Compiler.CompileFile(path, out var program, out stringTable);
-//
-//        dialogue.SetProgram(program);
-//
-//        // dialogue should not be running yet
-//        Assert.Null(dialogue.currentNode);
-//
-//        dialogue.SetNode("Sally");
-//        Assert.Equal("Sally", dialogue.currentNode);
-//
-//        dialogue.Stop();
-//        // Current node should now be null
-//        Assert.Null(dialogue.currentNode);
-//    }
-//
-//
+
+
+    @org.junit.jupiter.api.Test
+    public void testDumpingCode() throws IOException {
+		Path path = getTestDataPath().resolve("Example.yarn");
+
+		dialogue.loadFile(path, true, true, null);
+
+        String byteCode = dialogue.getByteCode();
+        assertNotNull(byteCode);
+        assertFalse(byteCode.isEmpty());
+    }
+
+
+    @org.junit.jupiter.api.Test
+    public void testMissingNode() throws IOException {
+		Path path = getTestDataPath().resolve(Paths.get("TestCases", "Smileys.yarn"));
+
+		dialogue.loadFile(path);
+        dialogue.start();
+
+		errorsCauseFailures = false;
+		boolean result = dialogue.setNode("THIS NODE DOES NOT EXIST");
+		assertFalse(result);
+		assertEquals("no node named THIS NODE DOES NOT EXIST", getLastError());
+    }
+
+
+    @org.junit.jupiter.api.Test
+    public void testGettingCurrentNodeName() throws IOException {
+		Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
+		dialogue.loadFile(path);
+
+        // dialogue should not be running yet
+        assertNull(dialogue.getCurrentNode());
+
+        dialogue.start("Sally");
+		assertEquals("Sally", dialogue.getCurrentNode().name);
+
+		dialogue.setNode("Sally.Watch");
+        assertEquals("Sally.Watch", dialogue.getCurrentNode().name);
+
+        dialogue.stop();
+        // Current node should now be null
+        assertNull(dialogue.getCurrentNode());
+	}
+
+
 //    @org.junit.jupiter.api.Test
 //    public void TestGettingRawSource() {
 //
@@ -167,9 +165,9 @@ public class DialogueTests extends TestBase {
 //
 //        Assert.Equal("A: HAHAHA\n", source);
 //    }
-//
+
 	@org.junit.jupiter.api.Test
-	public void TestGettingTags() throws IOException {
+	public void testGettingTags() throws IOException {
 		System.out.println("TestGettingTags --");
 		Path path = getTestDataPath().resolve("Example.yarn");
 		dialogue.loadFile(path, true, true, null);

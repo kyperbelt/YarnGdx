@@ -79,12 +79,17 @@ public class VirtualMachine {
 		return true;
 	}
 
+	public Node getCurrentNode() {
+		return current_node;
+	}
+
 	public String currentNodeName() {
 		return state.current_node_name;
 	}
 
 	public void stop() {
 		setExecutionState(ExecutionState.Stopped);
+		current_node = null;
 	}
 
 	public boolean hasOptions() {
@@ -113,7 +118,7 @@ public class VirtualMachine {
 		Instruction current_instruction = current_node.instructions.get(state.program_counter);
 
 		runInstruction(current_instruction);
-		
+
 		//DEBUG instruction sets ---
 		//System.out.println(current_instruction.toString(program, dialogue.library));
 
@@ -330,7 +335,7 @@ public class VirtualMachine {
 					state.current_options.clear();
 
 					// we can now keep running
-					
+
 					setExecutionState(ExecutionState.Running);
 
 				}

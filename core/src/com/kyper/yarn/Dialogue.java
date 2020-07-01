@@ -207,8 +207,8 @@ public class Dialogue {
 			String input = new String(Files.readAllBytes(path));
 			loadString(input, path.toString(), show_tokens, show_tree, only_consider);
 	}
-	
-	
+
+
 //	public void loadFile(String file, boolean show_tokens, boolean show_tree, String only_consider) {
 //		String input=null;
 //		try {
@@ -340,7 +340,7 @@ public class Dialogue {
 
 		vm.setOptionsHandler(options -> {
 			next_result = options;
-			
+
 			if(option_handler != null) option_handler.handle(options);
 		});
 
@@ -561,8 +561,7 @@ public class Dialogue {
 	// }
 
 	public void stop() {
-		if (vm != null)
-			vm.stop();
+		if (vm != null) vm.stop();
 	}
 
 	public Set<String> allNodes() {
@@ -723,6 +722,10 @@ public class Dialogue {
 			return visited;
 		}
 	};
+
+	public Program.Node getCurrentNode() {
+		return (vm != null) ? vm.getCurrentNode() : null;
+	}
 
 	// ======================================================================================
 
