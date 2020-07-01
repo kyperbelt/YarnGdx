@@ -401,7 +401,7 @@ public class VirtualMachine {
 		public int program_counter = 0;
 
 		// list of options, where each option = <string id,destination node>
-		public ArrayList<Option> current_options = new ArrayList<>();
+		public ArrayList<Option> current_options = new ArrayList<Option>();
 
 		// the value stack
 		private ArrayDeque<Value> stack = new ArrayDeque<Value>();

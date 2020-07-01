@@ -1,5 +1,13 @@
 package com.kyper.yarn;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.kyper.yarn.Analyser.Context;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.ReturningFunc;
@@ -194,10 +202,23 @@ public class Dialogue {
 	 *            - if not null, only the specified node will be considered for
 	 *            loading;all else will be ignored.
 	 */
+<<<<<<< HEAD
 	public void loadFile(Path path, boolean show_tokens, boolean show_tree, String only_consider) throws IOException {
 //		String input = Gdx.files.internal(file).readString();
 			String input = new String(Files.readAllBytes(path));
 			loadString(input, path.toString(), show_tokens, show_tree, only_consider);
+=======
+	public void loadFile(String file, boolean show_tokens, boolean show_tree, String only_consider) {
+		String input=null;
+		try {
+			input = new String(Files.readAllBytes(Paths.get(file)));
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		loadString(input, file, show_tokens, show_tree, only_consider);
+>>>>>>> vanilla_0
 	}
 
 	/**

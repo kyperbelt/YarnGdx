@@ -18,7 +18,7 @@ public class Parser {
 	protected Library library;
 
 	public Parser(List<Token> tokens, Library library) {
-		this.tokens = new ArrayDeque<>(tokens);
+		this.tokens = new ArrayDeque<Token>(tokens);
 		//TODO:================================
 		//TODO: fix? this.tokens.reverse();
 		//this.tokens.reverse();
@@ -982,7 +982,7 @@ public class Parser {
 			//used for keeping count of parameters for each function
 			ArrayDeque<Token> function_stack = new ArrayDeque<Lexer.Token>();
 
-			ArrayList<TokenType> valid_token_types = new ArrayList<>(Arrays.asList(Operator.operatorTypes()));
+			ArrayList<TokenType> valid_token_types = new ArrayList<TokenType>(Arrays.asList(Operator.operatorTypes()));
 			valid_token_types.add(TokenType.Number);
 			valid_token_types.add(TokenType.Variable);
 			valid_token_types.add(TokenType.Str);

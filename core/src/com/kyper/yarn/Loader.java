@@ -4,10 +4,13 @@ package com.kyper.yarn;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 
+import com.esotericsoftware.jsonbeans.Json;
 import com.kyper.yarn.Lexer.Regex;
 import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenList;
@@ -15,7 +18,6 @@ import com.kyper.yarn.Lexer.TokeniserException;
 import com.kyper.yarn.Loader.NodeInfo.Position;
 import com.kyper.yarn.Parser.Node;
 import com.kyper.yarn.Program.ParseException;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Loader {
 	public enum NodeFormat {
@@ -216,18 +218,17 @@ public class Loader {
 			break;
 		case Json:
 			//parse it as json
-//			Json json = new Json();
-//			try {
-//				nodes = json.fromJson(ArrayList.class, Loader.NodeInfo.class, text);
-//			} catch (Exception e) {
-//				if(e instanceof SerializationException) {
-//					dialogue.error_logger.log("Error parsing Yarn input: " + e.getMessage());
-//				}else if(e instanceof ClassCastException) {
-//					dialogue.error_logger.log("Unable to cast yarn");
-//				}
-//			}
-            throw new NotImplementedException();
-//			break;
+			Json json = new Json();
+			try {
+				nodes = json.fromJson(ArrayList.class, Loader.NodeInfo.class, text);
+			} catch (Exception e) {
+				if(e instanceof SerializationException) {
+					dialogue.error_logger.log("Error parsing Yarn input: " + e.getMessage());
+				}else if(e instanceof ClassCastException) {
+					dialogue.error_logger.log("Unable to cast yarn");
+				}
+			}
+			break;
 		case Text:
 
 			//check for the existance of atleast one '---'+newline sentinel, which divides
@@ -481,6 +482,30 @@ public class Loader {
 			throw new IllegalArgumentException("field not found " + name);
 		}
 
+	}
+	
+	@SuppressWarnings("serial")
+	public static class SerializationException extends RuntimeException{
+		public SerializationException () {
+			super();
+		}
+
+		public SerializationException (String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public SerializationException (String message) {
+			super(message);
+		}
+
+		public SerializationException (Throwable cause) {
+			super("", cause);
+		}
+		
+		@Override
+		public String getMessage() {
+			return super.getMessage();
+		}
 	}
 
 }

@@ -48,7 +48,7 @@ public class Compiler {
 		Program.Node compiled_node = new Program.Node();
 
 		compiled_node.name = node.getName();
-		compiled_node.tags = new ArrayList<>(node.getNodeTags()); // TODO maybe just keep this as an ArrayList the whole time
+		compiled_node.tags = new ArrayList<String>(node.getNodeTags()); // TODO maybe just keep this as an ArrayList the whole time
 
 		//register the entire text of this node if we hav eit
 		if (node.getSource() != null) {
