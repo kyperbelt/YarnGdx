@@ -1,13 +1,18 @@
 package com.kyper.yarn;
 
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Stack;
+
 import com.kyper.yarn.Lexer.Token;
 import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.FunctionInfo;
 import com.kyper.yarn.Parser.Operator.OperatorInfo;
 import com.kyper.yarn.Program.ParseException;
-
-import java.util.*;
 
 public class Parser {
 
@@ -21,7 +26,7 @@ public class Parser {
 		this.tokens = new ArrayDeque<Token>(tokens);
 		//TODO:================================
 		//TODO: fix? this.tokens.reverse();
-		//this.tokens.reverse();
+		//Collections.reverse(this.tokens.toArray())
 		///TODO: ===============================
 		this.library = library;
 	}
@@ -38,7 +43,7 @@ public class Parser {
 	 */
 	public boolean nextSymbolIs(TokenType... valid_types) {
 
-		TokenType t = this.tokens.peekFirst().type;
+		TokenType t = this.tokens.peek().type;
 		for (TokenType valid_type : valid_types) {
 			if (t == valid_type)
 				return true;
@@ -70,7 +75,7 @@ public class Parser {
 	 * @return
 	 */
 	public Token expectSymbol(TokenType type) {
-		Token t = this.tokens.remove();
+		Token t = this.tokens.pop();
 		if (t.type != type) {
 			throw ParseException.make(t, type);
 		}
@@ -83,7 +88,7 @@ public class Parser {
 	 * @return
 	 */
 	public Token expectSymbol() {
-		Token t = this.tokens.remove();
+		Token t = this.tokens.pop();
 		if (t.type == TokenType.EndOfInput) {
 			throw ParseException.make(t, "unexpected end of input.");
 		}
@@ -98,7 +103,7 @@ public class Parser {
 	 * @return
 	 */
 	public Token expectSymbol(TokenType... valid_types) {
-		Token t = this.tokens.remove();
+		Token t = this.tokens.pop();
 		for (TokenType valid_type : valid_types) {
 			if (t.type == valid_type)
 				return t;
@@ -108,7 +113,7 @@ public class Parser {
 
 	//indents are 'input' String 'indentLevel' times;
 	private static String tab(int indent_level, String input, boolean newline) {
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder();//TODO: dont create this more than once
 		for (int i = 0; i < indent_level; i++) {
 			sb.append("| ");
 		}
@@ -136,7 +141,7 @@ public class Parser {
 		protected ParseNode(ParseNode parent, Parser p) {
 			this.parent = parent;
 			if (p.tokens.size() > 0)
-				this.line_number = p.tokens.peekFirst().line_number;
+				this.line_number = p.tokens.peek().line_number;
 			else
 				this.line_number = -1;
 			tags = new ArrayList<String>();
@@ -296,7 +301,7 @@ public class Parser {
                 line = p.expectSymbol(TokenType.Text).value;
                 type = Type.Line;
             } else {
-				throw ParseException.make(p.tokens.peekFirst(), "Expected a statement here but got " + p.tokens.peekFirst().toString() +" instead (was there an unbalanced if statement earlier?)");
+				throw ParseException.make(p.tokens.peek(), "Expected a statement here but got " + p.tokens.peek().toString() +" instead (was there an unbalanced if statement earlier?)");
             }
 			//parse the optional tags that follow this statement
 			ArrayList<String> tags = new ArrayList<String>();
@@ -976,7 +981,7 @@ public class Parser {
 			// build a tree of expressions from the result
 			// https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 
-			ArrayDeque<Token> expression_RPN = new ArrayDeque<Lexer.Token>();
+			ArrayList<Token> expression_RPN = new ArrayList<Lexer.Token>();
 			ArrayDeque<Token> operator_stack = new ArrayDeque<Token>();
 
 			//used for keeping count of parameters for each function
@@ -1011,14 +1016,14 @@ public class Parser {
 					//primitive values go straight to output
 					expression_RPN.add(next_token);
 				} else if (next_token.type == TokenType.Identifier) {
-					operator_stack.add(next_token);//push
-					function_stack.add(next_token);//push
+					operator_stack.push(next_token);//push
+					function_stack.push(next_token);//push
 
 					//next token must be a left paren, so process that immediately
 					next_token = p.expectSymbol(TokenType.LeftParen);
 
 					//enter that sub expression
-					operator_stack.add(next_token); //push
+					operator_stack.push(next_token); //push
 
 				} else if (next_token.type == TokenType.Comma) {
 
@@ -1044,7 +1049,7 @@ public class Parser {
 					//the next token is not allowed to be a right paren or comma
 					//(that is, you cant say "foo(2,,)")
 					if (p.nextSymbolIs(TokenType.RightParen, TokenType.Comma)) {
-						throw ParseException.make(p.tokens.peekFirst(), "Expected expression");
+						throw ParseException.make(p.tokens.peek(), "Expected expression");
 					}
 
 					//find the closest function on the stack
@@ -1092,13 +1097,13 @@ public class Parser {
 						expression_RPN.add(o);
 					}
 
-					operator_stack.add(next_token);
+					operator_stack.push(next_token);
 
 				} else if (next_token.type == TokenType.LeftParen) {
 
 					//Record that we have entered a paren delimited
 					//subexpression
-					operator_stack.add(next_token);
+					operator_stack.push(next_token);
 
 				} else if (next_token.type == TokenType.RightParen) {
 
@@ -1154,11 +1159,11 @@ public class Parser {
 
 			//we now have this in more easly parsed RPN form;
 			//time to build the expression tree
-			Token first_token = expression_RPN.peekFirst();
+			Token first_token = expression_RPN.get(0);
 			ArrayDeque<Expression> evaluation_stack = new ArrayDeque<Parser.Expression>();
 			while (expression_RPN.size() > 0) {
 
-				Token next = expression_RPN.remove();
+				Token next = expression_RPN.remove(0);
 				if (Operator.isOperator(next.type)) {
 
 					//this is an operation
