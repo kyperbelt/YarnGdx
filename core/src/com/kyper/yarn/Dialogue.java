@@ -41,7 +41,7 @@ public class Dialogue {
 	protected Loader loader;
 
 	// the program is the compiled yarn program
-	public Program program;
+	protected Program program;
 
 	// the library contains all the functions and operators we know about
 	protected Library library;
@@ -723,7 +723,7 @@ public class Dialogue {
 		}
 	};
 
-	public Program.Node getCurrentNode() {
+	protected Program.Node getCurrentNode() {
 		return (vm != null) ? vm.getCurrentNode() : null;
 	}
 

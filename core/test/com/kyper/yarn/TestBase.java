@@ -1,11 +1,7 @@
-package com.kyper.yarn.tests.yarn;
+package com.kyper.yarn;
 
-import com.kyper.yarn.Dialogue;
 import com.kyper.yarn.Dialogue.*;
-import com.kyper.yarn.Program;
-import com.kyper.yarn.Value;
 
-import java.io.Console;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

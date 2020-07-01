@@ -182,7 +182,7 @@ public class Program {
 		}
 	}
 
-	public static class LineInfo {
+	protected static class LineInfo {
 		private int line_number;
 		private String node_name;
 
@@ -200,7 +200,7 @@ public class Program {
 		}
 	}
 
-	public static class Node {
+	protected static class Node {
 
 		public ArrayList<Instruction> instructions = new ArrayList<Program.Instruction>();
 		public String name;

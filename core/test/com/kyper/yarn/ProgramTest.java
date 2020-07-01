@@ -1,4 +1,4 @@
-package com.kyper.yarn.tests.yarn;
+package com.kyper.yarn;
 
 import org.junit.jupiter.api.Test;
 

@@ -31,7 +31,7 @@ public class Compiler {
 
 	private int label_count = 0;
 
-	public Compiler(String program_name) {
+	protected Compiler(String program_name) {
 		program = new Program();
 		this.program_name = program_name;
 	}

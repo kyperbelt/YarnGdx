@@ -4,6 +4,7 @@ import com.kyper.yarn.Analyser.Diagnosis.Severity;
 import com.kyper.yarn.Program.Instruction;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Analyser {
 
@@ -103,12 +104,10 @@ public class Analyser {
 			}
 		}
 
-		public Iterable<Diagnosis> finalAnalysis(){
-			ArrayList<Diagnosis> diagnoses = new ArrayList<Analyser.Diagnosis>();
-			for (CompiledProgramAnalyser a : analysers) {
-				diagnoses.addAll(a.gatherDiagnoses());
-			}
-			return diagnoses;
+		public List<Diagnosis> finalAnalysis(){
+			return analysers.stream()
+					.flatMap(a -> a.gatherDiagnoses().stream())
+					.collect(Collectors.toList());
 		}
 
 

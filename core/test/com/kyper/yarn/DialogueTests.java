@@ -1,13 +1,10 @@
-package com.kyper.yarn.tests.yarn;
-
-import com.kyper.yarn.Analyser;
-import com.kyper.yarn.Dialogue;
-import com.kyper.yarn.Program;
+package com.kyper.yarn;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -58,8 +55,8 @@ public class DialogueTests extends TestBase {
 	}
 
    	@org.junit.jupiter.api.Test
-    public void TestAnalysis() {
-        ArrayList<Analyser.Diagnosis> diagnoses;
+    public void TestAnalysis() throws IOException {
+		List<Analyser.Diagnosis> diagnoses;
         Analyser.Context context;
 
         // this script has the following variables:
@@ -67,69 +64,24 @@ public class DialogueTests extends TestBase {
         // $bar is written to but never read
         // $bas is read from but never written to
         // this means that there should be two diagnosis results
-        context = new Analyser.Context(new Analyser.
+        context = new Analyser.Context(new Analyser.UnusedVariableChecker());
 
-        var path = Path.Combine(TestDataPath, "AnalysisTest.yarn");
+		Path path = getTestDataPath().resolve("AnalysisTest.yarn");
+		dialogue.loadFile(path);
+        dialogue.analyse(context);
+        diagnoses = context.finalAnalysis();
 
-        Compiler.CompileFile(path, out var program, out stringTable);
+        assertEquals(2, diagnoses.size());
 
-        dialogue.SetProgram(program);
-        dialogue.Analyse(context);
-        diagnoses = new List<Yarn.Analysis.Diagnosis>(context.FinishAnalysis());
+        dialogue.unloadAll();
 
-        Assert.Equal(2, diagnoses.Count);
-
-        dialogue.UnloadAll();
-
-        context = new Yarn.Analysis.Context(typeof(Yarn.Analysis.UnusedVariableChecker));
-
-        string shipPath = Path.Combine(SpaceDemoScriptsPath, "Ship.yarn");
-        Compiler.CompileFile(shipPath, out var shipProgram, out var shipStringTable);
-
-        string sallyPath = Path.Combine(SpaceDemoScriptsPath, "Sally.yarn");
-        Compiler.CompileFile(sallyPath, out var sallyProgram, out var sallyStringTable);
-
-        stringTable = shipStringTable.Union(sallyStringTable).ToDictionary(k = > k.Key, v =>v.Value);
-
-        var combinedProgram = Program.Combine(shipProgram, sallyProgram);
-
-        dialogue.SetProgram(combinedProgram);
-
-        dialogue.Analyse(context);
-        diagnoses = new List<Yarn.Analysis.Diagnosis>(context.FinishAnalysis());
-
-        // This script should contain no unused variables
-        Assert.Empty(diagnoses);
-//  ------------
-//        ICollection<Yarn.Analysis.Diagnosis> diagnoses;
-//        Yarn.Analysis.Context context;
+        // TODO I don't think the lower tests are possible given current API
+//        context = new Analyser.Context(new Analyser.UnusedVariableChecker());
 //
-//        // this script has the following variables:
-//        // $foo is read from and written to
-//        // $bar is written to but never read
-//        // $bas is read from but never written to
-//        // this means that there should be two diagnosis results
-//        context = new Yarn.Analysis.Context(typeof(Yarn.Analysis.UnusedVariableChecker));
+//		Path path = getSpaceDemoScriptsPath().resolve("Ship.yarn");
 //
-//        var path = Path.Combine(TestDataPath, "AnalysisTest.yarn");
-//
-//        Compiler.CompileFile(path, out var program, out stringTable);
-//
-//        dialogue.SetProgram(program);
-//        dialogue.Analyse(context);
-//        diagnoses = new List<Yarn.Analysis.Diagnosis>(context.FinishAnalysis());
-//
-//        Assert.Equal(2, diagnoses.Count);
-//
-//        dialogue.UnloadAll();
-//
-//        context = new Yarn.Analysis.Context(typeof(Yarn.Analysis.UnusedVariableChecker));
-//
-//        string shipPath = Path.Combine(SpaceDemoScriptsPath, "Ship.yarn");
-//        Compiler.CompileFile(shipPath, out var shipProgram, out var shipStringTable);
-//
-//        string sallyPath = Path.Combine(SpaceDemoScriptsPath, "Sally.yarn");
-//        Compiler.CompileFile(sallyPath, out var sallyProgram, out var sallyStringTable);
+//		Path sallyPath = getSpaceDemoScriptsPath().resolve("Sally.yarn");
+//        java.lang.Compiler.CompileFile(sallyPath, out var sallyProgram, out var sallyStringTable);
 //
 //        stringTable = shipStringTable.Union(sallyStringTable).ToDictionary(k = > k.Key, v =>v.Value);
 //

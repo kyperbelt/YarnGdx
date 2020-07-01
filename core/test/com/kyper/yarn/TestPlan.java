@@ -1,8 +1,5 @@
-package com.kyper.yarn.tests.yarn;
+package com.kyper.yarn;
 
-import com.kyper.yarn.StringUtils;
-
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
@@ -11,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class TestPlan
 {
