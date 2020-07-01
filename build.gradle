@@ -68,6 +68,7 @@ project(":core") {
     }
 }
 
+/*
 project(":desktop") {
     apply plugin: "java"
 
@@ -79,6 +80,7 @@ project(":desktop") {
 	
     }
 }
+*/
 
 tasks.eclipse.doLast {
     delete ".project"
