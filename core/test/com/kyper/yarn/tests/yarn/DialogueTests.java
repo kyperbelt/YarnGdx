@@ -44,7 +44,7 @@ public class DialogueTests extends TestBase {
 			// runtime types
 			assertEquals("Go to B", optionSet.getOptions().get(0));
 			assertEquals("Go to C", optionSet.getOptions().get(1));
-			System.out.println("hello?");
+			callbackCalled.set(true);
 			
 		});
 		dialogue.start("A");
