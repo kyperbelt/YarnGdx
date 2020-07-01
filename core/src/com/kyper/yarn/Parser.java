@@ -507,7 +507,6 @@ public class Parser {
 			super(parent, p);
 			p.expectSymbol(TokenType.ShortcutOption);
 			label = p.expectSymbol(TokenType.Text).value;
-
 			//parse the conditional ("<< if $foo >>) if its there
 
 			ArrayList<String> tags = new ArrayList<String>();

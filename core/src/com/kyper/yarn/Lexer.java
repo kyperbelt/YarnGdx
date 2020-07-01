@@ -91,7 +91,7 @@ public class Lexer {
 		patterns.put(TokenType.EndIf, "endif(?!\\w)");
 		patterns.put(TokenType.Set, "set(?!\\w)");
 
-		patterns.put(TokenType.ShortcutOption, "\\-\\>");
+		patterns.put(TokenType.ShortcutOption, "\\-\\>\\s*");
 
 		//compound states
 		String shortcut_option = SHORTCUT + DASH + OPTION;
@@ -250,7 +250,7 @@ public class Lexer {
 
 			should_track_next_indent = false;
 
-			line_tokens_stack.add(indent);
+			line_tokens_stack.push(indent);
 
 		} else if (this_indentation < previous_indentation.key) {
 
@@ -265,7 +265,7 @@ public class Lexer {
 
 				if (top_level.value) {
 					Token dedent = new Token(TokenType.Dedent, current_state, line_number, 0);
-					line_tokens_stack.add(dedent);
+					line_tokens_stack.push(dedent);
 				}
 			}
 		}
@@ -288,6 +288,7 @@ public class Lexer {
 
 				Matcher myMatch = rule.altRegex.match(line,column_number);
 				Matcher match = rule.regex.match(line);
+				
 
 				if (!myMatch.find(0))
 					continue;
@@ -328,6 +329,8 @@ public class Lexer {
 					//THIS IS PROBABLY WRONG
 					int text_end_index = match.start()+match.group().length();
 					token_text = line.substring(text_start_index,text_end_index);
+					//token_text = token_text. ? token_text.startsWith("\\s") : ;
+
 
 				}else {
 					token_text = myMatch.group();
@@ -352,7 +355,7 @@ public class Lexer {
 				Token token = new Token(rule.type, current_state,line_number,column_number,token_text);
 				token.delimits_text = rule.delimits_text;
 
-				line_tokens_stack.add(token);
+				line_tokens_stack.push(token);
 
 				if(rule.enter_state!=null) {
 					if(!states.containsKey(rule.enter_state))
@@ -384,7 +387,7 @@ public class Lexer {
 		}
 
 		TokenList list_to_return = new TokenList(new ArrayList<>(line_tokens_stack));
-		//list_to_return.reverse();
+		Collections.reverse(list_to_return);
 
 		return list_to_return;
 	}

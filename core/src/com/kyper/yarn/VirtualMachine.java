@@ -258,8 +258,9 @@ public class VirtualMachine {
 			break;
 		case Stop:
 			// stop execution immidiately and report it
+			//command_handler.handle(new CommandResult(EXEC_COMPLETE));
 			node_complte_handler.handle(new NodeCompleteResult(null));
-			command_handler.handle(new CommandResult(EXEC_COMPLETE));
+			
 
 			//execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);

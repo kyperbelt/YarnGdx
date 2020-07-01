@@ -147,7 +147,7 @@ public class TestBase {
                 assertEquals(expectedOptionCount, optionCount);
 
                 if (testPlan.nextOptionToSelect != -1) {
-                    optionSet.choose(testPlan.nextOptionToSelect - 1);
+                    optionSet.choose(testPlan.nextOptionToSelect-1);
 //                    dialogue.SetSelectedOption(testPlan.nextOptionToSelect - 1);
                 } else {
                     optionSet.choose(0);
