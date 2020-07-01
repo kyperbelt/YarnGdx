@@ -140,6 +140,9 @@ public class TestBase {
                 // Assert that the list of options we were given is
                 // identical to the list of options we expect
                 List<String> actualOptionList = optionSet.getOptions().stream().map(this::GetComposedTextForLine).collect(Collectors.toList());
+                if(!testPlan.nextExpectedOptions.equals(actualOptionList)) {
+                    System.out.println(testPlan.nextExpectedOptions);
+                }
                 assertEquals(testPlan.nextExpectedOptions, actualOptionList);
 
                 int expectedOptionCount = testPlan.nextExpectedOptions.size();

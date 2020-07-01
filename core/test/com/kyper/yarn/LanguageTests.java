@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LanguageTests extends TestBase {
@@ -22,7 +23,6 @@ public class LanguageTests extends TestBase {
     }
 
     @Test
-//    @Disabled("Localization not yet implemented")
     public void TestExampleScript() throws IOException {
         errorsCauseFailures = false;
         Path path = getTestDataPath().resolve("Example.yarn");
@@ -34,9 +34,9 @@ public class LanguageTests extends TestBase {
         runStandardTestcase(null);
     }
 
-//        @Test @Disabled("Localization not yet implemented")
-//    public void TestMergingNodes()
-//    {
+    @Test @Disabled("Node merging is not currently possible")
+    public void testMergingNodes()
+    {
 //        var sallyPath = Path.Combine(SpaceDemoScriptsPath, "Sally.yarn");
 //        var shipPath = Path.Combine(SpaceDemoScriptsPath, "Ship.yarn");
 //
@@ -51,53 +51,41 @@ public class LanguageTests extends TestBase {
 //        {
 //            var combinedNotWorking = Program.Combine(sally, ship, ship);
 //        });
-//    }
+    }
+
+
+
+    @Test
+    public void testEndOfNotesWithOptionsNotAdded() throws IOException {
+        Path path = getTestDataPath().resolve("SkippedOptions.yarn");
+        dialogue.loadFile(path);
+
+        dialogue.setOptionsHandler((Dialogue.OptionResult optionSets) -> {
+            fail("Options should not be shown to the user in this test.");
+        });
+
+        dialogue.start();
+        dialogue.update();
+    }
+
+    @Test
+    public void testNodeHeaders() throws IOException {
+        Path path = getTestDataPath().resolve("Headers.yarn");
+        dialogue.loadFile(path);
+
+        assertEquals(3, dialogue.getAllNodes().size());
+
+        assertTrue(dialogue.getAllNodes().get("Tags").tags.containsAll(Arrays.asList("one", "two", "three")));
+    }
+
+    @Test
+    public void testInvalidCharactersInNodeTitle() {
+        Path path = getTestDataPath().resolve("InvalidNodeTitle.yarn");
+        // Technically the original test here was directly on the compiler but it's not easy to access.
+        assertThrows(Program.ParseException.class, () -> dialogue.loadFile(path));
+    }
 //
-//
-//
-//        @Test @Disabled("Localization not yet implemented")
-//    public void TestEndOfNotesWithOptionsNotAdded()
-//    {
-//        var path = Path.Combine(TestDataPath, "SkippedOptions.yarn");
-//        Compiler.CompileFile(path, out var program, out stringTable);
-//
-//        dialogue.SetProgram(program);
-//
-//        dialogue.optionsHandler = delegate (OptionSet optionSets) {
-//        Assert.False(true, "Options should not be shown to the user in this test.");
-//    };
-//
-//        dialogue.SetNode();
-//        dialogue.Continue();
-//
-//    }
-//
-//        @Test @Disabled("Localization not yet implemented")
-//    public void TestNodeHeaders()
-//    {
-//        var path = Path.Combine(TestDataPath, "Headers.yarn");
-//        Compiler.CompileFile(path, out var program, out stringTable);
-//
-//        Assert.Equal(3, program.Nodes.Count);
-//
-//        foreach (var tag in new[] {"one", "two", "three"}) {
-//        Assert.Contains(tag, program.Nodes["Tags"].Tags);
-//    }
-//
-//    }
-//
-//        @Test @Disabled("Localization not yet implemented")
-//    public void TestInvalidCharactersInNodeTitle()
-//    {
-//        var path = Path.Combine(TestDataPath, "InvalidNodeTitle.yarn");
-//
-//        Assert.Throws<Yarn.Compiler.ParseException>( () => {
-//            Compiler.CompileFile(path, out var program, out stringTable);
-//            });
-//
-//    }
-//
-//        @Test @Disabled("Localization not yet implemented")
+//        @Test
 //    public void TestFormatFunctionParsing()
 //    {
 //        var input = @"prefix [plural ""5"" one=""one"" two=""two"" few=""few"" many=""many""] suffix";
@@ -123,7 +111,7 @@ public class LanguageTests extends TestBase {
 //
 //    }
 //
-//        @Test @Disabled("Localization not yet implemented")
+//        @Test
 //    public void TestNumberPlurals() {
 //
 //        (string, double , PluralCase )[] cardinalTests = new[] {
