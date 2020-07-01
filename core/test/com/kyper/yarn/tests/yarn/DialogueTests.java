@@ -19,11 +19,10 @@ public class DialogueTests extends TestBase {
         Path path = getSpaceDemoScriptsPath().resolve("Sally.yarn");
 
 //        Compiler compiler = new Compiler(data);
-        dialogue.loadFile(path, true, true, null);
+        dialogue.loadFile(path, false, false, null);
 //        dialogue.SetProgram(program);
         
         assertTrue(dialogue.nodeExists("Sally"));
-        System.out.println("-- Sally Exists --");
         // Test clearing everything
         dialogue.unloadAll();
 
@@ -36,7 +35,7 @@ public class DialogueTests extends TestBase {
     public void TestOptionDestinations() throws IOException {
     	System.out.println("TestOptionDestinations --");
         Path path = getTestDataPath().resolve("Options.yarn");
-        dialogue.loadFile(path);
+        dialogue.loadFile(path, true, true, null);
 
         dialogue.start();
 
@@ -53,7 +52,7 @@ public class DialogueTests extends TestBase {
 
         dialogue.update();
 
-        //await().until(() -> callbackCalled.get());
+        await().until(() -> callbackCalled.get());
     }
 //
 //
@@ -172,7 +171,7 @@ public class DialogueTests extends TestBase {
     @org.junit.jupiter.api.Test
     public void TestGettingTags() throws IOException {
     	System.out.println("TestGettingTags --");
-        Path path = getTestDataPath().resolve("Example.yarn");
+        Path path = getTestDataPath().resolve("sally.json");
         dialogue.loadFile(path);
 
         Program.Node node = dialogue.program.getNodes().get("LearnMore");
