@@ -11,59 +11,63 @@ public class StringUtils {
 	}
 
 	public static String format(String format_string, Object... params) {
-		StringBuilder builder = getBuilder();
-		builder.setLength(0);
-
-		builder.append(format_string);
-
-		int found_start = 0;
-		int found_end = 0;
-		int last_param_used = 1;
-		int paramd1 = 0;
-		int offset = 0;
-
-		for (int i = 0; i < format_string.length(); i++) {
-			char c = format_string.charAt(i);
-
-			if (c == '%') {
-				if(i > 0) {
-					char p = format_string.charAt(i-1);
-					if(p == '\\')
-						continue;
-				}
-				paramd1 = last_param_used;
-				found_start = i;
-				i++;
-				while (i < format_string.length() && c != 's' && c != 'd') {
-
-					c = format_string.charAt(i);
-					if (isDigit(c)) {
-						paramd1 = getNumericValue(c);
-						if (isDigit(format_string.charAt(i + 1))) {
-							i++;
-							paramd1 *= 10;
-							c = format_string.charAt(i);
-							int paramd2 = getNumericValue(c);
-							paramd1 += paramd2;
-						}
-						if (paramd1 > params.length)
-							throw new IllegalArgumentException(
-									"Illegal Format String [\"" + format_string + "\"] not enough params");
-
-					}
-					i++;
-				}
-				found_end = i;
-				if (paramd1 == last_param_used) {
-					last_param_used++;
-				}
-				String paramused = params[paramd1-1].toString();
-				builder.replace(found_start+offset, found_end+offset, paramused);
-				offset += paramused.length()-(found_end-found_start);
-			}
-		}
-
-		return builder.toString();
+		return String.format(format_string, params);
+		//TODO: To keep compatibility with GWT we need to re-implement this
+		//TODO: Right now it causes too much errors.
+		
+//		StringBuilder builder = getBuilder();
+//		builder.setLength(0);
+//
+//		builder.append(format_string);
+//
+//		int found_start = 0;
+//		int found_end = 0;
+//		int last_param_used = 1;
+//		int paramd1 = 0;
+//		int offset = 0;
+//
+//		for (int i = 0; i < format_string.length(); i++) {
+//			char c = format_string.charAt(i);
+//
+//			if (c == '%') {
+//				if(i > 0) {
+//					char p = format_string.charAt(i-1);
+//					if(p == '\\')
+//						continue;
+//				}
+//				paramd1 = last_param_used;
+//				found_start = i;
+//				i++;
+//				while (i < format_string.length() && c != 's' && c != 'd') {
+//
+//					c = format_string.charAt(i);
+//					if (isDigit(c)) {
+//						paramd1 = getNumericValue(c);
+//						if (isDigit(format_string.charAt(i + 1))) {
+//							i++;
+//							paramd1 *= 10;
+//							c = format_string.charAt(i);
+//							int paramd2 = getNumericValue(c);
+//							paramd1 += paramd2;
+//						}
+//						if (paramd1 > params.length)
+//							throw new IllegalArgumentException(
+//									"Illegal Format String [\"" + format_string + "\"] not enough params");
+//
+//					}
+//					i++;
+//				}
+//				found_end = i;
+//				if (paramd1 == last_param_used) {
+//					last_param_used++;
+//				}
+//				String paramused = params[paramd1-1].toString();
+//				builder.replace(found_start+offset, found_end+offset, paramused);
+//				offset += paramused.length()-(found_end-found_start);
+//			}
+//		}
+//
+//		return builder.toString();
 	}
 
 	public static boolean isDigit(char c) {

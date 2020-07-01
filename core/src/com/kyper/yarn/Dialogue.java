@@ -157,6 +157,7 @@ public class Dialogue {
 			format = NodeFormat.SingleNodeText;
 		}
 
+
 		program = loader.load(text, library, file_name, program, show_tokens, show_tree, only_consider, format);
 	}
 
@@ -208,18 +209,18 @@ public class Dialogue {
 	}
 	
 	
-	public void loadFile(String file, boolean show_tokens, boolean show_tree, String only_consider) {
-		String input=null;
-		try {
-			input = new String(Files.readAllBytes(Paths.get(file)));
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		loadString(input, file, show_tokens, show_tree, only_consider);
-
-	}
+//	public void loadFile(String file, boolean show_tokens, boolean show_tree, String only_consider) {
+//		String input=null;
+//		try {
+//			input = new String(Files.readAllBytes(Paths.get(file)));
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			System.exit(1);
+//		}
+//
+//		loadString(input, file, show_tokens, show_tree, only_consider);
+//
+//	}
 
 	/**
 	 *

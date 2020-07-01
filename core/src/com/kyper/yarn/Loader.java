@@ -236,7 +236,7 @@ public class Loader {
 
 			//we use a regex to match either \r\n or \n line endings
 			Matcher match = new Regex("---.?\n").match(text);
-			if (!match.find()) {
+			if (!match.find(0)) {
 				dialogue.error_logger.log("Error parsing input: text appears corrupt(no header)");
 				break;
 			}
