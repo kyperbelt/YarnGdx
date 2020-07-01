@@ -1,11 +1,13 @@
 package com.kyper.yarn.tests.yarn;
 
+import com.kyper.yarn.Analyser;
 import com.kyper.yarn.Dialogue;
 import com.kyper.yarn.Program;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,11 +57,50 @@ public class DialogueTests extends TestBase {
 
 	}
 
-//
-//
-//    @org.junit.jupiter.api.Test
-//    public void TestAnalysis() {
-//
+   	@org.junit.jupiter.api.Test
+    public void TestAnalysis() {
+        ArrayList<Analyser.Diagnosis> diagnoses;
+        Analyser.Context context;
+
+        // this script has the following variables:
+        // $foo is read from and written to
+        // $bar is written to but never read
+        // $bas is read from but never written to
+        // this means that there should be two diagnosis results
+        context = new Analyser.Context(new Analyser.
+
+        var path = Path.Combine(TestDataPath, "AnalysisTest.yarn");
+
+        Compiler.CompileFile(path, out var program, out stringTable);
+
+        dialogue.SetProgram(program);
+        dialogue.Analyse(context);
+        diagnoses = new List<Yarn.Analysis.Diagnosis>(context.FinishAnalysis());
+
+        Assert.Equal(2, diagnoses.Count);
+
+        dialogue.UnloadAll();
+
+        context = new Yarn.Analysis.Context(typeof(Yarn.Analysis.UnusedVariableChecker));
+
+        string shipPath = Path.Combine(SpaceDemoScriptsPath, "Ship.yarn");
+        Compiler.CompileFile(shipPath, out var shipProgram, out var shipStringTable);
+
+        string sallyPath = Path.Combine(SpaceDemoScriptsPath, "Sally.yarn");
+        Compiler.CompileFile(sallyPath, out var sallyProgram, out var sallyStringTable);
+
+        stringTable = shipStringTable.Union(sallyStringTable).ToDictionary(k = > k.Key, v =>v.Value);
+
+        var combinedProgram = Program.Combine(shipProgram, sallyProgram);
+
+        dialogue.SetProgram(combinedProgram);
+
+        dialogue.Analyse(context);
+        diagnoses = new List<Yarn.Analysis.Diagnosis>(context.FinishAnalysis());
+
+        // This script should contain no unused variables
+        Assert.Empty(diagnoses);
+//  ------------
 //        ICollection<Yarn.Analysis.Diagnosis> diagnoses;
 //        Yarn.Analysis.Context context;
 //
@@ -101,7 +142,7 @@ public class DialogueTests extends TestBase {
 //
 //        // This script should contain no unused variables
 //        Assert.Empty(diagnoses);
-//    }
+    }
 
 
     @org.junit.jupiter.api.Test
