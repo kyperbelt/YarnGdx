@@ -96,18 +96,24 @@ com_crashlytics_export_strings.xml
 nbactions.xml
 nb-configuration.xml
 
-## Gradle
+### Gradle ###
+.gradle
+build/
 
-/local.properties
-.gradle/
+# Ignore Gradle GUI config
 gradle-app.setting
-/build/
-/android/build/
-/core/build/
-/desktop/build/
-/html/build/
-/ios/build/
-/ios-moe/build/
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Cache of project
+.gradletasknamecache
+
+# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
+# gradle/wrapper/gradle-wrapper.properties
+
+### Gradle Patch ###
+**/build/
 
 ## OS Specific
 .DS_Store
