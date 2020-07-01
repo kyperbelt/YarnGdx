@@ -18,7 +18,6 @@ import com.kyper.yarn.VirtualMachine.ExecutionState;
 import com.kyper.yarn.VirtualMachine.LineHandler;
 import com.kyper.yarn.VirtualMachine.NodeCompleteHandler;
 import com.kyper.yarn.VirtualMachine.OptionsHandler;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -202,12 +201,13 @@ public class Dialogue {
 	 *            - if not null, only the specified node will be considered for
 	 *            loading;all else will be ignored.
 	 */
-<<<<<<< HEAD
 	public void loadFile(Path path, boolean show_tokens, boolean show_tree, String only_consider) throws IOException {
 //		String input = Gdx.files.internal(file).readString();
 			String input = new String(Files.readAllBytes(path));
 			loadString(input, path.toString(), show_tokens, show_tree, only_consider);
-=======
+	}
+	
+	
 	public void loadFile(String file, boolean show_tokens, boolean show_tree, String only_consider) {
 		String input=null;
 		try {
@@ -218,7 +218,7 @@ public class Dialogue {
 		}
 
 		loadString(input, file, show_tokens, show_tree, only_consider);
->>>>>>> vanilla_0
+
 	}
 
 	/**

@@ -47,6 +47,7 @@ project(":core") {
         testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
         testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
         testImplementation 'org.awaitility:awaitility:4.0.3'
+    	implementation 'com.github.EsotericSoftware:jsonbeans:0.9'
     }
 
     test {
@@ -64,7 +65,6 @@ project(":core") {
                 srcDirs = ['test']
             }
         }
-    	implementation 'com.github.EsotericSoftware:jsonbeans:0.9'
     }
 }
 
