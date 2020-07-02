@@ -32,7 +32,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Zip Test Results
-      run: zip -r reports.zip core/build/reports
+      run: |
+        set -x
+        pwd
+        ls
+        zip -r reports.zip core/build/reports
     - uses: actions/upload-artifact@v2
       with:
         name: my-artifact
