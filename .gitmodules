@@ -1,0 +1,3 @@
+[submodule "tools/YarnSpinnerCSharp"]
+	path = tools/YarnSpinnerCSharp
+	url = https://github.com/YarnSpinnerTool/YarnSpinner.git
