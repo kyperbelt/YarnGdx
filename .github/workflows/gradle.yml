@@ -26,18 +26,15 @@ jobs:
       run: ./gradlew --info test
     - name: Build with Gradle
       run: ./gradlew build
-
-  deploy:
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
     - name: Zip Test Results
+      if: ${{ always() }}
       run: |
         set -x
         pwd
         ls
         zip -r reports.zip core/build/reports
     - uses: actions/upload-artifact@v2
+      if: ${{ always() }}
       with:
         name: my-artifact
         path: reports.zip
