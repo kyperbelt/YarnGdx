@@ -1,7 +1,13 @@
 package com.kyper.yarn;
 
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,13 +34,13 @@ public class Lexer {
 
 	private static final Regex WHITESPACE = new Regex("\\s*");
 
-	protected HashMap<String, LexerState> states;
+	public HashMap<String, LexerState> states;
 
-	protected LexerState default_state;
-	protected LexerState current_state;
+	public LexerState default_state;
+	public LexerState current_state;
 
-	protected ArrayDeque<IntBoolPair> indentation_stack;
-	protected boolean should_track_next_indent;
+	public ArrayDeque<IntBoolPair> indentation_stack;
+	public boolean should_track_next_indent;
 
 	public Lexer() {
 		createStates();
@@ -410,7 +416,7 @@ public class Lexer {
 			should_track_next_indent = true;
 	}
 
-	protected static class TokeniserException extends IllegalStateException {
+	public static class TokeniserException extends IllegalStateException {
 		private static final long serialVersionUID = 337269479504244415L;
 
 		public int line_number;
@@ -467,7 +473,7 @@ public class Lexer {
 		}
 	}
 
-	protected enum TokenType {
+	public enum TokenType {
 
 		// Special tokens
 		Whitespace, Indent, Dedent, EndOfLine, EndOfInput,
@@ -549,7 +555,7 @@ public class Lexer {
 		Text // a run of text until we hit other syntax
 	}
 
-	protected class Token {
+	public class Token {
 
 		//the token itself
 		public TokenType type;
@@ -599,7 +605,7 @@ public class Lexer {
 
 	}
 
-	protected class LexerState {
+	public class LexerState {
 
 		public String name;
 		private HashMap<TokenType, String> patterns;
@@ -674,7 +680,7 @@ public class Lexer {
 
 	}
 
-	protected class TokenRule {
+	public class TokenRule {
 		public Regex regex = null;
 		public Regex altRegex = null;
 
@@ -698,53 +704,7 @@ public class Lexer {
 		}
 	}
 
-	protected static class Regex {
 
-		private Pattern pattern;
-		private StringBuilder stringBuilder;
-
-		public Regex(String pattern) {
-			this.pattern = Pattern.compile(pattern);
-			this.stringBuilder = new StringBuilder();
-		}
-
-		public Regex(Pattern pattern) {
-			this.pattern = pattern;
-		}
-
-		public void setPattern(String pattern) {
-			this.pattern = Pattern.compile(pattern);
-		}
-
-		public void setPattern(Pattern pattern) {
-			this.pattern = pattern;
-		}
-
-		public Pattern getPattern() {
-			return pattern;
-		}
-
-		@Override
-		public String toString() {
-			return pattern.toString();
-		}
-
-		public Matcher match(CharSequence text) {
-			return pattern.matcher(text);
-		}
-
-		public Matcher match(String text, int begin_index) {
-			stringBuilder.setLength(0);
-			stringBuilder.append(text, begin_index, text.length());
-			return match(stringBuilder);
-		}
-
-		public Matcher match(String text, int begin_index, int end_index) {
-			stringBuilder.setLength(0);
-			stringBuilder.append(text, begin_index, end_index);
-			return match(stringBuilder);
-		}
-	}
 
 	public class IntBoolPair {
 	    int key;

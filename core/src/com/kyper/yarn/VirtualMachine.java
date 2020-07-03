@@ -35,7 +35,7 @@ public class VirtualMachine {
 		}
 	}
 
-	protected static final String EXEC_COMPLETE = "execution_complete_command";
+	public static final String EXEC_COMPLETE = "execution_complete_command";
 
 	private LineHandler line_handler;
 	private OptionsHandler option_handler;
@@ -50,7 +50,7 @@ public class VirtualMachine {
 
 	private Node current_node;
 
-	protected VirtualMachine(Dialogue d, Program p) {
+	public VirtualMachine(Dialogue d, Program p) {
 		this.dialogue = d;
 		this.program = p;
 		execution_state = ExecutionState.Running;
@@ -99,7 +99,7 @@ public class VirtualMachine {
 	/**
 	 * Executes the next instruction in the current node
 	 */
-	protected void runNext() {
+	public void runNext() {
 
 		if (execution_state == ExecutionState.WaitingOnOptionSelection) {
 			dialogue.error_logger.log("Cannot continue running dialogue. Still waiting on option selection.");
@@ -141,13 +141,13 @@ public class VirtualMachine {
 	/**
 	 * looks up the instruction number for a named label in the current node.
 	 */
-	protected int findInstructionForLabel(String label) {
+	public int findInstructionForLabel(String label) {
 		if (!current_node.labels.containsKey(label))
 			throw new IndexOutOfBoundsException("Unknown label " + label + " in node " + state.current_node_name);
 		return current_node.labels.get(label);
 	}
 
-	protected void runInstruction(Instruction instruction) {
+	public void runInstruction(Instruction instruction) {
 		switch (instruction.getOperation()) {
 		case Label:
 			// label no-op, used as a destination for jumpto and jump
@@ -400,7 +400,7 @@ public class VirtualMachine {
 		state = new State();
 	}
 
-	protected class State {
+	public class State {
 		// the name of the node that we are currently on
 		public String current_node_name;
 
@@ -467,7 +467,7 @@ public class VirtualMachine {
 		public void handle(NodeCompleteResult compelte);
 	}
 
-	protected static class SpecialVariables {
+	public static class SpecialVariables {
 		public static final String ShuffleOptions = "$Yarn.ShuffleOptions";
 	}
 
