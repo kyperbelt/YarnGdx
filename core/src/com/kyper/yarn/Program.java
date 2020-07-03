@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -77,7 +78,7 @@ public class Program {
 				Instruction instruction = instructions.get(i);
 				String instruction_text = null;
 
-				if (instruction.getOperation() == ByteCode.Label) {
+				if (instruction.operation == ByteCode.Label) {
 					instruction_text = instruction.toString(this, lib);
 				} else {
 					instruction_text = "    " + instruction.toString(this, lib);
@@ -188,7 +189,7 @@ public class Program {
 //
 //	}
 //	
-	public class Node {
+	public static class Node {
 
 		public String name;
 		public ArrayList<Instruction> instructions = new ArrayList<Instruction>();
@@ -201,7 +202,7 @@ public class Program {
 		}
 
 		public void OnConstruction() {
-			//DO somthing on create?
+			// DO somthing on create?
 		}
 
 		public Node(Node other) {
@@ -370,27 +371,31 @@ public class Program {
 			return valueCase == ValueOneofCase.StringValue ? (String) value : "";
 		}
 
-		public void setStringValue(String string) {
+		public Operand setStringValue(String string) {
 			value = string == null ? "null" : string;
 			valueCase = ValueOneofCase.StringValue;
+			return this;
 		}
 
 		public boolean getBoolValue() {
+
 			return valueCase == ValueOneofCase.BoolValue ? (boolean) value : false;
 		}
 
-		public void setBoolValue(boolean bool) {
+		public Operand setBoolValue(boolean bool) {
 			value = bool;
 			valueCase = ValueOneofCase.BoolValue;
+			return this;
 		}
 
 		public float getFloatValue() {
 			return valueCase == ValueOneofCase.FloatValue ? (float) value : 0.0f;
 		}
 
-		public void setFloatValue(float f) {
+		public Operand setFloatValue(float f) {
 			value = f;
 			valueCase = ValueOneofCase.FloatValue;
+			return this;
 		}
 
 		public ValueOneofCase getValueCase() {
@@ -473,52 +478,48 @@ public class Program {
 	}
 
 	public static class Instruction {
-		private ByteCode operation;
-		private Object operandA;
-		private Object operantB;
+		public ByteCode operation;
+		public ArrayList<Operand> operands = new ArrayList<Program.Operand>();
 
 		public Instruction() {
+			onConstruction();
 		}
 
-		public Instruction(ByteCode operation, Object operandA, Object operandB) {
-			this.operandA = operandA;
-			this.operantB = operandB;
-			this.operation = operation;
+		public Instruction(Instruction other) {
+			this.operation = other.operation;
+			this.operands.addAll(operands);
 		}
 
-		public ByteCode getOperation() {
-			return operation;
+		public void onConstruction() {
+
 		}
 
-		public void setOperation(ByteCode operation) {
-			this.operation = operation;
+		@Override
+		public int hashCode() {
+			  int hash = 1;
+		      if (operation != ByteCode.JumpTo) hash ^= operation.hashCode();
+		      hash ^= operands.hashCode();
+		      return hash;
 		}
 
-		public Object operandA() {
-			return operandA;
-		}
-
-		public Object operandB() {
-			return operantB;
-		}
-
-		public void setOperandA(Object operandA) {
-			this.operandA = operandA;
-		}
-
-		public void setOperandB(Object operandB) {
-			this.operantB = operandB;
+		public void mergeFrom(Instruction other) {
+			if (other == null) {
+				return;
+			}
+			if (other.operation != ByteCode.JumpTo) {
+				operation = other.operation;
+			}
+			operands.addAll(other.operands);
 		}
 
 		public String toString(Program p, Library l) {
 			// Labels are easy: just dump out the name
 			if (operation == ByteCode.Label) {
-				return operandA + ":";
+				return operands.get(0).getStringValue();
 			}
 
 			// Convert the operands to strings
-			String opAString = operandA != null ? operandA.toString() : "";
-			String opBString = operantB != null ? operantB.toString() : "";
+			String opString = operands.stream().map(Object::toString).collect(Collectors.joining(","));
 
 			// Generate a comment, if the instruction warrants it
 			String comment = "";
@@ -541,7 +542,7 @@ public class Program {
 
 			// Functions pop 0 or more values, and pop 0 or 1
 			case CallFunc:
-				FunctionInfo function = l.getFunction((String) operandA);
+				FunctionInfo function = l.getFunction((String) operands.get(0).getStringValue());
 
 				pops = function.getParamCount();
 
@@ -579,8 +580,8 @@ public class Program {
 			case AddOption:
 
 				// Add the string for this option, if it has one
-				if ((String) operandA != null) {
-					String text = p.getString((String) operandA);
+				if ((String) operands.get(0).getStringValue() != null) {
+					String text = p.getString((String) operands.get(0).getStringValue());
 					comment += String.format("\"%s\"", text);
 				}
 
@@ -594,7 +595,7 @@ public class Program {
 				comment = "; " + comment;
 			}
 
-			return String.format("%1$-15s %2$-10s %3$-10s %4$-10s", operation.name(), opAString, opBString, comment);
+			return String.format("%1$-15s %2$-10s %4$-10s", operation.name(), opString, comment);
 		}
 	}
 

@@ -1,14 +1,14 @@
 package com.kyper.yarn;
 
 public class StringUtils {
-	private static final int START_CAPACITY = 200;
-	private static StringBuilder string_builder;
-
-	private static StringBuilder getBuilder() {
-		if (string_builder == null)
-			string_builder = new StringBuilder(START_CAPACITY);
-		return string_builder;
-	}
+//	private static final int START_CAPACITY = 200;
+//	private static StringBuilder string_builder;
+//
+////	private static StringBuilder getBuilder() {
+////		if (string_builder == null)
+////			string_builder = new StringBuilder(START_CAPACITY);
+////		return string_builder;
+////	}
 
 	public static String format(String format_string, Object... params) {
 		return String.format(format_string, params);
