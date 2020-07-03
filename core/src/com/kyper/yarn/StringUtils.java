@@ -69,6 +69,10 @@ public class StringUtils {
 //
 //		return builder.toString();
 	}
+	
+	public static String removeExtension(String input) {
+		return input.replaceFirst("[.][^.]+$", "");
+	}
 
 	public static boolean isDigit(char c) {
 		switch(c) {

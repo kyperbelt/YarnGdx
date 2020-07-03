@@ -18,6 +18,7 @@ import com.kyper.yarn.Lexer.TokeniserException;
 import com.kyper.yarn.Loader.NodeInfo.Position;
 import com.kyper.yarn.Parser.Node;
 import com.kyper.yarn.Program.ParseException;
+import com.kyper.yarn.compiler.Compiler;
 
 public class Loader {
 	public enum NodeFormat {
@@ -179,9 +180,9 @@ public class Loader {
 		}
 
 		if(include!=null)
-			compiler.program.include(include);
+			compiler.getProgram().include(include);
 
-		return compiler.program;
+		return compiler.getProgram();
 	}
 
 	private static NodeFormat getFormatFromFileName(String file_name) {
@@ -204,7 +205,7 @@ public class Loader {
 	 * the nodes in text file
 	 */
 	@SuppressWarnings("unchecked")
-	protected List<NodeInfo> getNodesFromText(String text, NodeFormat format) {
+	public List<NodeInfo> getNodesFromText(String text, NodeFormat format) {
 		ArrayList<NodeInfo> nodes = new ArrayList<Loader.NodeInfo>();
 
 		switch (format) {

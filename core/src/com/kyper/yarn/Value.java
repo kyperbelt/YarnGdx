@@ -100,7 +100,7 @@ public class Value implements Comparable<Value> {
 		return type;
 	}
 
-	protected void setType(Type type) {
+	public void setType(Type type) {
 		this.type = type;
 	}
 
