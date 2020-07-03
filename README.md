@@ -4,6 +4,7 @@ YarnGdx is a Libgdx library for creating interactive dialogue in games! YarnGdx 
 
 There is a simple code example in the tests package that can be run like a normal libgdx project.
 
+![Java CI with Gradle](https://github.com/kyperbelt/YarnGdx/workflows/Java%20CI%20with%20Gradle/badge.svg?branch=vanilla)
 
 ## Latest Build Download
 [yarngdx_1_1.zip][101]
