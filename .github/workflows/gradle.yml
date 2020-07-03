@@ -23,7 +23,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Assemble with Gradle
-      run: ./gradlew --info assemble
+      run: ./gradlew --debug assemble
     - name: Test with Gradle
       run: ./gradlew --info test
     - name: Zip Test Results
@@ -33,6 +33,7 @@ jobs:
         pwd
         ls
         zip -r reports.zip core/build/reports
+        ls -lR
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
       if: ${{ always() }}
