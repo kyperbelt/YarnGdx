@@ -2,30 +2,20 @@ package com.kyper.yarn;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import com.kyper.yarn.Analyser.Context;
-import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Library.ReturningFunc;
-import com.kyper.yarn.Loader.NodeFormat;
-import com.kyper.yarn.Program.LineInfo;
 import com.kyper.yarn.VirtualMachine.CommandHandler;
 import com.kyper.yarn.VirtualMachine.ExecutionState;
 import com.kyper.yarn.VirtualMachine.LineHandler;
 import com.kyper.yarn.VirtualMachine.NodeCompleteHandler;
 import com.kyper.yarn.VirtualMachine.OptionsHandler;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import com.kyper.yarn.VirtualMachine.TokenType;
 
 public class Dialogue {
 
@@ -36,9 +26,6 @@ public class Dialogue {
 
 	// node we start from
 	public static final String DEFAULT_START = "Start";
-
-	// loader contains all the nodes we're going to run
-	protected Loader loader;
 
 	// the program is the compiled yarn program
 	protected Program program;
@@ -69,7 +56,7 @@ public class Dialogue {
 	 */
 	public Dialogue(VariableStorage continuity, YarnLogger debug, YarnLogger error) {
 		this.continuity = continuity;
-		loader = new Loader(this);
+//		loader = new Loader(this);
 		library = new Library();
 
 		this.debug_logger = debug;
@@ -140,25 +127,27 @@ public class Dialogue {
 	 */
 	public void loadString(String text, String file_name, boolean show_tokens, boolean show_tree,
 			String only_consider) {
-		if (debug_logger == null) {
-			throw new YarnRuntimeException("DebugLogger must be set before loading");
-		}
-
-		if (error_logger == null)
-			throw new YarnRuntimeException("ErrorLogger must be set before loading");
-
-		// try to infer type
-		NodeFormat format;
-		if (text.startsWith("[")) {
-			format = NodeFormat.Json;
-		} else if (text.contains("---")) {
-			format = NodeFormat.Text;
-		} else {
-			format = NodeFormat.SingleNodeText;
-		}
-
-
-		program = loader.load(text, library, file_name, program, show_tokens, show_tree, only_consider, format);
+			System.err.println("Not implemented - Dialogue.loadString");
+			System.exit(1);
+//		if (debug_logger == null) {
+//			throw new YarnRuntimeException("DebugLogger must be set before loading");
+//		}
+//
+//		if (error_logger == null)
+//			throw new YarnRuntimeException("ErrorLogger must be set before loading");
+//
+//		// try to infer type
+//		NodeFormat format;
+//		if (text.startsWith("[")) {
+//			format = NodeFormat.Json;
+//		} else if (text.contains("---")) {
+//			format = NodeFormat.Text;
+//		} else {
+//			format = NodeFormat.SingleNodeText;
+//		}
+//
+//
+//		program = loader.load(text, library, file_name, program, show_tokens, show_tree, only_consider, format);
 	}
 
 	/**
@@ -612,17 +601,17 @@ public class Dialogue {
 		}
 	}
 
-	public void addStringTable(HashMap<String, String> string_table) {
-		program.loadStrings(string_table);
-	}
+//	public void addStringTable(HashMap<String, String> string_table) {
+//		program.loadStrings(string_table);
+//	}
 
 	public HashMap<String, String> getStringTable() {
 		return program.strings;
 	}
 
-	protected HashMap<String, LineInfo> getStringInfoTable() {
-		return program.line_info;
-	}
+//	protected HashMap<String, LineInfo> getStringInfoTable() {
+//		return program.line_info;
+//	}
 
 	/**
 	 * unload all nodes
@@ -733,78 +722,78 @@ public class Dialogue {
 
 	// ======================================================================================
 
-	/**
-	 * indicates something the client should do
-	 */
-	public static abstract class RunnerResult {
-		// private boolean consumed = false;
-		// public void consume() {consumed = true;}
-		// private boolean isConsumed() {return consumed;}
-	}
+//	/**
+//	 * indicates something the client should do
+//	 */
+//	public static abstract class RunnerResult {
+//		// private boolean consumed = false;
+//		// public void consume() {consumed = true;}
+//		// private boolean isConsumed() {return consumed;}
+//	}
 
-	/**
-	 * the client should run a line of dialogue
-	 */
-	public static class LineResult extends RunnerResult {
-		protected Line line;
+//	/**
+//	 * the client should run a line of dialogue
+//	 */
+//	public static class LineResult extends RunnerResult {
+//		protected Line line;
+//
+//		public LineResult(String text) {
+//			line = new Line(text);
+//		}
+//
+//		public String getText() {
+//			return line.;
+//		}
+//	}
 
-		public LineResult(String text) {
-			line = new Line(text);
-		}
+//	/**
+//	 * client should run and parse command
+//	 */
+//	public static class CommandResult extends RunnerResult {
+//		protected Command command;
+//
+//		public CommandResult(String text) {
+//			command = new Command(text);
+//		}
+//
+//		public String getCommand() {
+//			return command.command;
+//		}
+//
+//	}
 
-		public String getText() {
-			return line.text;
-		}
-	}
+//	/**
+//	 * Client should show a list of options and call the chooser choose before
+//	 * asking for the next line.
+//	 */
+//	public static class OptionResult extends RunnerResult {
+//		protected Options options;
+//		protected OptionChooser chooser;
+//
+//		public OptionResult(ArrayList<String> options, OptionChooser chooser) {
+//			this.chooser = chooser;
+//			this.options = new Options(options);
+//		}
+//
+//		public ArrayList<String> getOptions() {
+//			return options.getOptions();
+//		}
+//
+//		public void choose(int choice) {
+//			chooser.choose(choice);
+//		}
+//	}
 
-	/**
-	 * client should run and parse command
-	 */
-	public static class CommandResult extends RunnerResult {
-		protected Command command;
-
-		public CommandResult(String text) {
-			command = new Command(text);
-		}
-
-		public String getCommand() {
-			return command.command;
-		}
-
-	}
-
-	/**
-	 * Client should show a list of options and call the chooser choose before
-	 * asking for the next line.
-	 */
-	public static class OptionResult extends RunnerResult {
-		protected Options options;
-		protected OptionChooser chooser;
-
-		public OptionResult(ArrayList<String> options, OptionChooser chooser) {
-			this.chooser = chooser;
-			this.options = new Options(options);
-		}
-
-		public ArrayList<String> getOptions() {
-			return options.getOptions();
-		}
-
-		public void choose(int choice) {
-			chooser.choose(choice);
-		}
-	}
-
-	/**
-	 * end of node reached
-	 */
-	public static class NodeCompleteResult extends RunnerResult {
-		public String next_node;
-
-		public NodeCompleteResult(String next_node) {
-			this.next_node = next_node;
-		}
-	}
+//	/**
+//	 * end of node reached
+//	 */
+//	public static class NodeCompleteResult extends RunnerResult {
+//		public String next_node;
+//
+//		public NodeCompleteResult(String next_node) {
+//			this.next_node = next_node;
+//		}
+//	}
 
 	/**
 	 * something went wrong
@@ -847,36 +836,81 @@ public class Dialogue {
 	 * information that the client should handle
 	 */
 	public static class Line {
-		private String text;
+		public String id;
+		public String[] substitutions;
 
-		public Line(String text) {
-			this.text = text;
-		}
-
-		public String getText() {
-			return text;
-		}
-
-		public void setText(String text) {
-			this.text = text;
+		public Line(String id) {
+			this.id = id;
+			substitutions = new String[0];
 		}
 	}
 
-	public static class Options {
-		private ArrayList<String> options;
-
-		public Options(ArrayList<String> options) {
+	
+	public static class OptionSet{
+		private Option[] options;
+		public OptionSet(Option...options) {
 			this.options = options;
 		}
-
-		public ArrayList<String> getOptions() {
+		
+		public Option[] getOptions() {
 			return options;
 		}
-
-		public void setOptions(ArrayList<String> options) {
-			this.options = options;
-		}
 	}
+	
+	public static class Option{
+		private Line line;
+		private int id;
+		private String destination;
+		
+		public Option(Line line,int id,String destination) {
+			this.setLine(line);
+			this.setId(id);
+			this.setDestination(destination);
+		}
+
+		public Line getLine() {
+			return line;
+		}
+
+		private void setLine(Line line) {
+			this.line = line;
+		}
+
+		public int getId() {
+			return id;
+		}
+
+		private void setId(int id) {
+			this.id = id;
+		}
+
+		public String getDestination() {
+			return destination;
+		}
+
+		private void setDestination(String destination) {
+			this.destination = destination;
+		}
+		
+		
+		
+	}
+	
+//	public static class Options {
+//		private ArrayList<String> options;
+//
+//		public Options(ArrayList<String> options) {
+//			this.options = options;
+//		}
+//
+//		public ArrayList<String> getOptions() {
+//			return options;
+//		}
+//
+//		public void setOptions(ArrayList<String> options) {
+//			this.options = options;
+//		}
+//	}
 
 	public static class Command {
 		private String command;
@@ -887,10 +921,6 @@ public class Dialogue {
 
 		public String getCommand() {
 			return command;
-		}
-
-		public void setCommand(String command) {
-			this.command = command;
 		}
 	}
 
@@ -937,41 +967,41 @@ public class Dialogue {
 	 * a line localized into the current locale that is used in lines, options and
 	 * shortcut options. Anything that is user-facing.
 	 */
-	public static class LocalisedLine {
-		private String code;
-		private String text;
-		private String comment;
-
-		public LocalisedLine(String code, String text, String comment) {
-			this.code = code;
-			this.text = text;
-			this.comment = comment;
-		}
-
-		public String getCode() {
-			return code;
-		}
-
-		public String getText() {
-			return text;
-		}
-
-		public String getComment() {
-			return comment;
-		}
-
-		public void setCode(String code) {
-			this.code = code;
-		}
-
-		public void setText(String text) {
-			this.text = text;
-		}
-
-		public void setComment(String comment) {
-			this.comment = comment;
-		}
-	}
+//	public static class LocalisedLine {
+//		private String code;
+//		private String text;
+//		private String comment;
+//
+//		public LocalisedLine(String code, String text, String comment) {
+//			this.code = code;
+//			this.text = text;
+//			this.comment = comment;
+//		}
+//
+//		public String getCode() {
+//			return code;
+//		}
+//
+//		public String getText() {
+//			return text;
+//		}
+//
+//		public String getComment() {
+//			return comment;
+//		}
+//
+//		public void setCode(String code) {
+//			this.code = code;
+//		}
+//
+//		public void setText(String text) {
+//			this.text = text;
+//		}
+//
+//		public void setComment(String comment) {
+//			this.comment = comment;
+//		}
+//	}
 
 	/**
 	 * the standrad built in lib of functions and operators

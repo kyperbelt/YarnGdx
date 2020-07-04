@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 public class Regex {
 
-	private Pattern pattern;
+	public Pattern pattern;
 	private StringBuilder stringBuilder;
 
 	public Regex(String pattern) {

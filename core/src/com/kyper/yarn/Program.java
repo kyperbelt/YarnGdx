@@ -1,28 +1,23 @@
 package com.kyper.yarn;
 
-import com.esotericsoftware.jsonbeans.Json;
-import com.esotericsoftware.jsonbeans.JsonWriter;
-import com.kyper.yarn.Lexer.Token;
-import com.kyper.yarn.Lexer.TokenType;
-import com.kyper.yarn.Library.FunctionInfo;
-
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Interval;
+import com.esotericsoftware.jsonbeans.Json;
+import com.kyper.yarn.Library.FunctionInfo;
 
 public class Program {
-
+	public String name;
 	public HashMap<String, String> strings = new HashMap<String, String>();
-	public HashMap<String, LineInfo> line_info = new HashMap<String, Program.LineInfo>();
+//	public HashMap<String, LineInfo> line_info = new HashMap<String, Program.LineInfo>();
 
 	public HashMap<String, Node> nodes = new HashMap<String, Node>();
 
-	private int string_count = 0;
+//	private int string_count = 0;
 
 	public Map<String, Node> getNodes() {
 		return nodes;
@@ -33,31 +28,45 @@ public class Program {
 	 * The string table is merged with any existing strings, with the new table
 	 * taking precedence over the old.
 	 */
-	public void loadStrings(Map<String, String> new_strings) {
-		for (Map.Entry<String, String> line : new_strings.entrySet()) {
-			strings.put(line.getKey(), line.getValue());
-		}
+//	public void loadStrings(Map<String, String> new_strings) {
+//		for (Map.Entry<String, String> line : new_strings.entrySet()) {
+//			strings.put(line.getKey(), line.getValue());
+//		}
+//	}
+
+//	public String registerString(String string, String node_name, String line_id, int line_number,
+//			boolean localisable) {
+//		String key;
+//
+//		if (line_id == null)
+//			key = String.format("%1$s - %2$s", node_name, string_count++);
+//		else
+//			key = line_id;
+//
+//		// its not int he list; append it
+//		strings.put(key, string);
+//
+//		if (localisable) {
+//			// additionally, keep info about this string around
+//			line_info.put(key, new LineInfo(node_name, line_number));
+//		}
+//
+//		return key;
+//	}
+	
+	protected List<String> getTagsForNode(String name){
+		return nodes.get(name).tags;
 	}
-
-	public String registerString(String string, String node_name, String line_id, int line_number,
-			boolean localisable) {
-		String key;
-
-		if (line_id == null)
-			key = String.format("%1$s - %2$s", node_name, string_count++);
-		else
-			key = line_id;
-
-		// its not int he list; append it
-		strings.put(key, string);
-
-		if (localisable) {
-			// additionally, keep info about this string around
-			line_info.put(key, new LineInfo(node_name, line_number));
-		}
-
-		return key;
-	}
+	
+    public void MergeFrom(Program other) {
+        if (other == null) {
+          return;
+        }
+        if (other.name.length() != 0) {
+          this.name = other.name;
+        }
+        nodes.putAll(other.nodes);
+      }
 
 	public String getString(String key) {
 		String value = null;
@@ -85,6 +94,7 @@ public class Program {
 				}
 
 				String preface;
+				
 				if (instruction_count % 5 == 0 || instruction_count == entry.getValue().instructions.size() - 1) {
 					preface = String.format("%1$6s", instruction_count + "");
 				} else {
@@ -96,14 +106,14 @@ public class Program {
 			}
 			sb.append("\n\n");
 		}
-
-		for (Map.Entry<String, String> entry : strings.entrySet()) {
-			LineInfo line_info = this.line_info.get(entry.getKey());
-			if (line_info == null)
-				continue;
-			sb.append(String.format("%1$s: %2$s  (%3$s:%4$s)\n", entry.getKey(), entry.getValue(),
-					line_info.getNodeName(), line_info.getLineNumber()));
-		}
+//
+//		for (Map.Entry<String, String> entry : strings.entrySet()) {
+//			LineInfo line_info = this.line_info.get(entry.getKey());
+//			if (line_info == null)
+//				continue;
+//			sb.append(String.format("%1$s: %2$s  (%3$s:%4$s)\n", entry.getKey(), entry.getValue(),
+//					line_info.getNodeName(), line_info.getLineNumber()));
+//		}
 
 		return sb.toString();
 	}
@@ -213,7 +223,7 @@ public class Program {
 			sourceStringId = other.sourceStringId;
 		}
 
-		public Node Clone() {
+		public Node clone() {
 			return new Node(this);
 		}
 
@@ -338,12 +348,16 @@ public class Program {
 		private Object value;
 		private ValueOneofCase valueCase = ValueOneofCase.None;
 
-		public Operand() {
-			OnConstruction();
+		public Operand(String value) {
+			setStringValue(value);
 		}
-
-		public void OnConstruction() {
-
+		
+		public Operand(float value) {
+			setFloatValue(value);
+		}
+		
+		public Operand(boolean value) {
+			setBoolValue(value);
 		}
 
 		public Operand(Operand other) {
@@ -482,16 +496,11 @@ public class Program {
 		public ArrayList<Operand> operands = new ArrayList<Program.Operand>();
 
 		public Instruction() {
-			onConstruction();
 		}
 
 		public Instruction(Instruction other) {
 			this.operation = other.operation;
 			this.operands.addAll(operands);
-		}
-
-		public void onConstruction() {
-
 		}
 
 		@Override

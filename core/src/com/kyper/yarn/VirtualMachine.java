@@ -1,18 +1,17 @@
 package com.kyper.yarn;
 
-import com.kyper.yarn.Dialogue.CommandResult;
-import com.kyper.yarn.Dialogue.LineResult;
-import com.kyper.yarn.Dialogue.NodeCompleteResult;
-import com.kyper.yarn.Dialogue.OptionChooser;
-import com.kyper.yarn.Dialogue.OptionResult;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Map.Entry;
+
+import com.kyper.yarn.Dialogue.Command;
+import com.kyper.yarn.Dialogue.Line;
+import com.kyper.yarn.Dialogue.Option;
+import com.kyper.yarn.Dialogue.OptionSet;
 import com.kyper.yarn.Library.FunctionInfo;
 import com.kyper.yarn.Program.Instruction;
 import com.kyper.yarn.Program.Node;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
 
 public class VirtualMachine {
 
@@ -21,167 +20,290 @@ public class VirtualMachine {
 		Stopped,
 		/** Waiting on option selection */
 		WaitingOnOptionSelection,
+		/** Suspended in the middle of execution */
+		Suspended,
 		/** Running */
 		Running
 	}
 
-	class Option {
-		public String key;
-		public String value;
-
-		public Option(String key, String value) {
-			this.key = key;
-			this.value = value;
-		}
-	}
 
 	public static final String EXEC_COMPLETE = "execution_complete_command";
 
-	private LineHandler line_handler;
-	private OptionsHandler option_handler;
-	private CommandHandler command_handler;
-	private NodeCompleteHandler node_complte_handler;
+	protected LineHandler lineHandler;
+	protected OptionsHandler optionHandler;
+	protected CommandHandler commandHandler;
+	protected NodeStartHandler nodeStartHandler;
+	protected NodeCompleteHandler nodeCompleteHandler;
+	protected DialogueCompleteHandler dialogueCompleteHandler;
 
 	private Dialogue dialogue;
 	private Program program;
-	private State state = new State();
+	private State state;
 
-	private ExecutionState execution_state;
+	private ExecutionState executionState;
 
-	private Node current_node;
+	private Node currentNode;
 
-	public VirtualMachine(Dialogue d, Program p) {
+	protected VirtualMachine(Dialogue d) {
 		this.dialogue = d;
-		this.program = p;
-		execution_state = ExecutionState.Running;
+		state = new State();
 	}
+
+//	protected VirtualMachine(Dialogue d, Program p) {
+//		this.dialogue = d;
+//		this.program = p;
+//		state = new State();
+//		execution_state = ExecutionState.Running;
+//	}
 
 	/**
 	 * set the current node the program is on log an error and stop execution if the
 	 * node does not exist
 	 */
 	public boolean setNode(String name) {
+		if (program == null || program.nodes.size() == 0)
+			throw new DialogueException(StringUtils.format("Cannot load node %s: No nodes have been loaded.", name));
+
 		if (!program.nodes.containsKey(name)) {
-			String error = "no node named " + name;
-			dialogue.error_logger.log(error);
 			setExecutionState(ExecutionState.Stopped);
-			return false;
+			throw new DialogueException(StringUtils.format("No node named [%s] has been loaded.", name));
+
 		}
 
 		dialogue.debug_logger.log("Running node " + name);
 
 		// clear the special variables
-		dialogue.continuity.setValue(SpecialVariables.ShuffleOptions, new Value(false));
+//		dialogue.continuity.setValue(SpecialVariables.ShuffleOptions, new Value(false));
 
-		current_node = program.nodes.get(name);
+		currentNode = program.nodes.get(name);
 		resetState();
-		state.current_node_name = name;
+		state.currentNodeName = name;
 		return true;
 	}
 
 	public Node getCurrentNode() {
-		return current_node;
+		return currentNode;
 	}
 
 	public String currentNodeName() {
-		return state.current_node_name;
+		return state.currentNodeName;
 	}
 
 	public void stop() {
 		setExecutionState(ExecutionState.Stopped);
-		current_node = null;
 	}
 
-	public boolean hasOptions() {
+	public void setSelectedOption(int selectedOptionId) {
+		if (executionState != ExecutionState.WaitingOnOptionSelection) {
+			throw new DialogueException(StringUtils.format(
+					"SelectedOption was called, but Dialogue wasn't waiting for a selection. This method should only be called after the Dialogue is waiting for the user to select an option."));
+		}
+
+		if (selectedOptionId < 0 || selectedOptionId >= state.current_options.size()) {
+			throw new IllegalArgumentException(
+					StringUtils.format("%d is not a valid option ID(expected a number between 0 and %d)",
+							selectedOptionId, state.current_options.size()));
+		}
+
+		String destination = state.current_options.get(selectedOptionId).getValue();
+		state.pushValue(destination);
+		state.current_options.clear();
+		// We're no longer in the WaitingForOptions state; we are now
+		// instead Suspended
+		setExecutionState(ExecutionState.Suspended);
+	}
+
+	protected boolean hasOptions() {
 		return state.current_options.size() > 0;
 	}
 
-	/**
-	 * Executes the next instruction in the current node
-	 */
-	public void runNext() {
+	public void continueRunning() {
+		if (currentNode == null)
+			throw new DialogueException("Cannot continue running dialogue. No node has been selected.");
+		if (executionState == ExecutionState.WaitingOnOptionSelection)
+			throw new DialogueException("Cannot continue running dialogue. Still waiting on option selection.");
+		if (lineHandler == null)
+			throw new DialogueException("Cannot continue running dialogue. lineHandler has not been set.");
 
-		if (execution_state == ExecutionState.WaitingOnOptionSelection) {
-			dialogue.error_logger.log("Cannot continue running dialogue. Still waiting on option selection.");
-			//execution_state = ExecutionState.Stopped;
-			setExecutionState(ExecutionState.Stopped);
+		if (optionHandler == null)
+			throw new DialogueException("Cannot continue running dialogue. optionHandler has not been set.");
 
-			return;
+		if (commandHandler == null)
+			throw new DialogueException("Cannot continue running dialogue. commandHandler has not been set.");
+
+		if (nodeStartHandler == null)
+			throw new DialogueException("Cannot continue running dialogue. nodeStartHandler has not been set.");
+
+		if (nodeCompleteHandler == null)
+			throw new DialogueException("Cannot continue running dialogue. nodeCompleteHandler has not been set.");
+
+		setExecutionState(ExecutionState.Running);
+
+		// Execute instructions until something forces us to stop
+		while (executionState == ExecutionState.Running) {
+			Instruction currentInstruction = currentNode.instructions.get(state.program_counter);
+
+			runInstruction(currentInstruction);
+
+			state.program_counter++;
+
+			if (state.program_counter >= currentNode.instructions.size()) {
+				nodeCompleteHandler.handle(currentNode.name);
+				executionState = ExecutionState.Stopped;
+				dialogueCompleteHandler.handle();
+				dialogue.debug_logger.log("Run complete.");
+			}
 		}
-
-		if (execution_state == ExecutionState.Stopped)
-			setExecutionState(ExecutionState.Running);
-
-
-
-
-		Instruction current_instruction = current_node.instructions.get(state.program_counter);
-
-		runInstruction(current_instruction);
-
-		//DEBUG instruction sets ---
-		//System.out.println(current_instruction.toString(program, dialogue.library));
-
-		state.program_counter++;
-
-		if (state.program_counter >= current_node.instructions.size()) {
-			node_complte_handler.handle(new NodeCompleteResult(null));
-			//execution_state = ExecutionState.Stopped;
-		    setExecutionState(ExecutionState.Stopped);
-			dialogue.debug_logger.log("Run complete");
-			return;
-		}
-
-
-
-
-
 	}
+
+//	/**
+//	 * Executes the next instruction in the current node
+//	 */
+//	public void runNext() {
+//
+//		if (execution_state == ExecutionState.WaitingOnOptionSelection) {
+//			dialogue.error_logger.log("Cannot continue running dialogue. Still waiting on option selection.");
+//			// execution_state = ExecutionState.Stopped;
+//			setExecutionState(ExecutionState.Stopped);
+//
+//			return;
+//		}
+//
+//		if (execution_state == ExecutionState.Stopped)
+//			setExecutionState(ExecutionState.Running);
+//
+//		Instruction current_instruction = currentNode.instructions.get(state.program_counter);
+//
+//		runInstruction(current_instruction);
+//
+//		// DEBUG instruction sets ---
+//		// System.out.println(current_instruction.toString(program, dialogue.library));
+//
+//		state.program_counter++;
+//
+//		if (state.program_counter >= currentNode.instructions.size()) {
+//			nodeCompleteHandler.handle(new NodeCompleteResult(null));
+//			// execution_state = ExecutionState.Stopped;
+//			setExecutionState(ExecutionState.Stopped);
+//			dialogue.debug_logger.log("Run complete");
+//			return;
+//		}
+//
+//	}
 
 	/**
 	 * looks up the instruction number for a named label in the current node.
 	 */
 	public int findInstructionForLabel(String label) {
-		if (!current_node.labels.containsKey(label))
-			throw new IndexOutOfBoundsException("Unknown label " + label + " in node " + state.current_node_name);
-		return current_node.labels.get(label);
+		if (!currentNode.labels.containsKey(label))
+			throw new IndexOutOfBoundsException("Unknown label " + label + " in node " + state.currentNodeName);
+		return currentNode.labels.get(label);
 	}
 
 	public void runInstruction(Instruction instruction) {
-		switch (instruction.getOperation()) {
+		switch (instruction.operation) {
+		// TODO:DEPRECATED --- remove(first figure out why)
 		case Label:
 			// label no-op, used as a destination for jumpto and jump
 			break;
 		case JumpTo:
 			// jumps to named label
-			state.program_counter = findInstructionForLabel((String) instruction.operandA());
+			state.program_counter = findInstructionForLabel((String) instruction.operands.get(0).getStringValue()) - 1;
 			break;
-		case RunLine:
+		case RunLine: {
 			// looks up a string from the string table
 			// and passes it to the client as a line
-			String line_text = program.getString((String) instruction.operandA());
-			if (line_text == null) {
-				dialogue.error_logger.log("no loaded string table includes line " + instruction.operandA());
-				break;
+			String stringKey = (String) instruction.operands.get(0).getStringValue();
+
+			Line line = new Line(stringKey);
+
+			// The second operand, if provided (compilers prior
+			// to v1.1 don't include it), indicates the number
+			// of expressions in the line. We need to pop these
+			// values off the stack and deliver them to the
+			// line handler.
+			if (instruction.operands.size() > 1) {
+				// TODO: we only have float operands, which is
+				// unpleasant. we should make 'int' operands a
+				// valid type, but doing that implies that the
+				// language differentiates between floats and
+				// ints itself. something to think about.
+				int expressionCount = (int) instruction.operands.get(1).getFloatValue();
+
+				String[] strings = new String[expressionCount];
+
+				for (int expressionIndex = expressionCount - 1; expressionIndex >= 0; expressionIndex--) {
+					strings[expressionIndex] = state.popValue().asString();
+				}
+
+				line.substitutions = strings;
 			}
-			line_handler.handle(new LineResult(line_text));
+
+			{
+				HandlerExecutionType pause = lineHandler.handle(line);
+
+				if (pause == HandlerExecutionType.PauseExecution) {
+					setExecutionState(ExecutionState.Suspended);
+				}
+			}
+		}
 			break;
+//			String line_text = program.getString();
+//			if (line_text == null) {
+//				dialogue.error_logger.log("no loaded string table includes line " + instruction.operandA());
+//				break;
+//			}
+//			lineHandler.handle(new LineResult(line_text));
+
 		case RunCommand:
 			// passes a string to the client as a custom command
-			command_handler.handle(new CommandResult((String) instruction.operandA()));
+
+			String commandText = instruction.operands.get(0).getStringValue();
+
+			// The second operand, if provided (compilers prior
+			// to v1.1 don't include it), indicates the number
+			// of expressions in the command. We need to pop
+			// these values off the stack and deliver them to
+			// the line handler.
+			if (instruction.operands.size() > 1) {
+				// TODO: we only have float operands, which is
+				// unpleasant. we should make 'int' operands a
+				// valid type, but doing that implies that the
+				// language differentiates between floats and
+				// ints itself. something to think about.
+				int expressionCount = (int) instruction.operands.get(1).getFloatValue();
+
+				String[] strings = new String[expressionCount];
+
+				// Get the values from the stack, and
+				// substitute them into the command text
+				for (int expressionIndex = expressionCount - 1; expressionIndex >= 0; expressionIndex--) {
+					String substitution = state.popValue().asString();
+
+					commandText = commandText.replace("{" + expressionIndex + "}", substitution);
+				}
+			}
+
+		{
+			Command command = new Command(commandText);
+			HandlerExecutionType pause = commandHandler.handle(command);
+			if (pause == HandlerExecutionType.PauseExecution) {
+				setExecutionState(ExecutionState.Suspended);
+			}
+		}
 			break;
 		case PushString:
 			// pushes a string value onto the stack. the operand is an index into
 			// the string table, so thats looked up first
-			state.pushValue(program.getString((String) instruction.operandA()));
+			state.pushValue(instruction.operands.get(0).getStringValue());
 			break;
 		case PushNumber:
 			// pushes a number onto the stack
-			state.pushValue(Float.parseFloat(String.valueOf(instruction.operandA())));
+			state.pushValue(instruction.operands.get(0).getFloatValue());
 			break;
 		case PushBool:
 			// pushes a boolean value onto the stack.
-			state.pushValue(Boolean.parseBoolean(String.valueOf(instruction.operandA())));
+			state.pushValue(instruction.operands.get(0).getBoolValue());
 			break;
 		case PushNull:
 			// pushes a null value onto the stack
@@ -191,13 +313,13 @@ public class VirtualMachine {
 			// jumps to a named label if the value of the top of the stack
 			// evaluates to the boolean value 'false'
 			if (!state.peekValue().asBool()) {
-				state.program_counter = findInstructionForLabel((String) instruction.operandA());
+				state.program_counter = findInstructionForLabel(instruction.operands.get(0).getStringValue()) - 1;
 			}
 			break;
 		case Jump:
 			// jumps to a label whose name is on the stack
 			String jump_dest = state.peekValue().asString();
-			state.program_counter = findInstructionForLabel(jump_dest);
+			state.program_counter = findInstructionForLabel(jump_dest) - 1;
 
 			break;
 		case Pop:
@@ -208,191 +330,178 @@ public class VirtualMachine {
 			// call a function, whose parameters are expected to
 			// be on the stack. pushes the functions return value,
 			// if it returns one
-			String function_name = (String) instruction.operandA();
+			String function_name = instruction.operands.get(0).getStringValue();
 
 			FunctionInfo function = dialogue.library.getFunction(function_name);
 
-			{
-				int param_count = function.getParamCount();
+		{
+			int expectedParamCount = function.getParamCount();
 
-				// if this function takes -1 params, it is variadic.
-				// expect the compiler to have palced the number of params
-				// actually passed at the top of the stack.
-				if (param_count == -1) {
-					param_count = (int) state.popValue().asNumber();
-				}
+			int actualParamCount = (int) state.popValue().asNumber();
 
-				Value result;
-
-				if (param_count == 0) {
-					result = function.invoke();
-				} else {
-					// get the parameters, which are pushed in reverse
-					Value[] params = new Value[param_count];
-					for (int i = param_count - 1; i >= 0; i--) {
-						params[i] = state.popValue();
-					}
-
-					// invoke the function
-					result = function.invokeWithArray(params);
-				}
-
-				// if the function returns a value push it
-				if (function.returnsValue()) {
-					state.pushValue(result);
-				}
-
+			// if this function takes -1 params, it is variadic.
+			// expect the compiler to have palced the number of params
+			// actually passed at the top of the stack.
+			if (expectedParamCount == -1) {
+				expectedParamCount = actualParamCount;
 			}
+
+			if (expectedParamCount != actualParamCount) {
+				throw new IllegalStateException(StringUtils.format("Function %s expected %d, but received %d",
+						function.getName(), expectedParamCount, actualParamCount));
+			}
+
+			Value result;
+
+			if (actualParamCount == 0) {
+				result = function.invoke();
+			} else {
+				// get the parameters, which are pushed in reverse
+				Value[] params = new Value[actualParamCount];
+				for (int i = actualParamCount - 1; i >= 0; i--) {
+					params[i] = state.popValue();
+				}
+
+				// invoke the function
+				result = function.invokeWithArray(params);
+			}
+
+			// if the function returns a value push it
+			if (function.returnsValue()) {
+				state.pushValue(result);
+			}
+
+		}
 			break;
 		case PushVariable:
 			// get contents of a variable and push it to the stack
-			String var_name = (String)instruction.operandA();
+			String var_name = (String) instruction.operands.get(0).getStringValue();
 			Value loaded = dialogue.continuity.getValue(var_name);
 			state.pushValue(loaded);
 			break;
 		case StoreVariable:
 			// store the top value on the stack in a variable
 			Value topval = state.peekValue();
-			String destinationVarName = String.valueOf(instruction.operandA());
+			String destinationVarName = instruction.operands.get(0).getStringValue();
 			dialogue.continuity.setValue(destinationVarName, topval);
 			break;
 		case Stop:
 			// stop execution immidiately and report it
-			//command_handler.handle(new CommandResult(EXEC_COMPLETE));
-			node_complte_handler.handle(new NodeCompleteResult(null));
-			
-
-			//execution_state = ExecutionState.Stopped;
+			// command_handler.handle(new CommandResult(EXEC_COMPLETE));
+			nodeCompleteHandler.handle(currentNode.name);
+			dialogueCompleteHandler.handle();
+			// execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
 			break;
 		case RunNode:
 			// run a node
 			String node_name;
 
-			if (instruction.operandA() == null || ((String)instruction.operandA()).isEmpty()) {
+			if (instruction.operands.size() == 0 || (instruction.operands.get(0).getStringValue().isEmpty())) {
 				// get a string from the stack, and jump to a node with that name
 				node_name = state.peekValue().asString();
 			} else {
 				// jump straight to the node
-				node_name = (String) instruction.operandA();
+				node_name = instruction.operands.get(0).getStringValue();
 			}
 
-			node_complte_handler.handle(new NodeCompleteResult(node_name));
+		{
+
+			HandlerExecutionType pause = nodeCompleteHandler.handle(currentNode.name);
 			setNode(node_name);
-
+			// Decrement program counter here, because it will
+			// be incremented when this function returns, and
+			// would mean skipping the first instruction
+			state.program_counter -= 1;
+			if (pause == HandlerExecutionType.PauseExecution) {
+				setExecutionState(ExecutionState.Suspended);
+			}
+		}
 			break;
-		case AddOption:
-			// add an option to the current state
-			state.current_options.add(new Option((String)instruction.operandA(), (String)instruction.operandB()));
-			break;
-		case ShowOptions:
-			// if we have no options to show, immidiately stop
-			if (state.current_options.size() == 0) {
-				node_complte_handler.handle(new NodeCompleteResult(null));
-				//execution_state = ExecutionState.Stopped;
-				setExecutionState(ExecutionState.Stopped);
-				break;
-			}
+		case AddOption: {
+			/// - AddOption
+			/**
+			 * Add an option to the current state.
+			 */
 
-			// if we have a single option, and it has no label, select it and continue
-			// execution
-			if (state.current_options.size() == 1 && state.current_options.get(0).key == null) {
-				String dest = state.current_options.get(0).value;
-				state.pushValue(dest);
-				state.current_options.clear();
-				break;
-			}
+			Line line = new Line(instruction.operands.get(0).getStringValue());
 
-			if (dialogue.continuity.getValue(SpecialVariables.ShuffleOptions).asBool()) {
-				// shuffle the dialogue options if needed
-				Collections.shuffle(state.current_options);
-//				int n = state.current_options.size();
-//				for (int opt1 = 0; opt1 < n; opt1++) {
-//					int opt2 = opt1 + (int) (Math.random() * (n - opt1));
-//					state.current_options.swap(opt1, opt2);
-//				}
-			}
+			if (instruction.operands.size() > 2) {
+				// TODO: we only have float operands, which is
+				// unpleasant. we should make 'int' operands a
+				// valid type, but doing that implies that the
+				// language differentiates between floats and
+				// ints itself. something to think about.
 
-			// present options to user to choose
-			ArrayList<String> option_strings = new ArrayList<String>();
-			for (Option op : state.current_options) {
-				option_strings.add(program.getString(op.key));
-			}
+				// get the number of expressions that we're
+				// working with out of the third operand
+				int expressionCount = (int) instruction.operands.get(2).getFloatValue();
 
-			// cant continue until client chooses option
-			setExecutionState(ExecutionState.WaitingOnOptionSelection);
+				String[] strings = new String[expressionCount];
 
-			option_handler.handle(new OptionResult(option_strings, new OptionChooser() {
-
-				@Override
-				public void choose(int selected_option_index) {
-					// we now know what number option was selected; push the corresponding node name
-					// to the stack
-					String dest_node = state.current_options.get(selected_option_index).value;
-					state.pushValue(dest_node);
-
-					// we no longer need the accum list of optionsl clear it so that ist
-					// ready for the next one
-					state.current_options.clear();
-
-					// we can now keep running
-
-					setExecutionState(ExecutionState.Running);
-
+				// pop the expression values off the stack in
+				// reverse order, and store the list of substitutions
+				for (int expressionIndex = expressionCount - 1; expressionIndex >= 0; expressionIndex--) {
+					String substitution = state.popValue().asString();
+					strings[expressionIndex] = substitution;
 				}
-			}));
+
+				line.substitutions = strings;
+			}
+			state.current_options.add(new SimpleEntry<Line, String>(line, // line to show
+					instruction.operands.get(1).getStringValue() // node name
+			));
 
 			break;
+		}
+		case ShowOptions: {
+			/// - ShowOptions
+			/**
+			 * If we have no options to show, immediately stop.
+			 */
+			if (state.current_options.size() == 0) {
+				executionState = ExecutionState.Stopped;
+				dialogueCompleteHandler.handle();
+				break;
+			}
+
+			// Present the list of options to the user and let them pick
+			ArrayList<Option> optionChoices = new ArrayList<Option>();
+
+			for (int optionIndex = 0; optionIndex < state.current_options.size(); optionIndex++) {
+				SimpleEntry<Line, String> option = state.current_options.get(optionIndex);
+				optionChoices.add(new Option(option.getKey(), optionIndex, option.getValue()));
+			}
+
+			// We can't continue until our client tell us which option to pick
+			executionState = ExecutionState.WaitingOnOptionSelection;
+
+			// Pass the options set to the client, as well as a delegate for them to call
+			// when the
+			// user has made a selection
+
+			optionHandler.handle(new OptionSet(optionChoices.toArray(new Option[0])));
+
+			break;
+		}
 
 		default:
 			// no acepted bytecode, stop the program
 			// and throw exeption
-			//execution_state = ExecutionState.Stopped;
+			// execution_state = ExecutionState.Stopped;
 			setExecutionState(ExecutionState.Stopped);
-			throw new IllegalArgumentException(instruction.getOperation().name());
+			throw new IllegalArgumentException(StringUtils.format("Uknown ByteCode %s",instruction.operation.name()));
 
 		}
 	}
 
-	public LineHandler getLineHandler() {
-		return line_handler;
-	}
-
-	public void setLineHandler(LineHandler line_handler) {
-		this.line_handler = line_handler;
-	}
-
-	public OptionsHandler getOptionsHandler() {
-		return option_handler;
-	}
-
-	public void setOptionsHandler(OptionsHandler options_handler) {
-		this.option_handler = options_handler;
-	}
-
-	public CommandHandler getCommandHandler() {
-		return command_handler;
-	}
-
-	public void setCommandHandler(CommandHandler command_handler) {
-		this.command_handler = command_handler;
-	}
-
-	public NodeCompleteHandler getCompleteHandler() {
-		return node_complte_handler;
-	}
-
-	public void setCompleteHandler(NodeCompleteHandler node_complete_handler) {
-		this.node_complte_handler = node_complete_handler;
-	}
-
 	public ExecutionState getExecutionState() {
-		return execution_state;
+		return executionState;
 	}
 
 	private void setExecutionState(ExecutionState exec_state) {
-		this.execution_state = exec_state;
-		if (execution_state == ExecutionState.Stopped)
+		this.executionState = exec_state;
+		if (executionState == ExecutionState.Stopped)
 			resetState();
 	}
 
@@ -400,15 +509,115 @@ public class VirtualMachine {
 		state = new State();
 	}
 
+	public static Program combinePrograms(Program... programs) {
+		if (programs.length == 0)
+			throw new IllegalArgumentException("combinePrograms - At least one program must be provided");
+		Program p = new Program();
+		for (Program otherProgram : programs) {
+			for (Entry<String, Node> otherNode : otherProgram.nodes.entrySet()) {
+				if (p.nodes.containsKey(otherNode.getKey())) {
+					throw new IllegalStateException(
+							String.format("This program already contains a node names %s", otherNode.getKey()));
+
+				}
+				p.nodes.put(otherNode.getKey(), otherNode.getValue().clone());
+			}
+
+		}
+		return p;
+	}
+
+	public static enum TokenType {
+
+		// Special tokens
+		Whitespace, Indent, Dedent, EndOfLine, EndOfInput,
+
+		// Numbers. Everybody loves a number
+		Number,
+
+		// Strings. Everybody also loves a string
+		Str,
+
+		// '#'
+		TagMarker,
+
+		// Command syntax ("<<foo>>")
+		BeginCommand, EndCommand,
+
+		// Variables ("$foo")
+		Variable,
+
+		// Shortcut syntax ("->")
+		ShortcutOption,
+
+		// Option syntax ("[[Let's go here|Destination]]")
+		OptionStart, // [[
+		OptionDelimit, // |
+		OptionEnd, // ]]
+
+		// Command types (specially recognised command word)
+		If, ElseIf, Else, EndIf, Set,
+
+		// Boolean values
+		True, False,
+
+		// The null value
+		Null,
+
+		// Parentheses
+		LeftParen, RightParen,
+
+		// Parameter delimiters
+		Comma,
+
+		// Operators
+		EqualTo, // ==, eq, is
+		GreaterThan, // >, gt
+		GreaterThanOrEqualTo, // >=, gte
+		LessThan, // <, lt
+		LessThanOrEqualTo, // <=, lte
+		NotEqualTo, // !=, neq
+
+		// Logical operators
+		Or, // ||, or
+		And, // &&, and
+		Xor, // ^, xor
+		Not, // !, not
+
+		// this guy's special because '=' can mean either 'equal to'
+		// or 'becomes' depending on context
+		EqualToOrAssign, // =, to
+
+		UnaryMinus, // -; this is differentiated from Minus
+		// when parsing expressions
+
+		Add, // +
+		Minus, // -
+		Multiply, // *
+		Divide, // /
+		Modulo, // %
+
+		AddAssign, // +=
+		MinusAssign, // -=
+		MultiplyAssign, // *=
+		DivideAssign, // /=
+
+		Comment, // a run of text that we ignore
+
+		Identifier, // a single word (used for functions)
+
+		Text // a run of text until we hit other syntax
+	}
+
 	public class State {
 		// the name of the node that we are currently on
-		public String current_node_name;
+		public String currentNodeName;
 
 		// the instruction number in the current node
 		public int program_counter = 0;
 
 		// list of options, where each option = <string id,destination node>
-		public ArrayList<Option> current_options = new ArrayList<Option>();
+		public ArrayList<SimpleEntry<Line, String>> current_options = new ArrayList<SimpleEntry<Line, String>>();
 
 		// the value stack
 		private ArrayDeque<Value> stack = new ArrayDeque<Value>();
@@ -418,9 +627,9 @@ public class VirtualMachine {
 		 */
 		public void pushValue(Object o) {
 			if (o instanceof Value)
-				stack.add((Value) o);
+				stack.push((Value) o);
 			else
-				stack.add(new Value(o));
+				stack.push(new Value(o));
 		}
 
 		/**
@@ -451,20 +660,52 @@ public class VirtualMachine {
 
 	// HANDLERS
 
+	/// <summary>
+	/// Used as a return type by handlers (such as the <see
+	/// cref="LineHandler"/>) to indicate whether a <see
+	/// cref="Dialogue"/> should suspend execution, or continue
+	/// executing, after it has called the handler.
+	/// </summary>
+	/// <seealso cref="LineHandler"/>
+	/// <seealso cref="CommandHandler"/>
+	/// <seealso cref="NodeCompleteHandler"/>
+	public enum HandlerExecutionType {
+
+		/// <summary>
+		/// Indicates that the <see cref="Dialogue"/> should suspend
+		/// execution.
+		/// </summary>
+		PauseExecution,
+
+		/// <summary>
+		/// Indicates that the <see cref="Dialogue"/> should continue
+		/// execution.
+		/// </summary>
+		ContinueExecution,
+	}
+
 	public static interface LineHandler {
-		public void handle(LineResult line);
+		public HandlerExecutionType handle(Line line);
 	}
 
 	public static interface OptionsHandler {
-		public void handle(OptionResult options);
+		public HandlerExecutionType handle(OptionSet options);
 	}
 
 	public static interface CommandHandler {
-		public void handle(CommandResult command);
+		public HandlerExecutionType handle(Command command);
 	}
 
 	public static interface NodeCompleteHandler {
-		public void handle(NodeCompleteResult compelte);
+		public HandlerExecutionType handle(String nodeName);
+	}
+
+	public static interface DialogueCompleteHandler {
+		public void handle();
+	}
+
+	public static interface NodeStartHandler {
+		public HandlerExecutionType handle(String nodeName);
 	}
 
 	public static class SpecialVariables {
