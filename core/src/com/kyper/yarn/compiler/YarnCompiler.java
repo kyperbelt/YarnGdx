@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -122,13 +121,13 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 
 		lexer.removeErrorListeners();
 		lexer.addErrorListener(LexerErrorListener.getInstance());
-		//lexer.getAllTokens().stream().forEach(System.out::println);
+		// lexer.getAllTokens().stream().forEach(System.out::println);
 		ParseTree tree;
-		//getTokensFromString(text).stream().forEach(System.out::println);
+		// getTokensFromString(text).stream().forEach(System.out::println);
 		try {
 			tree = parser.dialogue();
 		} catch (ParseException e) {
-			
+
 			// if DEBUG
 //              ArrayList<String> tokenStringList = new ArrayList<String>();
 //              tokens.seek(0);
@@ -190,7 +189,7 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 		boolean isImplicit;
 
 		if (lineID == null) {
-			lineIDUsed = String.format("%s-%s-%d",this.fileName,nodeName,this.stringCount);
+			lineIDUsed = String.format("%s-%s-%d", this.fileName, nodeName, this.stringCount);
 
 			this.stringCount += 1;
 
@@ -214,7 +213,7 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 	}
 
 	public String registerLabel(String commentary) {
-		return "L" + labelCount++ + (commentary == null ? "null" : commentary);
+		return "L" + labelCount++ + (commentary == null ? "" : commentary);
 	}
 
 	protected void emit(Node node, ByteCode code, Operand... operands) {
@@ -255,7 +254,7 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 
 	@Override
 	public void exitNode(NodeContext ctx) {
-		//System.out.println("hello from:"+currentNode.name);
+		// System.out.println("hello from:"+currentNode.name);
 		program.nodes.put(currentNode.name, currentNode);
 		currentNode = null;
 		rawTextNode = false;
@@ -270,7 +269,9 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 		// be stored as 'foo', '', consistent with how it was typed.
 		// That is, it's not null, because a header was provided, but
 		// it was written as an empty line.
-		String headerValue = context.header_value != null ? (context.header_value.getText() == null?"":context.header_value.getText()):"";
+		String headerValue = context.header_value != null
+				? (context.header_value.getText() == null ? "" : context.header_value.getText())
+				: "";
 
 		if (headerKey.equals("title")) {
 			// Set the name of the node
@@ -287,9 +288,9 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 		if (headerKey.equals("tags")) {
 			// Split the list of tags by spaces, and use that
 			// TODO: dont know if im using streams correctly - hope i am XD
-			//System.out.println("before:"+currentNode.tags);
+			// System.out.println("before:"+currentNode.tags);
 			Arrays.stream(headerValue.split(" ")).filter(item -> !item.isEmpty()).forEach(currentNode.tags::add);
-			//System.out.println("after:"+currentNode.tags);
+			// System.out.println("after:"+currentNode.tags);
 			if (currentNode.tags.contains("rawText")) {
 				// This is a raw text node. Flag it as such for future compilation.
 				rawTextNode = true;
@@ -322,47 +323,40 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 					context.getStart().getLine(), null);
 		}
 	}
-	
+
 	@Override
 	public void exitBody(BodyContext context) {
 		// if it is a regular node
-        if (!rawTextNode)
-        {
-            // Note: this only works when we know that we don't have
-            // AddOptions and then Jump up back into the code to run them.
-            // TODO: A better solution would be for the parser to flag
-            // whether a node has Options at the end.
-            boolean hasRemainingOptions = false;
-            for (Instruction instruction : currentNode.instructions)
-            {
-                if (instruction.operation == ByteCode.AddOption)
-                {
-                    hasRemainingOptions = true;
-                }
-                if (instruction.operation == ByteCode.ShowOptions)
-                {
-                    hasRemainingOptions = false;
-                }
-            }
+		if (!rawTextNode) {
+			// Note: this only works when we know that we don't have
+			// AddOptions and then Jump up back into the code to run them.
+			// TODO: A better solution would be for the parser to flag
+			// whether a node has Options at the end.
+			boolean hasRemainingOptions = false;
+			for (Instruction instruction : currentNode.instructions) {
+				if (instruction.operation == ByteCode.AddOption) {
+					hasRemainingOptions = true;
+				}
+				if (instruction.operation == ByteCode.ShowOptions) {
+					hasRemainingOptions = false;
+				}
+			}
 
-            // If this compiled node has no lingering options to show at the end of the node, then stop at the end
-            if (hasRemainingOptions == false)
-            {
-                emit(currentNode, ByteCode.Stop);
-            }
-            else
-            {
-                // Otherwise, show the accumulated nodes and then jump to the selected node
-                emit(currentNode, ByteCode.ShowOptions);
+			// If this compiled node has no lingering options to show at the end of the
+			// node, then stop at the end
+			if (hasRemainingOptions == false) {
+				emit(currentNode, ByteCode.Stop);
+			} else {
+				// Otherwise, show the accumulated nodes and then jump to the selected node
+				emit(currentNode, ByteCode.ShowOptions);
 
-                // Showing options will make the execution stop; the
-                // user will have invoked code that pushes the name of
-                // a node onto the stack, which RunNode handles
-                emit(currentNode, ByteCode.RunNode);
-            }
-        }
-    }
-	
+				// Showing options will make the execution stop; the
+				// user will have invoked code that pushes the name of
+				// a node onto the stack, which RunNode handles
+				emit(currentNode, ByteCode.RunNode);
+			}
+		}
+	}
 
 	public boolean isRawTextNode() {
 		return rawTextNode;
@@ -506,8 +500,7 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 			String stringID = compiler.registerString(composedString.toString(), compiler.currentNode.name, lineID,
 					lineNumber, hashtagText);
 
-			compiler.emit(ByteCode.RunLine, new Operand(stringID),
-					new Operand(expressionCount));
+			compiler.emit(ByteCode.RunLine, new Operand(stringID), new Operand(expressionCount));
 
 			return 0;
 		}
@@ -541,8 +534,8 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 			String stringID = compiler.registerString(label, compiler.currentNode.name, lineID, lineNumber,
 					hashtagText);
 
-			compiler.emit(ByteCode.AddOption, new Operand(stringID),
-					new Operand(destination), new Operand(expressionCount));
+			compiler.emit(ByteCode.AddOption, new Operand(stringID), new Operand(destination),
+					new Operand(expressionCount));
 
 			return 0;
 		}
@@ -672,7 +665,10 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 			}
 
 			compiler.emit(ByteCode.JumpTo, new Operand(jumpLabel));
-
+			if (expression != null) {
+				compiler.currentNode.labels.put(endOfClauseLabel, compiler.currentNode.instructions.size());
+				compiler.emit(ByteCode.Pop);
+			}
 		}
 
 		@Override
@@ -694,7 +690,7 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 				// if this option is selected. We'll emit the label itself
 				// later.
 				String optionDestinationLabel = compiler.registerLabel(String.format("shortcutoption_%s_%d",
-						(currentNode.name == null ? "node" : currentNode.name), optionCount));
+						(currentNode.name == null ? "node" : currentNode.name), optionCount + 1));
 				labels.add(optionDestinationLabel);
 
 				// This line statement may have a condition on it. If it
@@ -734,8 +730,7 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 						lineID, shortcut.getStart().getLine(), hashtags);
 
 				// And add this option to the list.
-				compiler.emit(ByteCode.AddOption, new Operand(labelStringID),
-						new Operand(optionDestinationLabel),
+				compiler.emit(ByteCode.AddOption, new Operand(labelStringID), new Operand(optionDestinationLabel),
 						new Operand(expressionCount));
 
 				// If we had a line condition, now's the time to generate
@@ -1024,7 +1019,7 @@ public class YarnCompiler extends YarnSpinnerParserBaseListener {
 		public Graph graph = new Graph();
 
 		public void enterHeader(YarnSpinnerParser.HeaderContext context) {
-			System.out.println("header "+context.header_key.getText());
+			System.out.println("header " + context.header_key.getText());
 			if (context.header_key.getText().equals("title")) {
 				currentNode = context.header_value.getText();
 			}
