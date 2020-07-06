@@ -58,7 +58,7 @@ public class Program {
 		return nodes.get(name).tags;
 	}
 	
-    public void MergeFrom(Program other) {
+    public void mergeFrom(Program other) {
         if (other == null) {
           return;
         }
@@ -183,6 +183,7 @@ public class Program {
 			return node_name == null ? "null" : node_name;
 		}
 	}
+	
 
 //	public static class Node {
 //
@@ -604,7 +605,7 @@ public class Program {
 				comment = "; " + comment;
 			}
 
-			return String.format("%1$-15s %2$-10s %4$-10s", operation.name(), opString, comment);
+			return String.format("%1$-15s %2$-10s %3$-10s", operation.name(), opString, comment);
 		}
 	}
 

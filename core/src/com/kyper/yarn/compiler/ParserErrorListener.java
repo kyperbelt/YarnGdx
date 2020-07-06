@@ -23,12 +23,12 @@ public final class ParserErrorListener extends BaseErrorListener{
 
          // the human readable message
          int[] format = new int[] { line, charPositionInLine + 1 };
-         builder.append(String.format(Locale.getDefault(), "Error on line %d at position %d:\n", format));
+         builder.append(String.format("Error on line %d at position %d:\n", format[0],format[1]));
          // the actual error message
          builder.append(System.lineSeparator());
          builder.append(msg);
 //         #if DEBUG
-//         builder.AppendLine($"Debug: Offending symbol type: {recognizer.Vocabulary.GetSymbolicName(offendingSymbol.Type)}");
+         builder.append(String.format("\nDebug: Offending symbol type: %s",recognizer.getVocabulary().getSymbolicName(((Token)offendingSymbol).getType())));
 //         #endif
 
          Token offender = (Token)offendingSymbol;
@@ -36,8 +36,9 @@ public final class ParserErrorListener extends BaseErrorListener{
          if (offender.getTokenSource() != null) {
              // the line with the error on it
              String input = offender.getTokenSource().getInputStream().toString();
+             System.out.println(input);
              String[] lines = input.split("\n");
-             String errorLine = lines[line - 1];
+             String errorLine = lines[line-2];
              builder.append(System.lineSeparator());
              builder.append(errorLine);
 

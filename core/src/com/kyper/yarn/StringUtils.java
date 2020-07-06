@@ -70,7 +70,9 @@ public class StringUtils {
 //		return builder.toString();
 	}
 	
-
+	public static String replaceLast(String text, String regex, String replacement) {
+        return text.replaceFirst("(?s)"+regex+"(?!.*?"+regex+")", replacement);
+    }
 	
 	public static String removeExtension(String input) {
 		return input.replaceFirst("[.][^.]+$", "");

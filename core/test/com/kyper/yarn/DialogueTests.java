@@ -1,8 +1,12 @@
 package com.kyper.yarn;
 
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -10,17 +14,28 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import com.kyper.yarn.Dialogue.OptionSet;
+import com.kyper.yarn.compiler.YarnCompiler;
 
 public class DialogueTests extends TestBase {
 	@ParameterizedTest
-	@ValueSource(strings = { "Sally.yarn", "Sally.json" })
+	@ValueSource(strings = { "Sally.yarn" })
 	public void testNodeExists(String filename) throws IOException {
 		System.out.println("TestNodeExists --");
+		stringTable.clear();
 		Path path = getSpaceDemoScriptsPath().resolve(filename);
 
-		dialogue.loadFile(path, false, false, null);
+		Program program = new Program();
+
+		YarnCompiler.compileFile(path, program, stringTable);
+
+		dialogue.setProgram(program);
 
 		assertTrue(dialogue.nodeExists("Sally"));
 		// Test clearing everything
@@ -33,31 +48,33 @@ public class DialogueTests extends TestBase {
 	@Test
 	public void testOptionDestinations() throws IOException {
 		System.out.println("TestOptionDestinations --");
+		stringTable.clear();
 		Path path = getTestDataPath().resolve("Options.yarn");
-		dialogue.loadFile(path, true, true, null);
-
-
+		Program program = new Program();
+		YarnCompiler.compileFile(path, program, stringTable);
+		dialogue.setProgram(program);
 
 		AtomicBoolean callbackCalled = new AtomicBoolean(false);
-		dialogue.setOptionsHandler((Dialogue.OptionResult optionSet) -> {
-			assertEquals(2, optionSet.getOptions().size());
+		dialogue.setOptionsHandler((OptionSet optionSet) -> {
+			assertEquals(2, optionSet.getOptions().length);
 			// TODO original tests referenced DestinationNode but this has been erased from
 			// runtime types
-			assertEquals("Go to B", optionSet.getOptions().get(0));
-			assertEquals("Go to C", optionSet.getOptions().get(1));
+			assertEquals("B", optionSet.getOptions()[0].getDestination());
+			assertEquals("C", optionSet.getOptions()[1].getDestination());
 			callbackCalled.set(true);
 
 		});
-		dialogue.start("A");
-		dialogue.checkNext();
+		dialogue.setNode("A");
+		dialogue.continueRunning();
 
 		await().until(() -> callbackCalled.get());
 
 	}
 
-   	@Test
-    public void testAnalysis() throws IOException {
+	@Test
+	public void testAnalysis() throws IOException {
 		List<Analyser.Diagnosis> diagnoses;
+		stringTable.clear();
 		Analyser.Context context;
 
 		// this script has the following variables:
@@ -68,110 +85,114 @@ public class DialogueTests extends TestBase {
 		context = new Analyser.Context(new Analyser.UnusedVariableChecker());
 
 		Path path = getTestDataPath().resolve("AnalysisTest.yarn");
-		dialogue.loadFile(path);
+		Program program = new Program();
+		YarnCompiler.compileFile(path, program, stringTable);
+
+		dialogue.setProgram(program);
 		dialogue.analyse(context);
 		diagnoses = context.finalAnalysis();
 
 		assertEquals(2, diagnoses.size());
 
 		dialogue.unloadAll();
+
+		context = new Analyser.Context(new Analyser.UnusedVariableChecker());
+		Path shipPath = getSpaceDemoScriptsPath().resolve("Ship.yarn");
+		stringTable.clear();
+		Program shipProgram = new Program();
+		YarnCompiler.compileFile(shipPath, shipProgram, stringTable);
+		Path sallyPath = getSpaceDemoScriptsPath().resolve("Sally.yarn");
+		Program sallyProgram = new Program();
+		YarnCompiler.compileFile(sallyPath, sallyProgram, stringTable);
+
+		Program combinedProgram = VirtualMachine.combinePrograms(shipProgram, sallyProgram);
+
+		dialogue.setProgram(combinedProgram);
+		dialogue.analyse(context);
+		diagnoses = context.finalAnalysis();
+
+		assertEquals(0, diagnoses.size());
+
 	}
 
-	@Test @Disabled("I don't think this is possible yet")
-	public void testCombinedProgramAnalysis() {
-		// TODO I don't think the lower tests are possible given current API
-//        context = new Analyser.Context(new Analyser.UnusedVariableChecker());
-//
-//		Path path = getSpaceDemoScriptsPath().resolve("Ship.yarn");
-//
-//		Path sallyPath = getSpaceDemoScriptsPath().resolve("Sally.yarn");
-//        Compiler.CompileFile(sallyPath, out var sallyProgram, out var sallyStringTable);
-//
-//        stringTable = shipStringTable.Union(sallyStringTable).ToDictionary(k = > k.Key, v =>v.Value);
-//
-//        var combinedProgram = Program.Combine(shipProgram, sallyProgram);
-//
-//        dialogue.SetProgram(combinedProgram);
-//
-//        dialogue.Analyse(context);
-//        diagnoses = new List<Yarn.Analysis.Diagnosis>(context.FinishAnalysis());
-//
-//        // This script should contain no unused variables
-//        Assert.Empty(diagnoses);
-    }
-
-
-    @Test
-    public void testDumpingCode() throws IOException {
+	@Test
+	public void testDumpingCode() throws IOException {
 		Path path = getTestDataPath().resolve("Example.yarn");
+		stringTable.clear();
+		Program program = new Program();
+		YarnCompiler.compileFile(path, program, stringTable);
+		dialogue.setProgram(program);
+		String byteCode = dialogue.getByteCode();
+		// assertNotNull(byteCode);
+		assertFalse(byteCode.isEmpty());
+	}
 
-		dialogue.loadFile(path, true, true, null);
-
-        String byteCode = dialogue.getByteCode();
-        assertNotNull(byteCode);
-        assertFalse(byteCode.isEmpty());
-    }
-
-
-    @Test
-    public void testMissingNode() throws IOException {
+	@Test
+	public void testMissingNode() throws IOException {
+		stringTable.clear();
 		Path path = getTestDataPath().resolve(Paths.get("TestCases", "Smileys.yarn"));
+		Program program = new Program();
+		YarnCompiler.compileFile(path, program, stringTable);
 
-		dialogue.loadFile(path);
-        dialogue.start();
+		dialogue.setProgram(program);
 
 		errorsCauseFailures = false;
-		boolean result = dialogue.setNode("THIS NODE DOES NOT EXIST");
-		assertFalse(result);
-		assertEquals("no node named THIS NODE DOES NOT EXIST", getLastError());
-    }
-
+		assertThrows(DialogueException.class, () -> {
+			dialogue.setNode("THIS NODE DOES NOT EXIST");
+		});
+	}
 
 	@ParameterizedTest
-	@ValueSource(strings = { "Sally.yarn", "Sally.json" })
-    public void testGettingCurrentNodeName(String filename) throws IOException {
+	@ValueSource(strings = { "Sally.yarn" })
+	public void testGettingCurrentNodeName(String filename) throws IOException {
 		Path path = getSpaceDemoScriptsPath().resolve(filename);
-		dialogue.loadFile(path);
+		Program program = new Program();
+		YarnCompiler.compileFile(path, program, stringTable);
+		dialogue.setProgram(program);
+		// dialogue should not be running yet
 
-        // dialogue should not be running yet
-        assertNull(dialogue.getCurrentNode());
+		assertNull(dialogue.getCurrentNode());
 
-        dialogue.start("Sally");
+		dialogue.setNode("Sally");
 		assertEquals("Sally", dialogue.getCurrentNode().name);
 
 		dialogue.setNode("Sally.Watch");
-        assertEquals("Sally.Watch", dialogue.getCurrentNode().name);
+		assertEquals("Sally.Watch", dialogue.getCurrentNode().name);
 
-        dialogue.stop();
-        // Current node should now be null
-        assertNull(dialogue.getCurrentNode());
+		dialogue.stop();
+		// Current node should now be null
+		assertNull(dialogue.getCurrentNode());
 	}
 
+	@Test
+	public void testGettingRawSource() {
+		stringTable.clear();
+		Path path = getTestDataPath().resolve("Example.yarn");
 
-    @Test @Disabled("Not sure if this is possible yet")
-    public void testGettingRawSource() {
-//        var path = Path.Combine(TestDataPath, "Example.yarn");
-//
-//        Compiler.CompileFile(path, out var program, out stringTable);
-//        dialogue.SetProgram(program);
-//
-//        var sourceID = dialogue.GetStringIDForNode("LearnMore");
-//        var source = stringTable[sourceID].text;
-//
-//        Assert.NotNull(source);
-//
-//        Assert.Equal("A: HAHAHA\n", source);
-    }
+		Program program = new Program();
+		YarnCompiler.compileFile(path, program, stringTable);
+		dialogue.setProgram(program);
+
+		String sourceID = dialogue.getStringIDForNode("LearnMore");
+		String source = stringTable.get(sourceID).text;
+
+		assertNotNull(source);
+
+		assertEquals("A: HAHAHA\n", source);
+	}
 
 	@Test
 	public void testGettingTags() throws IOException {
 		System.out.println("TestGettingTags --");
 		Path path = getTestDataPath().resolve("Example.yarn");
-		dialogue.loadFile(path, true, true, null);
+		stringTable.clear();
 
-		Program.Node node = dialogue.program.getNodes().get("LearnMore");
-		List<String> source = node.tags;
+		Program program = new Program();
+		YarnCompiler.compileFile(path, program, stringTable);
+		dialogue.setProgram(program);
 
+		List<String> source = dialogue.getTagsForNode("LearnMore");
+		
 		assertNotNull(source);
 
 		assertFalse(source.isEmpty());

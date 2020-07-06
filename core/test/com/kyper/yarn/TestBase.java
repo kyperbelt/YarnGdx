@@ -1,21 +1,33 @@
 package com.kyper.yarn;
 
-import com.kyper.yarn.Dialogue.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.kyper.yarn.Dialogue.Command;
+import com.kyper.yarn.Dialogue.Line;
+import com.kyper.yarn.Dialogue.MemoryVariableStorage;
+import com.kyper.yarn.Dialogue.Option;
+import com.kyper.yarn.Dialogue.OptionSet;
+import com.kyper.yarn.Dialogue.VariableStorage;
+import com.kyper.yarn.Dialogue.YarnLogger;
+import com.kyper.yarn.VirtualMachine.HandlerExecutionType;
+import com.kyper.yarn.compiler.YarnCompiler.StringInfo;
 
 public class TestBase {
     protected VariableStorage storage = new MemoryVariableStorage();
     protected Dialogue dialogue;
-    protected Map<String, Program.LineInfo> stringTable;
+    protected Map<String, StringInfo> stringTable = new HashMap<String, StringInfo>();
     protected ArrayList<String> errorLogs = new ArrayList<>();
 
     public String locale = "en";
@@ -57,22 +69,27 @@ public class TestBase {
 
     private TestPlan testPlan;
 
-    public String GetComposedTextForLine(LineResult line) {
+    public String GetComposedTextForLine(Line line) {
         // TODO stringTable localization handling?
 //        var baseText = stringTable[line.ID].text;
-        String baseText = line.getText();
-        return GetComposedTextForLine(line.getText());
+        String baseText = stringTable.get(line.id).text;
+        for (int i = 0; i < line.substitutions.length; i++) {
+            String substitution = line.substitutions[i];
+            baseText = baseText.replace("{" + i + "}", substitution);
+        }
+        
+        return Dialogue.expandFormatFunctions(baseText, locale);
     }
-    public String GetComposedTextForLine(String line) {
-        return line;
-        // TODO substitution handling?
-//        for (int i = 0; i < line.Substitutions.Length; i++) {
-//            String substitution = line.Substitutions[i];
-//            baseText = baseText.Replace("{" + i + "}", substitution);
-//        }
-
-//        return Dialogue.ExpandFormatFunctions(baseText, locale);
-    }
+//    public String GetComposedTextForLine(String line) {
+//        return line;
+//        // TODO substitution handling?
+////        for (int i = 0; i < line.Substitutions.Length; i++) {
+////            String substitution = line.Substitutions[i];
+////            baseText = baseText.Replace("{" + i + "}", substitution);
+////        }
+//
+////        return Dialogue.ExpandFormatFunctions(baseText, locale);
+//    }
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
@@ -98,7 +115,7 @@ public class TestBase {
 
     void registerListeners() {
         // TODO VM used to be private so may need to add another layer of callbacks on Dialogue so we don't clobber them
-        dialogue.setLineHandler((LineResult line) -> {
+        dialogue.setLineHandler((Line line) -> {
 //            var id = line.ID;
 //            assertTrue(stringTable.containsKey(id));
 
@@ -116,17 +133,17 @@ public class TestBase {
                 }
             }
 
-//            return Dialogue.HandlerExecutionType.ContinueExecution;
+            return HandlerExecutionType.ContinueExecution;
         });
 
-        dialogue.setOptionsHandler((OptionResult optionSet) -> {
-            int optionCount = optionSet.getOptions().size();
+        dialogue.setOptionsHandler((OptionSet optionSet) -> {
+            int optionCount = optionSet.getOptions().length;
 
             System.out.println("Options:");
-            for(String option : optionSet.getOptions()) {
+            for(Option option : optionSet.getOptions()) {
                 // TODO localization handling?
 //                var optionText = GetComposedTextForLine(option.Line);
-                String optionText = GetComposedTextForLine(option);
+                String optionText = GetComposedTextForLine(option.getLine());
                 System.out.println(" - " + optionText);
             }
 
@@ -139,7 +156,8 @@ public class TestBase {
 
                 // Assert that the list of options we were given is
                 // identical to the list of options we expect
-                List<String> actualOptionList = optionSet.getOptions().stream().map(this::GetComposedTextForLine).collect(Collectors.toList());
+                
+                List<String> actualOptionList = Arrays.stream(optionSet.getOptions()).map(o->this.GetComposedTextForLine(o.getLine())).collect(Collectors.toList());
                 if(!testPlan.nextExpectedOptions.equals(actualOptionList)) {
                     System.out.println(testPlan.nextExpectedOptions);
                 }
@@ -150,16 +168,14 @@ public class TestBase {
                 assertEquals(expectedOptionCount, optionCount);
 
                 if (testPlan.nextOptionToSelect != -1) {
-                    optionSet.choose(testPlan.nextOptionToSelect-1);
-//                    dialogue.SetSelectedOption(testPlan.nextOptionToSelect - 1);
+                    dialogue.setSelectedOption(testPlan.nextOptionToSelect - 1);
                 } else {
-                    optionSet.choose(0);
-//                    dialogue.SetSelectedOption(0);
+                    dialogue.setSelectedOption(0);
                 }
             }
         });
 
-        dialogue.setCommandHandler((CommandResult command) -> {
+        dialogue.setCommandHandler((Command command) -> {
             System.out.println("Command: " + command.getCommand());
 
             if (testPlan != null) {
@@ -179,7 +195,7 @@ public class TestBase {
                 }
             }
 
-//            return Dialogue.HandlerExecutionType.ContinueExecution;
+            return HandlerExecutionType.ContinueExecution;
         });
 
         dialogue.getLibrary().registerFunction("assert", 1, (Value[] parameters) -> {
@@ -190,11 +206,9 @@ public class TestBase {
 
 
         // When a node is complete, just indicate that we want to continue execution
-        dialogue.setCompleteHandler((NodeCompleteResult result) -> {
-            System.out.println("NodeCompleteHandler " + result);
-            //return Dialogue.HandlerExecutionType.ContinueExecution;
+        dialogue.setDialogueCompleteHandler(() -> {
+            //
 
-            if (result == null) {
                 // When dialogue is complete, check that we expected a stop
                 if (testPlan != null) {
                     testPlan.Next();
@@ -203,10 +217,9 @@ public class TestBase {
                         fail("Stopped dialogue, but wasn't expecting to select it (was expecting "+testPlan.nextExpectedType.toString()+")");
                     }
                 }
-            }
         });
-
-//        dialogue.dialogueCompleteHandler = () => {
+        dialogue.setNodeStartHandler((String name)-> {return HandlerExecutionType.ContinueExecution;});
+        dialogue.setNodeCompleteHandler((String name)-> {return HandlerExecutionType.ContinueExecution;});
     }
 
     // Executes the named node, and checks any assertions made during
@@ -217,11 +230,11 @@ public class TestBase {
         assertNotNull(testPlan, "Cannot run test: no test plan provided.");
 
 //        dialogue.vm.setNode(nodeName);
-        dialogue.start(nodeName);
+        dialogue.setNode(nodeName);
 
         do {
-            dialogue.update();
-        } while (dialogue.isRunning());
+            dialogue.continueRunning();
+        } while (dialogue.isActive());
 
     }
 

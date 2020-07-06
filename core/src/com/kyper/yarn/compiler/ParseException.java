@@ -5,8 +5,6 @@ import java.util.Locale;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import com.kyper.yarn.Lexer.Token;
-
 public class ParseException extends RuntimeException {
 	private static final long serialVersionUID = -6422941521497633431L;
 

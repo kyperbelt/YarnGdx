@@ -48,6 +48,10 @@ public class VirtualMachine {
 		this.dialogue = d;
 		state = new State();
 	}
+	
+	public void setProgram(Program program) {
+		this.program = program;
+	}
 
 //	protected VirtualMachine(Dialogue d, Program p) {
 //		this.dialogue = d;
@@ -67,7 +71,6 @@ public class VirtualMachine {
 		if (!program.nodes.containsKey(name)) {
 			setExecutionState(ExecutionState.Stopped);
 			throw new DialogueException(StringUtils.format("No node named [%s] has been loaded.", name));
-
 		}
 
 		dialogue.debug_logger.log("Running node " + name);
@@ -91,6 +94,7 @@ public class VirtualMachine {
 
 	public void stop() {
 		setExecutionState(ExecutionState.Stopped);
+		currentNode = null;
 	}
 
 	public void setSelectedOption(int selectedOptionId) {
@@ -689,7 +693,7 @@ public class VirtualMachine {
 	}
 
 	public static interface OptionsHandler {
-		public HandlerExecutionType handle(OptionSet options);
+		public void handle(OptionSet options);
 	}
 
 	public static interface CommandHandler {

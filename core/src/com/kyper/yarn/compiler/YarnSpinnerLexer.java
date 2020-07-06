@@ -15,6 +15,8 @@ import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.*;
 
+import com.kyper.yarn.StringUtils;
+
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class YarnSpinnerLexer extends Lexer {
 	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
@@ -261,15 +263,16 @@ public class YarnSpinnerLexer extends Lexer {
 
 	    void createIndentIfNeeded(int type) {
 
-	        String newLine = getText().replace("[^\r\n\f]+", "");
-	        String spaces = getText().replace("[\r\n\f]+", "");
+	        String newLine = getText().replaceAll("[\r\n\f]+", "");//StringUtils.replaceLast(getText(),"[^\r\n\f]+", "");
+	        String spaces = getText().replaceAll("[(\r\n|\n|\r)\f]+", "");
 	        // Strip newlines inside open clauses except if we are near EOF. We keep NEWLINEs near EOF to
 	        // satisfy the final newline needed by the single_put rule used by the REPL.
 	        int next = getInputStream().LA(1);
 	        int nextnext = getInputStream().LA(2);
-
+	        
 	        // '-1' indicates 'do not emit the newline here but do emit indents/dedents'
 	        if (type != -1) {
+	        	
 	            emit(commonToken(type, newLine));
 	        }
 	        int indent = getIndentationCount(spaces);
@@ -278,10 +281,14 @@ public class YarnSpinnerLexer extends Lexer {
 	            // skip indents of the same size as the present indent-size
 	        } else if (indent > previous) {
 	            Indents.push(indent);
+
+	           
 	            emit(commonToken(YarnSpinnerParser.INDENT, spaces));
+	            
 	        } else {
 	            // Possibly emit more than 1 DEDENT token.
 	            while (Indents.size() != 0 && Indents.peek() > indent) {
+	            	
 	                this.emit(createDedent());
 	                Indents.pop();
 	            }
@@ -336,6 +343,7 @@ public class YarnSpinnerLexer extends Lexer {
 		}
 	}
 	private void NEWLINE_action(RuleContext _localctx, int actionIndex) {
+		
 		switch (actionIndex) {
 		case 0:
 			 createIndentIfNeeded(-1); 
@@ -343,6 +351,8 @@ public class YarnSpinnerLexer extends Lexer {
 		}
 	}
 	private void HEADER_NEWLINE_action(RuleContext _localctx, int actionIndex) {
+
+		
 		switch (actionIndex) {
 		case 1:
 			createIndentIfNeeded(HEADER_NEWLINE);

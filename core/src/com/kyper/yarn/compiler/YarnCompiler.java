@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collector;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -18,13 +20,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import com.kyper.yarn.Lexer.TokenType;
 import com.kyper.yarn.Program;
 import com.kyper.yarn.Program.ByteCode;
 import com.kyper.yarn.Program.Instruction;
 import com.kyper.yarn.Program.Node;
 import com.kyper.yarn.Program.Operand;
 import com.kyper.yarn.StringUtils;
+import com.kyper.yarn.VirtualMachine.TokenType;
 import com.kyper.yarn.compiler.YarnSpinnerParser.BodyContext;
 import com.kyper.yarn.compiler.YarnSpinnerParser.Call_statementContext;
 import com.kyper.yarn.compiler.YarnSpinnerParser.Command_statementContext;
@@ -65,7 +67,7 @@ import com.kyper.yarn.compiler.YarnSpinnerParser.ValueTrueContext;
 import com.kyper.yarn.compiler.YarnSpinnerParser.ValueVarContext;
 import com.kyper.yarn.compiler.YarnSpinnerParser.VariableContext;
 
-public class Compiler extends YarnSpinnerParserBaseListener {
+public class YarnCompiler extends YarnSpinnerParserBaseListener {
 
 	private static Regex invalidNodeTitleNameRegex = new Regex("[\\[<>\\]{}\\|:\\s#\\$]");
 
@@ -77,16 +79,17 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 	private final String fileName;
 	private boolean containsImplicitStringTags;
 
-	private HashMap<String, StringInfo> stringTable = new HashMap<String, Compiler.StringInfo>();
+	private HashMap<String, StringInfo> stringTable = new HashMap<String, YarnCompiler.StringInfo>();
 	private int stringCount = 0;
 	HashMap<Integer, TokenType> tokens = new HashMap<Integer, TokenType>();
 
-	public Compiler(String fileName) {
+	public YarnCompiler(String fileName) {
 		program = new Program();
+		program.name = fileName;
 		this.fileName = fileName;
 	}
 
-	public static Status compileFile(Path path, Program program, HashMap<String, StringInfo> stringTable) {
+	public static Status compileFile(Path path, Program program, Map<String, StringInfo> stringTable) {
 		String source = null;
 		try {
 			source = new String(Files.readAllBytes(path));
@@ -105,7 +108,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 //    private ArrayList<String> tokens;
 
 	public static Status compileString(String text, String fileName, Program program,
-			HashMap<String, StringInfo> stringTable) {
+			Map<String, StringInfo> stringTable2) {
 		CharStream input = CharStreams.fromString(text);
 
 		YarnSpinnerLexer lexer = new YarnSpinnerLexer(input);
@@ -119,11 +122,13 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 
 		lexer.removeErrorListeners();
 		lexer.addErrorListener(LexerErrorListener.getInstance());
-
+		//lexer.getAllTokens().stream().forEach(System.out::println);
 		ParseTree tree;
+		//getTokensFromString(text).stream().forEach(System.out::println);
 		try {
 			tree = parser.dialogue();
 		} catch (ParseException e) {
+			
 			// if DEBUG
 //              ArrayList<String> tokenStringList = new ArrayList<String>();
 //              tokens.seek(0);
@@ -133,16 +138,16 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 //
 //              throw new ParseException(String.format("%s\n\nTokens:\n%s",e.getMessage(),String.join("\n", tokenStringList)));
 			// else
+			System.out.println(e.getMessage());
 			throw new ParseException(e.getMessage());
 			// endif // DEBUG
 		}
-
-		Compiler compiler = new Compiler(fileName);
+		YarnCompiler compiler = new YarnCompiler(fileName);
 
 		compiler.compile(tree);
 
-		program = compiler.getProgram();
-		stringTable = compiler.stringTable;
+		program.mergeFrom(compiler.getProgram());
+		stringTable2.putAll(compiler.stringTable);
 
 		if (compiler.containsImplicitStringTags) {
 			return Status.SucceededUntaggedStrings;
@@ -215,7 +220,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 	protected void emit(Node node, ByteCode code, Operand... operands) {
 		Instruction instruction = new Instruction();
 		instruction.operation = code;
-		Arrays.stream(operands).forEach(instruction.operands::add);
+		instruction.operands.addAll(Arrays.asList(operands));
 
 		node.instructions.add(instruction);
 	}
@@ -250,7 +255,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 
 	@Override
 	public void exitNode(NodeContext ctx) {
-
+		//System.out.println("hello from:"+currentNode.name);
 		program.nodes.put(currentNode.name, currentNode);
 		currentNode = null;
 		rawTextNode = false;
@@ -265,7 +270,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 		// be stored as 'foo', '', consistent with how it was typed.
 		// That is, it's not null, because a header was provided, but
 		// it was written as an empty line.
-		String headerValue = context.header_value.getText() == null ? "" : context.header_value.getText();
+		String headerValue = context.header_value != null ? (context.header_value.getText() == null?"":context.header_value.getText()):"";
 
 		if (headerKey.equals("title")) {
 			// Set the name of the node
@@ -282,8 +287,9 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 		if (headerKey.equals("tags")) {
 			// Split the list of tags by spaces, and use that
 			// TODO: dont know if im using streams correctly - hope i am XD
+			//System.out.println("before:"+currentNode.tags);
 			Arrays.stream(headerValue.split(" ")).filter(item -> !item.isEmpty()).forEach(currentNode.tags::add);
-
+			//System.out.println("after:"+currentNode.tags);
 			if (currentNode.tags.contains("rawText")) {
 				// This is a raw text node. Flag it as such for future compilation.
 				rawTextNode = true;
@@ -380,9 +386,9 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 
 	protected class BodyVisitor extends YarnSpinnerParserBaseVisitor<Integer> {
 
-		private Compiler compiler;
+		private YarnCompiler compiler;
 
-		public BodyVisitor(Compiler compiler) {
+		public BodyVisitor(YarnCompiler compiler) {
 			this.compiler = compiler;
 			this.loadOperators();
 		}
@@ -500,8 +506,8 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 			String stringID = compiler.registerString(composedString.toString(), compiler.currentNode.name, lineID,
 					lineNumber, hashtagText);
 
-			compiler.emit(ByteCode.RunLine, new Operand().setStringValue(stringID),
-					new Operand().setFloatValue(expressionCount));
+			compiler.emit(ByteCode.RunLine, new Operand(stringID),
+					new Operand(expressionCount));
 
 			return 0;
 		}
@@ -509,7 +515,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 		@Override
 		public Integer visitOptionJump(OptionJumpContext context) {
 			String destination = context.NodeName.getText().trim();
-			compiler.emit(ByteCode.RunLine, new Operand().setStringValue(destination));
+			compiler.emit(ByteCode.RunLine, new Operand(destination));
 			return 0;
 		}
 
@@ -535,8 +541,8 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 			String stringID = compiler.registerString(label, compiler.currentNode.name, lineID, lineNumber,
 					hashtagText);
 
-			compiler.emit(ByteCode.AddOption, new Operand().setStringValue(stringID),
-					new Operand().setStringValue(destination), new Operand().setFloatValue(expressionCount));
+			compiler.emit(ByteCode.AddOption, new Operand(stringID),
+					new Operand(destination), new Operand(expressionCount));
 
 			return 0;
 		}
@@ -548,7 +554,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 
 			// now store the variable and clean up the stack
 			String variableName = context.VAR_ID().getText();
-			compiler.emit(ByteCode.StoreVariable, new Operand().setStringValue(variableName));
+			compiler.emit(ByteCode.StoreVariable, new Operand(variableName));
 			compiler.emit(ByteCode.Pop);
 			return 0;
 		}
@@ -596,8 +602,8 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 				compiler.emit(ByteCode.Stop);
 				break;
 			default:
-				compiler.emit(ByteCode.RunCommand, new Operand().setStringValue(composedString.toString()),
-						new Operand().setFloatValue(expressionCount));
+				compiler.emit(ByteCode.RunCommand, new Operand(composedString.toString()),
+						new Operand(expressionCount));
 				break;
 			}
 
@@ -612,10 +618,10 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 			}
 
 			// push the number of parameters onto the stack
-			compiler.emit(ByteCode.PushNumber, new Operand().setFloatValue(list.size()));
+			compiler.emit(ByteCode.PushNumber, new Operand(list.size()));
 
 			// then call the function itself
-			compiler.emit(ByteCode.CallFunc, new Operand().setStringValue(functionName));
+			compiler.emit(ByteCode.CallFunc, new Operand(functionName));
 		}
 
 		@Override
@@ -657,7 +663,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 			// will only be called on ifs and elseifs
 			if (expression != null) {
 				visit(expression);
-				compiler.emit(ByteCode.JumpIfFalse, new Operand().setStringValue(endOfClauseLabel));
+				compiler.emit(ByteCode.JumpIfFalse, new Operand(endOfClauseLabel));
 			}
 
 			// running through all of the children statements
@@ -665,7 +671,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 				visit(child);
 			}
 
-			compiler.emit(ByteCode.JumpTo, new Operand().setStringValue(jumpLabel));
+			compiler.emit(ByteCode.JumpTo, new Operand(jumpLabel));
 
 		}
 
@@ -705,7 +711,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 
 					visit(shortcut.line_statement().line_condition().expression());
 
-					compiler.emit(ByteCode.JumpIfFalse, new Operand().setStringValue(endOfClauseLabel));
+					compiler.emit(ByteCode.JumpIfFalse, new Operand(endOfClauseLabel));
 				}
 
 				StringBuilder composedString = new StringBuilder();
@@ -728,9 +734,9 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 						lineID, shortcut.getStart().getLine(), hashtags);
 
 				// And add this option to the list.
-				compiler.emit(ByteCode.AddOption, new Operand().setStringValue(labelStringID),
-						new Operand().setStringValue(optionDestinationLabel),
-						new Operand().setFloatValue(expressionCount));
+				compiler.emit(ByteCode.AddOption, new Operand(labelStringID),
+						new Operand(optionDestinationLabel),
+						new Operand(expressionCount));
 
 				// If we had a line condition, now's the time to generate
 				// the label that we'd jump to if its condition is false.
@@ -767,7 +773,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 				}
 
 				// Jump to the end of this shortcut option group.
-				compiler.emit(ByteCode.JumpTo, new Operand().setStringValue(endOfGroupLabel));
+				compiler.emit(ByteCode.JumpTo, new Operand(endOfGroupLabel));
 
 				optionCount++;
 			}
@@ -791,9 +797,9 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 			// TODO: temp operator call
 
 			// Indicate that we are pushing one parameter
-			compiler.emit(ByteCode.PushNumber, new Operand().setFloatValue(1));
+			compiler.emit(ByteCode.PushNumber, new Operand(1));
 
-			compiler.emit(ByteCode.CallFunc, new Operand().setStringValue(TokenType.UnaryMinus.name()));
+			compiler.emit(ByteCode.CallFunc, new Operand(TokenType.UnaryMinus.name()));
 
 			return 0;
 		}
@@ -805,9 +811,9 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 			// TODO: temp operator call
 
 			// Indicate that we are pushing one parameter
-			compiler.emit(ByteCode.PushNumber, new Operand().setFloatValue(1));
+			compiler.emit(ByteCode.PushNumber, new Operand(1));
 
-			compiler.emit(ByteCode.CallFunc, new Operand().setStringValue(TokenType.Not.name()));
+			compiler.emit(ByteCode.CallFunc, new Operand(TokenType.Not.name()));
 
 			return 0;
 		}
@@ -826,9 +832,9 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 			// TODO: temp operator call
 
 			// Indicate that we are pushing two items for comparison
-			compiler.emit(ByteCode.PushNumber, new Operand().setFloatValue(2));
+			compiler.emit(ByteCode.PushNumber, new Operand(2));
 
-			compiler.emit(ByteCode.CallFunc, new Operand().setStringValue(tokens.get(op).toString()));
+			compiler.emit(ByteCode.CallFunc, new Operand(tokens.get(op).toString()));
 		}
 
 		@Override
@@ -857,7 +863,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 
 		protected void opEquals(String varName, YarnSpinnerParser.ExpressionContext expression, int op) {
 			// Get the current value of the variable
-			compiler.emit(ByteCode.PushVariable, new Operand().setStringValue(varName));
+			compiler.emit(ByteCode.PushVariable, new Operand(varName));
 
 			// run the expression
 			visit(expression);
@@ -865,15 +871,15 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 			// Stack now contains [currentValue, expressionValue]
 
 			// Indicate that we are pushing two items for comparison
-			compiler.emit(ByteCode.PushNumber, new Operand().setFloatValue(2));
+			compiler.emit(ByteCode.PushNumber, new Operand(2));
 
 			// now we evaluate the operator
 			// op will match to one of + - / * %
-			compiler.emit(ByteCode.CallFunc, new Operand().setStringValue(tokens.get(op).toString()));
+			compiler.emit(ByteCode.CallFunc, new Operand(tokens.get(op).toString()));
 
 			// Stack now has the destination value
 			// now store the variable and clean up the stack
-			compiler.emit(ByteCode.StoreVariable, new Operand().setStringValue(varName));
+			compiler.emit(ByteCode.StoreVariable, new Operand(varName));
 			compiler.emit(ByteCode.Pop);
 		}
 
@@ -898,27 +904,27 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 		@Override
 		public Integer visitValueNumber(ValueNumberContext context) {
 			float number = Float.parseFloat(context.NUMBER().getText());
-			compiler.emit(ByteCode.PushNumber, new Operand().setFloatValue(number));
+			compiler.emit(ByteCode.PushNumber, new Operand(number));
 
 			return 0;
 		}
 
 		@Override
 		public Integer visitValueTrue(ValueTrueContext ctx) {
-			compiler.emit(ByteCode.PushBool, new Operand().setBoolValue(true));
+			compiler.emit(ByteCode.PushBool, new Operand(true));
 			return 0;
 		}
 
 		@Override
 		public Integer visitValueFalse(ValueFalseContext ctx) {
-			compiler.emit(ByteCode.PushBool, new Operand().setBoolValue(false));
+			compiler.emit(ByteCode.PushBool, new Operand(false));
 			return 0;
 		}
 
 		@Override
 		public Integer visitVariable(VariableContext context) {
 			String variableName = context.VAR_ID().getText();
-			compiler.emit(ByteCode.PushVariable, new Operand().setStringValue(variableName));
+			compiler.emit(ByteCode.PushVariable, new Operand(variableName));
 
 			return 0;
 		}
@@ -927,9 +933,9 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 		public Integer visitValueString(ValueStringContext ctx) {
 			// stripping the " off the front and back
 			// actually is this what we want?
-			String stringVal = ctx.STRING().getText().replaceAll("\"", "");
+			String stringVal = ctx.STRING().getText().replaceAll("^[\'\"]+", "").replaceAll("[\'\"]+$", "");
 
-			compiler.emit(ByteCode.PushString, new Operand().setStringValue(stringVal));
+			compiler.emit(ByteCode.PushString, new Operand(stringVal));
 
 			return 0;
 		}
@@ -977,7 +983,7 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 
 	}
 
-	public class Graph {
+	public static class Graph {
 		public ArrayList<String> nodes = new ArrayList<String>();
 		public MultiMap<String, String> edges = new MultiMap<String, String>();
 		public String graphName = "G";
@@ -1013,26 +1019,27 @@ public class Compiler extends YarnSpinnerParserBaseListener {
 		}
 	}
 
-	public class GraphListener extends YarnSpinnerParserBaseListener {
+	public static class GraphListener extends YarnSpinnerParserBaseListener {
 		String currentNode = null;
 		public Graph graph = new Graph();
 
-		public void EnterHeader(YarnSpinnerParser.HeaderContext context) {
-			if (context.header_key.getText() == "title") {
+		public void enterHeader(YarnSpinnerParser.HeaderContext context) {
+			System.out.println("header "+context.header_key.getText());
+			if (context.header_key.getText().equals("title")) {
 				currentNode = context.header_value.getText();
 			}
 		}
 
-		public void ExitNode(YarnSpinnerParser.NodeContext context) {
+		public void exitNode(YarnSpinnerParser.NodeContext context) {
 			// Add this node to the graph
 			graph.nodes.add(currentNode);
 		}
 
-		public void ExitOptionJump(YarnSpinnerParser.OptionJumpContext context) {
+		public void exitOptionJump(YarnSpinnerParser.OptionJumpContext context) {
 			graph.edge(currentNode, context.NodeName.getText());
 		}
 
-		public void ExitOptionLink(YarnSpinnerParser.OptionLinkContext context) {
+		public void exitOptionLink(YarnSpinnerParser.OptionLinkContext context) {
 			graph.edge(currentNode, context.NodeName.getText());
 		}
 
