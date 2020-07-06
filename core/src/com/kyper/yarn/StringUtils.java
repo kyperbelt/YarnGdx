@@ -70,6 +70,8 @@ public class StringUtils {
 //		return builder.toString();
 	}
 	
+
+	
 	public static String removeExtension(String input) {
 		return input.replaceFirst("[.][^.]+$", "");
 	}
@@ -108,12 +110,17 @@ public class StringUtils {
 	}
 
 	public static String trimEnd(String value) {
-		// Use replaceFirst to remove trailing spaces.
-		return value.replaceFirst("\\s+$", "");
+		return trimEnd(value,"\\s+$");
 	}
 
+	public static String trimEnd(String value,String trimChars) {
+		return value.replaceAll("[" + trimChars + "]+$", "");
+	}
+	
 	public static String trimStart(String value) {
 		// Remove leading spaces.
 		return value.replaceFirst("^\\s+", "");
 	}
+	
+
 }
