@@ -8,8 +8,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.Parser;
-
 import com.kyper.yarn.Analyser.Diagnosis.Severity;
 import com.kyper.yarn.Program.Instruction;
 import com.kyper.yarn.Program.Node;

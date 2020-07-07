@@ -277,7 +277,7 @@ public class VirtualMachine {
 				// ints itself. something to think about.
 				int expressionCount = (int) instruction.operands.get(1).getFloatValue();
 
-				String[] strings = new String[expressionCount];
+				//String[] strings = new String[expressionCount];
 
 				// Get the values from the stack, and
 				// substitute them into the command text

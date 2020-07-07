@@ -1502,7 +1502,7 @@ public class NumberPlurals {
 		}
 
 		public static int FractionalValue(double number) {
-			String text = String.format(Locale.ROOT, "%,d", number);
+			String text = Double.toString(number);
 			String text2 = (text.indexOf('.') < 0) ? "" : text.split("\\.")[1];
 			if (text2 == "") {
 				return 0;
@@ -1511,12 +1511,12 @@ public class NumberPlurals {
 		}
 
 		public static int VisibleFractionalDigits(double number, boolean trailingZeroes) {
-			String text = String.format(Locale.ROOT, "%,d", number);
-			;
-			String text2 = (text.indexOf('.') < 0) ? "" : text.split("\\.")[1];
-			if (!trailingZeroes) {
-				text2 = StringUtils.trimEnd(text2, "0");
-			}
+			String text = Double.toString(number);
+
+			String text2 = text.indexOf(".") < 0 ? "" : text.split("\\.")[1];
+//			if (!trailingZeroes) {
+			text2 = StringUtils.trimEnd(text2, "0");
+//			}
 			return text2.length();
 		}
 	}

@@ -1,7 +1,5 @@
 package com.kyper.yarn.compiler;
 
-import java.util.Locale;
-
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;

@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class TestPlan
 {
-    public enum Type
+    public static enum Type
     {
         // expecting to see this specific line
         line,
@@ -122,7 +122,7 @@ public class TestPlan
                 } while (true);
 
                 String value = sb.toString();
-
+                
                 return converter.apply(value);
 
 //                Type type = T.class;

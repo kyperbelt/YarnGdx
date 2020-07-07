@@ -1,9 +1,11 @@
 package com.kyper.yarn;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -117,16 +119,16 @@ public class Dialogue {
 	}
 
 	public void setNode() {
-		 setNode(DEFAULT_START);
+		setNode(DEFAULT_START);
 	}
 
 	public void setNode(String name) {
 		if (vm != null) {
 			vm.setNode(name);
-		}else {
+		} else {
 			throw new IllegalStateException("VirtualMachine is null");
 		}
-		
+
 	}
 
 	public void continueRunning() {
@@ -348,17 +350,293 @@ public class Dialogue {
 	public void unloadAll() {
 		unloadAll(true);
 	}
-	
-	public static String expandFormatFunctions(String input,String locale) {
-		throw new UnsupportedOperationException("Dialogue::expandFormatFunctions");
+
+	public static String expandFormatFunctions(String input, String locale) {
+		StringBuilder builder = new StringBuilder();
+		ArrayList<ParsedFormatFunction> formatFunctions = new ArrayList<ParsedFormatFunction>();
+		 parseFormatFunctions(input, builder,  formatFunctions);
+		 String lineWithReplacements = builder.toString();
+
+         for (int i = 0; i < formatFunctions.size(); i++)
+         {
+             ParsedFormatFunction function = formatFunctions.get(i);
+
+             // Apply the "select" format function
+             if (function.functionName == "select")
+             {
+            	 String replacement = null;
+                 if ((replacement = function.data.get(function.value)) == null)
+                 {
+                     replacement = StringUtils.format("<no replacement for %s>",function.value);
+                 }
+
+                 // Insert the value if needed
+                 replacement = replacement.replace(FORMAT_FUNCTION_PLACEHOLDER, function.value);
+
+                 lineWithReplacements = lineWithReplacements.replace("{" + i + "}", replacement);
+             }
+             else
+             {
+                 // Apply the "plural" or "ordinal" format function
+            	 double value = 0.0;
+            	 try {
+            	 value = Double.parseDouble(function.value);
+            	 }catch(NumberFormatException e) {
+            		 throw new IllegalArgumentException(StringUtils.format("Error while pluralising line '%s': '%s' is not a number",input,function.value));
+            	 }
+
+                 NumberPlurals.PluralCase pluralCase;
+
+                 switch (function.functionName)
+                 {
+                     case "plural":
+                         pluralCase = NumberPlurals.GetCardinalPluralCase(locale, value);
+                         break;
+                     case "ordinal":
+                         pluralCase = NumberPlurals.GetOrdinalPluralCase(locale, value);
+                         break;
+                     default:
+                    	 throw new IllegalArgumentException(StringUtils.format("Unknown formatting function '%s}' in line '%s'",function.functionName,input));
+                 }
+                 
+                 String replacement = null;
+                 if ((replacement = function.data.get(pluralCase.toString().toLowerCase(Locale.ROOT))) == null)
+                 {
+                     replacement = StringUtils.format("<no replacement for %s",function.value);
+                 }
+
+                 // Insert the value if needed
+                 replacement = replacement.replace(FORMAT_FUNCTION_PLACEHOLDER, function.value);
+
+                 lineWithReplacements = lineWithReplacements.replace("{" + i + "}", replacement);
+
+             }
+         }
+         return lineWithReplacements;
+		
 	}
-	
+
 	public static void parseFormatFunctions(String input,StringBuilder lineWithReplacements,ArrayList<ParsedFormatFunction> parsedFunctions) {
 		StringReader reader = new StringReader(input);
 		int next;
+		try {
+			while((next = reader.read())!=-1) {
+				
+				char c = (char)next;
+				if(c!='[') {
+					//plain text
+					lineWithReplacements.append(c);
+				}else {
+					ParsedFormatFunction function = new ParsedFormatFunction();
+					
+					//start of format function
+					//struct
+					//[ name "value" key1="value1" key2="value2" ]
+					
+					 // Read the name
+                    function.functionName = FormatFunctionHelpers.expectID(input, reader);
+					
+                 // Ensure that only valid function names are used
+                    switch (function.functionName) {
+                        case "select":
+                        break;
+                        case "plural":
+                        break;
+                        case "ordinal":
+                        break;
+                        default:
+                        	throw new IllegalArgumentException(StringUtils
+            						.format("Invalid formatting function '%s' in line \'%s'",function.functionName, input));
+                    }
+                    
+                    function.value = FormatFunctionHelpers.expectString(input, reader);
+                    function.data = new HashMap<String, String>();
+                    
+                    // parse and read the data for this format function
+                    while (true)
+                    {
+                        FormatFunctionHelpers.consumeWhiteSpace(input, reader);
 
-        throw new UnsupportedOperationException("Dialogue::parseFormatFunctions");
-		
+                        reader.mark(input.getBytes().length);
+                        int peek = reader.read();
+                        reader.reset();
+                        if ((char)peek == ']')
+                        {
+                            // we're done adding parameters
+                            break;
+                        }
+
+                        // this is a key-value pair
+                        String key = FormatFunctionHelpers.expectID(input,reader);
+                        FormatFunctionHelpers.expectCharacter(input,reader,'=');
+                        String value = FormatFunctionHelpers.expectString(input, reader);
+
+                        if (function.data.containsKey(key))
+                        {
+                        	throw new IllegalArgumentException(StringUtils
+            						.format("Duplicate value '%s' in format function inside line '%s'",key, input));
+                        }
+
+                        function.data.put(key, value);
+
+                    }
+                    
+                    FormatFunctionHelpers.expectCharacter(input, reader, ']');
+                    
+                    parsedFunctions.add(function);
+                    
+                    lineWithReplacements.append("{" + (parsedFunctions.size() - 1) + "}");
+                    
+				}
+				
+				
+				
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public static class FormatFunctionHelpers {
+
+		private static String expectID(String input,StringReader stringReader) throws IOException {
+			consumeWhiteSpace(input, stringReader);
+	        StringBuilder idStringBuilder = new StringBuilder();
+	        
+	        // Read the first character, which must be a letter
+	        int tempNext = stringReader.read();
+	        assertNotEndOfInput(input,tempNext);
+	        char nextChar = (char)tempNext;
+
+	        if (Character.isLetter(nextChar) || nextChar == '_')
+	        {
+	            idStringBuilder.append((char)tempNext);
+	        }
+	        else
+	        {
+	        	System.out.println("offendingChar:"+Character.toString(nextChar));
+	        	throw new IllegalArgumentException(StringUtils
+						.format("Expected an identifier inside a format function in line '%s' ", input));
+	        }
+
+	        // Read zero or more letters, numbers, or underscores
+	        while (true)
+	        {
+	        	stringReader.mark(100);
+	            tempNext = stringReader.read();
+	            stringReader.reset();
+	            if (tempNext == -1)
+	            {
+	                break;
+	            }
+	            nextChar = (char)tempNext;
+	            if (Character.isLetterOrDigit(nextChar) || (char)tempNext == '_')
+	            {
+	                idStringBuilder.append((char)tempNext);
+	                stringReader.read(); // consume it
+	            }
+	            else
+	            {
+	                // no more
+	                break;
+	            }
+	        }
+	        return idStringBuilder.toString();
+		}
+
+		private static String expectString(String input,StringReader stringReader) throws IOException {
+			consumeWhiteSpace(input, stringReader);
+			StringBuilder builder = new StringBuilder();
+			
+			int tempNext = stringReader.read();
+			assertNotEndOfInput(input, tempNext);
+			
+			char nextChar = (char)tempNext;
+			if(nextChar != '"') {
+				System.out.println("offendingChar:"+Character.toString(nextChar));
+				throw new IllegalArgumentException(StringUtils
+						.format("Expected a string inside a format function in line '%s' ", input));
+			}
+			
+			while(true) {
+				tempNext = stringReader.read();
+                assertNotEndOfInput(input,tempNext);
+                nextChar = (char)tempNext;                            
+
+                if (nextChar == '"')
+                {
+                    // end of string - consume it but don't
+                    // append to the final collection
+                    break;
+                }
+                else if (nextChar == '\\')
+                {
+                    // an escaped quote or backslash
+                    int nextNext = stringReader.read();
+                    assertNotEndOfInput(input,nextNext);
+                    int nextNextChar = (char)nextNext;
+                    if (nextNextChar == '\\' || nextNextChar == '"' || nextNextChar == '%')
+                    {
+                    	builder.append(nextNextChar);
+                    } 
+                } else if (nextChar == '%') {
+                	builder.append(FORMAT_FUNCTION_PLACEHOLDER);
+                }
+                else
+                {
+                	builder.append(nextChar);
+                }
+
+			}
+			return builder.toString();
+		}
+
+		private static void expectCharacter(String input, StringReader stringReader, char character)
+				throws IOException {
+			consumeWhiteSpace(input, stringReader);
+			int tempNext = stringReader.read();
+			assertNotEndOfInput(input, tempNext);
+			if ((char) tempNext != character) {
+				System.out.println("offendingChar:"+Character.toString((char)tempNext));
+				throw new IllegalArgumentException(StringUtils
+						.format("Expected a '%s' inside of format function in line '%s' ", character, input));
+			}
+		}
+
+		private static void assertNotEndOfInput(String input, int value) {
+			if (value == -1) {
+				throw new IllegalArgumentException(
+						StringUtils.format("Unexpected end of line inside a format function in line'%s'", input));
+			}
+		}
+
+		private static void consumeWhiteSpace(String input, StringReader stringReader) throws IOException {
+			consumeWhiteSpace(input, stringReader, false);
+		}
+
+		private static void consumeWhiteSpace(String input, StringReader stringReader, boolean allowEndOfLine)
+				throws IOException {
+			while (true) {
+				stringReader.mark(100);
+				int tempNext = stringReader.read();
+				stringReader.reset();
+				if (tempNext == -1 && allowEndOfLine == false) {
+					throw new IllegalArgumentException(
+							StringUtils.format("Unexpected end of line inside a format function in line %s", input));
+				}
+
+				if (Character.isWhitespace((char)tempNext)) {
+					// consume it and continue
+					stringReader.read();
+				} else {
+					// no more whitespace ahead; don't
+					// consume it, but instead stop eating
+					// whitespace
+					return;
+				}
+			}
+		}
 	}
 
 	/**
