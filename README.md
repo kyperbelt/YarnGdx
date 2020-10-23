@@ -27,7 +27,7 @@ There is a simple code example in the tests package that can be run like a norma
 [2]:http://twinery.org/
 [3]:https://github.com/thesecretlab/YarnSpinner
 [4]:https://github.com/kyperbelt/YarnGdx/wiki
-[5]:https://github.com/InfiniteAmmoInc/Yarn#builds
+[5]:https://yarnspinnertool.github.io/YarnEditor/
 
 
 <!--- NOTABLE GAMES --->
