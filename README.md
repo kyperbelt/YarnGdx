@@ -6,11 +6,7 @@ There is a simple code example in the tests package that can be run like a norma
 
 ![Java CI with Gradle](https://github.com/kyperbelt/YarnGdx/workflows/Java%20CI%20with%20Gradle/badge.svg?branch=vanilla)
 
-## Latest Build Download
-[yarngdx_1_1.zip][101]
----
-### Releases
-- [yarngdx_1_0.zip][100]
+
 ---
 
 ## Getting Started
